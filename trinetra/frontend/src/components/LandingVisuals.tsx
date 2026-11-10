@@ -118,19 +118,58 @@ export function EyeGlyph({ n }: { n: number }) {
   if (n === 1) return (
     <svg viewBox="0 0 48 48" className="eye-glyph" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M4 24s7-12 20-12 20 12 20 12-7 12-20 12S4 24 4 24z" />
-      <circle cx="24" cy="24" r="6" fill="currentColor" opacity="0.18" /><circle cx="24" cy="24" r="6" />
-      <circle cx="24" cy="24" r="2" fill="currentColor" />
+      <circle cx="24" cy="24" r="6" fill="currentColor" opacity="0.18" className="eg-iris" />
+      <circle cx="24" cy="24" r="6" className="eg-iris" />
+      <circle cx="24" cy="24" r="2" fill="currentColor" className="eg-pupil" />
     </svg>
   );
   if (n === 2) return (
     <svg viewBox="0 0 48 48" className="eye-glyph" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path d="M24 6l18 8-18 8-18-8 18-8z" /><path d="M6 24l18 8 18-8" /><path d="M6 32l18 8 18-8" opacity="0.5" />
+      <path d="M24 6l18 8-18 8-18-8 18-8z" className="eg-l1" />
+      <path d="M6 24l18 8 18-8" className="eg-l2" />
+      <path d="M6 32l18 8 18-8" opacity="0.5" className="eg-l3" />
     </svg>
   );
   return (
     <svg viewBox="0 0 48 48" className="eye-glyph" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <circle cx="24" cy="12" r="4" /><circle cx="10" cy="34" r="4" /><circle cx="38" cy="34" r="4" />
-      <path d="M24 16v8M22 26l-10 6M26 26l10 6" /><circle cx="24" cy="26" r="2" fill="currentColor" />
+      <path d="M24 16v8M22 26l-10 6M26 26l10 6" />
+      <circle cx="24" cy="12" r="4" className="eg-node" />
+      <circle cx="10" cy="34" r="4" className="eg-node" style={{ animationDelay: ".5s" }} />
+      <circle cx="38" cy="34" r="4" className="eg-node" style={{ animationDelay: "1s" }} />
+      <circle cx="24" cy="26" r="2" fill="currentColor" className="eg-core" />
     </svg>
+  );
+}
+
+// Original symbol-marks for the standards badges (brand-safe, not official
+// logos). Each sits in a chip to the left of the badge and animates subtly.
+const MARK: Record<string, ReactNode> = {
+  nist: (<g><path d="M3.5 9 12 4l8.5 5" /><path d="M4.5 9h15" /><path d="M6.5 10v8M10 10v8M14 10v8M17.5 10v8" /><path d="M4 20h16" /></g>),
+  attack: (
+    <g fill="var(--brand)" stroke="none">
+      {[0, 1, 2].flatMap((r) => [0, 1, 2].map((c) => (
+        <rect key={`${r}-${c}`} className="sm-cell" x={4.5 + c * 5.4} y={4.5 + r * 5.4} width="4" height="4" rx="1" style={{ animationDelay: `${(r + c) * 0.16}s` }} />
+      )))}
+    </g>
+  ),
+  insider: (<g><path d="M12 3l7 3v5c0 4.2-3 7.2-7 8.2-4-1-7-4-7-8.2V6z" /><circle cx="12" cy="10.2" r="1.7" fill="var(--brand)" stroke="none" /><path d="M8.9 15.4c.3-1.7 1.6-2.6 3.1-2.6s2.8.9 3.1 2.6" /></g>),
+  ocsf: (<g><ellipse cx="12" cy="6" rx="7" ry="2.4" /><path d="M5 6v12c0 1.3 3.1 2.4 7 2.4s7-1.1 7-2.4V6" /><path d="M5 12c0 1.3 3.1 2.4 7 2.4s7-1.1 7-2.4" /></g>),
+  sigma: (<text x="12" y="17.5" textAnchor="middle" fontFamily="'Fira Code', monospace" fontSize="16" fontWeight="700" fill="var(--brand)" stroke="none">Σ</text>),
+  cisa: (<g><path d="M12 3l7 3v5c0 4.2-3 7.2-7 8.2-4-1-7-4-7-8.2V6z" /><path d="M12 7.5l1.1 2.4 2.6.3-1.9 1.8.5 2.6L12 13.6l-2.4 1.1.5-2.6-1.9-1.8 2.6-.3z" fill="var(--brand)" stroke="none" /></g>),
+};
+
+export function StdMark({ name }: { name: string }) {
+  const id = name.startsWith("NIST") ? "nist"
+    : /ATT/i.test(name) ? "attack"
+    : /Insider/i.test(name) ? "insider"
+    : name.startsWith("OCSF") ? "ocsf"
+    : /^Sigma/i.test(name) ? "sigma"
+    : /^CISA/i.test(name) ? "cisa" : "nist";
+  return (
+    <span className={`std-chip sm-${id}`} aria-hidden="true">
+      <svg className="std-mark" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        {MARK[id]}
+      </svg>
+    </span>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, Stats, Entity, Node, Case } from "./lib/api";
 import { C, Lang } from "./i18n";
-import { RadarEye, Sparkline, TierDiagram, CapIcon, EyeGlyph } from "./components/LandingVisuals";
+import { RadarEye, Sparkline, TierDiagram, CapIcon, EyeGlyph, StdMark } from "./components/LandingVisuals";
 
 function useReveal(dep: unknown) {
   useEffect(() => {
@@ -259,7 +259,7 @@ export default function Landing({ onEnter, onStructure }: { onEnter: () => void;
         <div className="lp-standards reveal">
           {t.standards.badges.map((b) => (
             <div className="lp-badge" key={b.n}>
-              <svg className="chk" viewBox="0 0 24 24" fill="none" stroke="var(--live)" strokeWidth="2"><path d="M4 12l5 5 11-11" /></svg>
+              <StdMark name={b.n} />
               <div><div className="n">{b.n}</div><div className="d">{b.d}</div></div>
             </div>
           ))}

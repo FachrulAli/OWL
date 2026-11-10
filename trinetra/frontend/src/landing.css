@@ -409,3 +409,48 @@
 .lp-rail a.rt:hover .tick { background: var(--gold); }
 @media (max-width: 1160px) { .lp-rail .lbl { display: none; } }
 @media (max-width: 920px) { .lp-rail { display: none; } }
+
+/* ── animated capability glyphs (EYE 01/02/03) ── */
+.eye-glyph { overflow: visible; }
+.eg-pupil { animation: egScan 3.6s ease-in-out infinite; }
+@keyframes egScan { 0%,100% { transform: translateX(-2.4px); } 50% { transform: translateX(2.4px); } }
+.eg-iris { transform-box: fill-box; transform-origin: center; animation: egIris 2.8s ease-in-out infinite; }
+@keyframes egIris { 0%,100% { transform: scale(.9); } 50% { transform: scale(1.08); } }
+.eg-l1, .eg-l2, .eg-l3 { animation: egFloat 3s ease-in-out infinite; }
+.eg-l2 { animation-delay: .18s; } .eg-l3 { animation-delay: .36s; }
+@keyframes egFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1.6px); } }
+.eg-node { transform-box: fill-box; transform-origin: center; animation: egNode 2.4s ease-in-out infinite; }
+@keyframes egNode { 0%,100% { transform: scale(.82); opacity: .7; } 50% { transform: scale(1.14); opacity: 1; } }
+.eg-core { transform-box: fill-box; transform-origin: center; animation: egIris 1.8s ease-in-out infinite; }
+
+/* ── standards badge: symbol chip (left, in the box), animated ── */
+.std-chip {
+  position: relative; flex: none; width: 44px; height: 44px; border-radius: 11px; overflow: hidden;
+  display: grid; place-items: center;
+  background: linear-gradient(180deg, rgba(61,155,255,0.14), rgba(61,155,255,0.03));
+  border: 1px solid rgba(61,155,255,0.24); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.std-chip .std-mark { width: 26px; height: 26px; color: var(--brand); animation: smBreath 4s ease-in-out infinite; }
+@keyframes smBreath { 0%,100% { transform: scale(.95); } 50% { transform: scale(1.05); } }
+.std-chip::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: -75%; width: 55%;
+  background: linear-gradient(100deg, transparent, rgba(190,220,255,0.20), transparent);
+  animation: smShine 4.6s ease-in-out infinite;
+}
+@keyframes smShine { 0% { transform: translateX(0); } 55%,100% { transform: translateX(360%); } }
+.sm-cell { transform-box: fill-box; transform-origin: center; animation: smTwinkle 2.4s ease-in-out infinite; }
+@keyframes smTwinkle { 0%,100% { opacity: .4; } 50% { opacity: 1; } }
+/* desync chips so they don't pulse in unison */
+.lp-badge:nth-child(2) .std-mark, .lp-badge:nth-child(2) .std-chip::after { animation-delay: .5s; }
+.lp-badge:nth-child(3) .std-mark, .lp-badge:nth-child(3) .std-chip::after { animation-delay: 1s; }
+.lp-badge:nth-child(4) .std-mark, .lp-badge:nth-child(4) .std-chip::after { animation-delay: 1.5s; }
+.lp-badge:nth-child(5) .std-mark, .lp-badge:nth-child(5) .std-chip::after { animation-delay: .8s; }
+.lp-badge:nth-child(6) .std-mark, .lp-badge:nth-child(6) .std-chip::after { animation-delay: 1.3s; }
+.lp-badge:nth-child(7) .std-mark, .lp-badge:nth-child(7) .std-chip::after { animation-delay: .3s; }
+.lp-badge:nth-child(8) .std-mark, .lp-badge:nth-child(8) .std-chip::after { animation-delay: 1.8s; }
+.lp-badge:hover .std-chip { border-color: var(--brand); }
+
+@media (prefers-reduced-motion: reduce) {
+  .eg-pupil, .eg-iris, .eg-l1, .eg-l2, .eg-l3, .eg-node, .eg-core,
+  .std-chip .std-mark, .std-chip::after, .sm-cell { animation: none !important; }
+}
