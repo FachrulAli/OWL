@@ -461,7 +461,23 @@ td b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 }
 .nm-close:hover { color: var(--text); border-color: var(--brand); }
 
-.nm-head { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding-right: 36px; }
+/* HQ aerial banner behind the header */
+.nm-head-wrap {
+  position: relative; margin: -22px -24px 14px; padding: 62px 24px 16px;
+  overflow: hidden; border-radius: 16px 16px 0 0;
+}
+.nm-banner { position: absolute; inset: 0; z-index: 0; }
+.nm-tiles { position: absolute; inset: 0; filter: saturate(1.08) brightness(0.82) contrast(1.02); }
+.nm-tiles img { position: absolute; width: 256px; height: 256px; image-rendering: auto; user-select: none; }
+.nm-head-wrap::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(8,20,35,0.30) 0%, rgba(8,20,35,0.68) 52%, var(--panel) 100%),
+    linear-gradient(90deg, rgba(8,20,35,0.55), transparent 44%),
+    radial-gradient(120% 100% at 50% 0%, rgba(61,155,255,0.12), transparent 60%);
+}
+.nm-attr { position: absolute; right: 8px; bottom: 5px; z-index: 2; font-size: 8.5px; letter-spacing: .3px; color: rgba(255,255,255,0.5); font-family: var(--font-mono); pointer-events: none; }
+.nm-head { position: relative; z-index: 2; display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding-right: 36px; }
 .nm-glyph {
   width: 44px; height: 44px; border-radius: 11px; flex: none;
   background:

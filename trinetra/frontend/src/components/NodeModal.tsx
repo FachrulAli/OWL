@@ -11,6 +11,35 @@ import { KODAM_BY_ID, PUSSIBERAD } from "../data/tniad";
 const STATUS = (r: number) =>
   r >= 70 ? "KRITIS" : r >= 50 ? "WASPADA" : r >= 30 ? "PANTAU" : "AMAN";
 
+// Aerial banner of the HQ location: a mosaic of Esri World Imagery tiles
+// centred on the node's coordinates. Self-hosted tiles aren't needed — these
+// are standard web-map tiles; attribution is shown. Falls back cleanly if the
+// tiles don't load (the gradient + panel background remain).
+function HqBanner({ lon, lat }: { lon: number; lat: number }) {
+  const z = 16;
+  const n = 2 ** z;
+  const fx = ((lon + 180) / 360) * n;
+  const latRad = (lat * Math.PI) / 180;
+  const fy = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n;
+  const cx = Math.floor(fx), cy = Math.floor(fy);
+  const tiles: { tx: number; ty: number; ox: number; oy: number }[] = [];
+  for (let tx = cx - 2; tx <= cx + 2; tx++)
+    for (let ty = cy - 1; ty <= cy + 1; ty++)
+      tiles.push({ tx, ty, ox: (tx - fx) * 256, oy: (ty - fy) * 256 });
+  return (
+    <div className="nm-banner" aria-hidden="true">
+      <div className="nm-tiles">
+        {tiles.map((t, i) => (
+          <img key={i} alt="" loading="lazy" draggable={false}
+            src={`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${t.ty}/${t.tx}`}
+            style={{ left: `calc(50% + ${t.ox}px)`, top: `calc(50% + ${t.oy}px)` }} />
+        ))}
+      </div>
+      <span className="nm-attr">Citra © Esri</span>
+    </div>
+  );
+}
+
 export function NodeModal({
   node, entities, cases, feed, onClose, onSelectEntity,
 }: {
@@ -65,7 +94,9 @@ export function NodeModal({
       <div className="nm-modal" role="dialog" aria-modal="true" aria-label={node.name} onClick={(e) => e.stopPropagation()}>
         <button className="nm-close" onClick={onClose} aria-label="Tutup">×</button>
 
-        <div className="nm-head" style={{ ["--c" as any]: c }}>
+        <div className="nm-head-wrap" style={{ ["--c" as any]: c }}>
+          {geo && <HqBanner lon={geo.lon} lat={geo.lat} />}
+          <div className="nm-head">
           <span className="nm-glyph" aria-hidden="true" />
           <div className="nm-id">
             <div className="nm-tier">
@@ -84,6 +115,7 @@ export function NodeModal({
             <span className={`pill sev-${sevFromRisk(node.max_risk)}`}>{status}</span>
             <b style={{ color: c }}>{node.max_risk.toFixed(0)}</b>
             <small>indeks risiko</small>
+          </div>
           </div>
         </div>
 
