@@ -1,46 +1,104 @@
 // Inline SVG visuals for the landing page — theme-aware, dependency-free.
 import type { ReactNode } from "react";
 
-/* Animated "third eye" radar: concentric rings, a sweeping beam, and blips
-   that pulse as if contacts are being detected. Anchors the hero visually. */
+/* Animated tactical night-vision helmet — quad GPNVG optics that scan and
+   glow, a glass shimmer sweep, HUD sweep + scanline, as if the operator is
+   actively monitoring. Anchors the hero and carries the "third eye" theme. */
 export function RadarEye() {
-  const blips = [
-    { x: 118, y: 92, c: "var(--critical)", d: "0s" },
-    { x: 196, y: 150, c: "var(--brand)", d: "0.8s" },
-    { x: 92, y: 178, c: "var(--high)", d: "1.5s" },
-    { x: 168, y: 214, c: "var(--brand)", d: "2.1s" },
-    { x: 228, y: 104, c: "var(--brand)", d: "2.7s" },
+  // four night-vision tubes in the characteristic quad splay (symmetric about x=160)
+  const lenses = [
+    { cx: 106, cy: 176, r: 19, d: "0s" },
+    { cx: 144, cy: 164, r: 23, d: ".5s" },
+    { cx: 192, cy: 164, r: 23, d: "1s" },
+    { cx: 230, cy: 176, r: 19, d: "1.6s" },
   ];
   return (
-    <svg className="radar" viewBox="0 0 320 320" role="img" aria-label="Behavioral radar">
+    <svg className="helm" viewBox="0 0 320 320" role="img" aria-label="Operator night-vision scanner">
       <defs>
         <radialGradient id="sweepGrad" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="var(--brand)" stopOpacity="0.5" />
           <stop offset="100%" stopColor="var(--brand)" stopOpacity="0" />
         </radialGradient>
-        <radialGradient id="irisGrad" cx="50%" cy="50%" r="50%">
+        <radialGradient id="irisGrad" cx="50%" cy="45%" r="60%">
           <stop offset="0%" stopColor="#eef6ff" />
-          <stop offset="35%" stopColor="var(--brand)" />
-          <stop offset="100%" stopColor="#052018" />
+          <stop offset="26%" stopColor="#7cc4ff" />
+          <stop offset="60%" stopColor="var(--brand)" />
+          <stop offset="100%" stopColor="#031a33" />
         </radialGradient>
+        <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#2a3a52" />
+          <stop offset="48%" stopColor="#111b2b" />
+          <stop offset="100%" stopColor="#060c16" />
+        </linearGradient>
+        <linearGradient id="shellG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#1b2740" />
+          <stop offset="100%" stopColor="#070d18" />
+        </linearGradient>
+        <linearGradient id="glintG" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#fff" stopOpacity="0" />
+          <stop offset="50%" stopColor="#dff0ff" stopOpacity="0.85" />
+          <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
+        <clipPath id="opticsClip">
+          {lenses.map((l, i) => <circle key={i} cx={l.cx} cy={l.cy} r={l.r} />)}
+        </clipPath>
       </defs>
-      {[150, 112, 74, 36].map((r) => (
-        <circle key={r} cx="160" cy="160" r={r} fill="none" stroke="var(--border-2)" strokeWidth="1" opacity="0.6" />
+
+      {/* backdrop: third-eye triangle + HUD arcs + sweep */}
+      <path className="helm-tri" d="M160 26 L300 290 L20 290 Z" fill="none" stroke="var(--brand)" strokeWidth="1.3" opacity="0.28" />
+      {[150, 116, 82].map((r) => (
+        <circle key={r} cx="160" cy="168" r={r} fill="none" stroke="var(--border-2)" strokeWidth="1" opacity="0.5" />
       ))}
-      <line x1="10" y1="160" x2="310" y2="160" stroke="var(--border)" strokeWidth="1" />
-      <line x1="160" y1="10" x2="160" y2="310" stroke="var(--border)" strokeWidth="1" />
-      {/* sweeping beam */}
-      <g className="radar-sweep" style={{ transformOrigin: "160px 160px" }}>
-        <path d="M160 160 L160 10 A150 150 0 0 1 290 95 Z" fill="url(#sweepGrad)" />
+      <g className="helm-sweep" style={{ transformOrigin: "160px 168px" }}>
+        <path d="M160 168 L160 18 A150 150 0 0 1 290 103 Z" fill="url(#sweepGrad)" />
       </g>
-      {/* contact blips */}
-      {blips.map((b, i) => (
-        <circle key={i} cx={b.x} cy={b.y} r="4" fill={b.c} className="radar-blip" style={{ animationDelay: b.d }} />
+
+      {/* helmet shell */}
+      <path d="M78 150 Q70 70 160 60 Q250 70 242 150 Q244 128 220 120 L100 120 Q76 128 78 150 Z"
+        fill="url(#shellG)" stroke="#2b3f5c" strokeWidth="1.5" />
+      <path d="M104 118 Q160 104 216 118" fill="none" stroke="#35507a" strokeWidth="2" opacity="0.7" />
+      <path d="M150 62 Q160 60 170 62 L168 116 L152 116 Z" fill="#0c1726" stroke="#2b3f5c" strokeWidth="1" />
+      {/* rails / side pods */}
+      <rect x="70" y="128" width="20" height="34" rx="5" fill="url(#metal)" stroke="#2b3f5c" strokeWidth="1" />
+      <rect x="230" y="128" width="20" height="34" rx="5" fill="url(#metal)" stroke="#2b3f5c" strokeWidth="1" />
+      <rect x="150" y="98" width="20" height="9" rx="2" fill="none" stroke="var(--brand)" strokeWidth="1" opacity="0.5" />
+
+      {/* goggle mount bridge */}
+      <rect x="120" y="134" width="80" height="22" rx="8" fill="url(#metal)" stroke="#2b3f5c" strokeWidth="1.2" />
+
+      {/* the four night-vision optics */}
+      {lenses.map((l, i) => (
+        <g key={i}>
+          {/* tube body */}
+          <circle cx={l.cx} cy={l.cy} r={l.r + 6} fill="url(#metal)" stroke="#324a6c" strokeWidth="1.5" />
+          <circle cx={l.cx} cy={l.cy} r={l.r + 2} fill="#05101f" stroke="#1d2d44" strokeWidth="1" />
+          {/* glowing lens */}
+          <circle cx={l.cx} cy={l.cy} r={l.r} fill="url(#irisGrad)" className="helm-iris" style={{ animationDelay: l.d }} />
+          {/* expanding scan ring */}
+          <circle cx={l.cx} cy={l.cy} r={l.r} fill="none" stroke="#bfe3ff" strokeWidth="1.4"
+            className="lens-ring" style={{ animationDelay: l.d }} />
+          {/* rotating scan line */}
+          <line x1={l.cx - l.r} y1={l.cy} x2={l.cx + l.r} y2={l.cy} stroke="#eaf5ff" strokeWidth="1" opacity="0.6"
+            className="lens-scan" style={{ animationDelay: l.d }} />
+          {/* pupil + highlight */}
+          <circle cx={l.cx} cy={l.cy} r={l.r * 0.3} fill="#03101f" />
+          <circle cx={l.cx - l.r * 0.32} cy={l.cy - l.r * 0.34} r={l.r * 0.16} fill="#eef6ff" opacity="0.9" />
+        </g>
       ))}
-      {/* the eye */}
-      <circle cx="160" cy="160" r="22" fill="url(#irisGrad)" className="radar-iris" />
-      <circle cx="160" cy="160" r="7" fill="#03120d" />
-      <circle cx="153" cy="153" r="3" fill="#eef6ff" opacity="0.8" />
+
+      {/* glass shimmer sweeping across the optics (google-glass glint) */}
+      <g clipPath="url(#opticsClip)">
+        <rect className="helm-shimmer" x="-80" y="130" width="46" height="80" fill="url(#glintG)" transform="skewX(-18)" />
+      </g>
+
+      {/* monitoring scanline sweeping down over the head */}
+      <rect className="helm-scanline" x="62" y="60" width="196" height="2.5" fill="var(--brand)" opacity="0.5" />
+
+      {/* pipeline data flow at base */}
+      {[232, 246, 260].map((y, i) => (
+        <line key={y} x1="92" y1={y} x2="228" y2={y} stroke="var(--brand)" strokeWidth="1.4"
+          strokeDasharray="3 9" opacity="0.5" className="helm-pipe" style={{ animationDelay: `${i * 0.4}s` }} />
+      ))}
     </svg>
   );
 }

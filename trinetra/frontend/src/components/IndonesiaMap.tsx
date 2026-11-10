@@ -11,6 +11,7 @@ const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 export function IndonesiaMap({ nodes, onPick }: { nodes: Node[]; onPick?: (nodeId: string) => void }) {
   const [hover, setHover] = useState<{ n: Node; x: number; y: number } | null>(null);
   const [view, setView] = useState({ k: 1, tx: 0, ty: 0 });
+  const [anim, setAnim] = useState(false); // tween transform only for discrete (button) zoom
   const [coord, setCoord] = useState<{ lon: number; lat: number } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const drag = useRef<{ x: number; y: number } | null>(null);
@@ -23,14 +24,17 @@ export function IndonesiaMap({ nodes, onPick }: { nodes: Node[]; onPick?: (nodeI
     const el = svgRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      if (!e.ctrlKey) return; // normal scroll -> let the page handle it
+      if (!e.ctrlKey) return; // normal scroll -> let the page handle it (pinch sets ctrlKey)
       e.preventDefault();
       const r = el.getBoundingClientRect();
       const px = ((e.clientX - r.left) / r.width) * VB.w;
       const py = ((e.clientY - r.top) / r.height) * VB.h;
       const v = viewRef.current;
-      const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
-      const k = clamp(v.k * factor, 1, 7);
+      // zoom amount follows the gesture velocity (continuous), like a maps pinch;
+      // clamp per-event delta so a chunky mouse wheel doesn't jump too far.
+      const dz = clamp(e.deltaY, -50, 50);
+      const k = clamp(v.k * Math.exp(-dz * 0.011), 1, 7);
+      setAnim(false); // follow the fingers 1:1 — no tween lag during the pinch
       setView({ k, tx: px - (px - v.tx) * (k / v.k), ty: py - (py - v.ty) * (k / v.k) });
     };
     el.addEventListener("wheel", onWheel, { passive: false });
@@ -53,7 +57,7 @@ export function IndonesiaMap({ nodes, onPick }: { nodes: Node[]; onPick?: (nodeI
     const r = svgRef.current!.getBoundingClientRect();
     return { x: ((e.clientX - r.left) / r.width) * VB.w, y: ((e.clientY - r.top) / r.height) * VB.h };
   };
-  const onDown = (e: React.PointerEvent) => { drag.current = { x: e.clientX, y: e.clientY }; (e.target as Element).setPointerCapture?.(e.pointerId); };
+  const onDown = (e: React.PointerEvent) => { setAnim(false); drag.current = { x: e.clientX, y: e.clientY }; (e.target as Element).setPointerCapture?.(e.pointerId); };
   const onMove = (e: React.PointerEvent) => {
     const r = svgRef.current!.getBoundingClientRect();
     if (drag.current) {
@@ -70,7 +74,8 @@ export function IndonesiaMap({ nodes, onPick }: { nodes: Node[]; onPick?: (nodeI
     if (lon > 93 && lon < 143 && lat > -12 && lat < 8) setCoord({ lon, lat }); else setCoord(null);
   };
   const onUp = () => { drag.current = null; };
-  const reset = () => setView({ k: 1, tx: 0, ty: 0 });
+  const zoomBtn = (mult: number) => { setAnim(true); setView((v) => ({ ...v, k: clamp(v.k * mult, 1, 7) })); };
+  const reset = () => { setAnim(true); setView({ k: 1, tx: 0, ty: 0 }); };
 
   const threats = plotted.filter((n) => n.tier === 1 && n.max_risk >= 50);
   const arc = (a: { x: number; y: number }, b: { x: number; y: number }) => {
@@ -98,8 +103,8 @@ export function IndonesiaMap({ nodes, onPick }: { nodes: Node[]; onPick?: (nodeI
           {coord && <span className="hud-coord">{Math.abs(coord.lat).toFixed(2)}°{coord.lat >= 0 ? "N" : "S"} {coord.lon.toFixed(2)}°E</span>}
         </div>
         <div className="map-ctrls">
-          <button onClick={() => setView((v) => ({ ...v, k: clamp(v.k * 1.3, 1, 7) }))} title="Perbesar">+</button>
-          <button onClick={() => setView((v) => ({ ...v, k: clamp(v.k / 1.3, 1, 7) }))} title="Perkecil">−</button>
+          <button onClick={() => zoomBtn(1.6)} title="Perbesar">+</button>
+          <button onClick={() => zoomBtn(1 / 1.6)} title="Perkecil">−</button>
           <button onClick={reset} title="Reset tampilan">⌖</button>
         </div>
 
@@ -120,8 +125,8 @@ export function IndonesiaMap({ nodes, onPick }: { nodes: Node[]; onPick?: (nodeI
           <g style={{
             transform: `translate(${view.tx}px, ${view.ty}px) scale(${view.k})`,
             transformBox: "view-box", transformOrigin: "0 0",
-            // smooth glide while zooming; instant while dragging so pan stays 1:1
-            transition: drag.current ? "none" : "transform .17s cubic-bezier(.22,.61,.36,1)",
+            // discrete (+/−/reset) zoom glides; pinch & drag update instantly (1:1)
+            transition: anim ? "transform .28s cubic-bezier(.22,.61,.36,1)" : "none",
             willChange: "transform",
           }}>
             {/* graticule */}
@@ -159,7 +164,10 @@ export function IndonesiaMap({ nodes, onPick }: { nodes: Node[]; onPick?: (nodeI
             {[...plotted].sort((a, b) => a.tier - b.tier).map((n) => {
               const p = pos(n.node_id)!; const risk = n.max_risk; const c = riskColor(risk);
               const isHub = n.tier === 0; const rad = (isHub ? 6.5 : 4.5) * inv;
-              const hot = risk >= 70; const showLabel = isHub || risk >= 50 || view.k > 2.4;
+              const hot = risk >= 70;
+              // progressive labels (Google-Maps style): HQ + threats always,
+              // then reveal more as you zoom in, all names past ~1.9x.
+              const showLabel = isHub || risk >= 50 || (view.k > 1.45 && risk >= 25) || view.k > 1.9;
               return (
                 <g key={n.node_id} className="map-node" transform={`translate(${p.x} ${p.y})`}
                   onPointerDown={(e) => e.stopPropagation()}
@@ -168,13 +176,12 @@ export function IndonesiaMap({ nodes, onPick }: { nodes: Node[]; onPick?: (nodeI
                   style={{ cursor: "pointer" }}>
                   {hot && <circle className="ping" r={rad} style={{ stroke: c, strokeWidth: 1.4 * inv }} />}
                   {risk >= 50 && <circle className="halo" r={rad + 5 * inv} style={{ fill: c }} />}
-                  <circle r={rad} style={{ fill: isHub ? "var(--brand)" : c, stroke: "#05070b", strokeWidth: 1.4 * inv }} />
+                  <circle r={rad} style={{ fill: isHub ? "var(--brand)" : c, stroke: "#081423", strokeWidth: 1.4 * inv }} />
                   {isHub && <circle r={rad + 3 * inv} fill="none" stroke="var(--brand)" strokeWidth={inv} opacity="0.6" />}
-                  {showLabel && (
-                    <text className="map-label" x={(rad + 6 * inv)} y={3.5 * inv} style={{ fontSize: `${11 * inv}px`, strokeWidth: 3 * inv }}>
-                      {isHub ? "PUSSIBERAD" : n.name.replace(/^Kodam\s*/i, "").replace(/\s*\/.*$/, "")}
-                    </text>
-                  )}
+                  <text className="map-label" x={(rad + 6 * inv)} y={3.5 * inv}
+                    style={{ fontSize: `${11 * inv}px`, strokeWidth: 3 * inv, opacity: showLabel ? 1 : 0, pointerEvents: "none" }}>
+                    {isHub ? "PUSSIBERAD" : n.name.replace(/^Kodam\s*/i, "").replace(/\s*\/.*$/, "")}
+                  </text>
                 </g>
               );
             })}
