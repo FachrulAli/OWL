@@ -111,12 +111,16 @@
   background: radial-gradient(circle, rgba(61,155,255,0.22), transparent 66%); filter: blur(34px);
 }
 .helm-photo {
-  position: relative; z-index: 1; width: min(520px, 92vw); overflow: hidden; isolation: isolate;
-  /* feather the rectangular photo edges so it emerges from the dark page, not a card */
-  -webkit-mask-image: radial-gradient(130% 120% at 58% 42%, #000 50%, transparent 100%);
-  mask-image: radial-gradient(130% 120% at 58% 42%, #000 50%, transparent 100%);
+  position: relative; z-index: 1; width: min(540px, 94vw); isolation: isolate;
+  /* dissolve the photo into the page: an oval keeps only the helmet, and each
+     edge fades to transparent well before the image border — no visible box */
+  --m: radial-gradient(ellipse 66% 74% at 55% 46%, #000 34%, rgba(0,0,0,0.45) 60%, transparent 80%),
+       linear-gradient(90deg, transparent 0%, #000 16%, #000 84%, transparent 100%),
+       linear-gradient(180deg, transparent 0%, #000 12%, #000 86%, transparent 100%);
+  -webkit-mask-image: var(--m); mask-image: var(--m);
+  -webkit-mask-composite: source-in; mask-composite: intersect;
 }
-.helm-photo img { display: block; width: 100%; height: auto; -webkit-user-drag: none; user-select: none; filter: saturate(1.06) contrast(1.03); }
+.helm-photo img { display: block; width: 100%; height: auto; -webkit-user-drag: none; user-select: none; filter: saturate(1.06) contrast(1.02); }
 .helm-photo .hp-fx { position: absolute; inset: 0; pointer-events: none; }
 
 .hp-lens {
