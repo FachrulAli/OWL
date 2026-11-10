@@ -46,6 +46,13 @@ function getInitialLang(): Lang {
   return "en"; // visitors default to English
 }
 
+const RAIL = [
+  { id: "gap", ix: "01", k: "approach" as const },
+  { id: "eyes", ix: "02", k: "capabilities" as const },
+  { id: "arch", ix: "03", k: "architecture" as const },
+  { id: "standar", ix: "04", k: "standards" as const },
+];
+
 export default function Landing({ onEnter, onStructure }: { onEnter: () => void; onStructure: () => void }) {
   const [lang, setLang] = useState<Lang>(getInitialLang);
   const [fading, setFading] = useState(false);
@@ -60,12 +67,24 @@ export default function Landing({ onEnter, onStructure }: { onEnter: () => void;
   };
   const { stats, entities, nodes, cases, epsHist } = useLiveNumbers();
   const [scrolled, setScrolled] = useState(false);
+  const [active, setActive] = useState("");
   const navRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // highlight the rail item for whichever section is centred in view
+  useEffect(() => {
+    const els = RAIL.map((r) => document.getElementById(r.id)).filter(Boolean) as HTMLElement[];
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => { if (e.isIntersecting) setActive(e.target.id); }),
+      { threshold: 0.5 }
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
   }, []);
 
   useEffect(() => {
@@ -81,17 +100,10 @@ export default function Landing({ onEnter, onStructure }: { onEnter: () => void;
       onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 24)}>
       {/* ── nav ── */}
       <div ref={navRef} className={`lp-nav ${scrolled ? "scrolled" : ""}`}>
-        <div className="wm" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+        <div className="wm" onClick={(e) => (e.currentTarget.closest(".lp") as HTMLElement)?.scrollTo({ top: 0, behavior: "smooth" })}>
           <div className="eye-sm" />
           <h1>TRINETRA</h1>
         </div>
-        <nav className="links">
-          <a href="#gap">{t.nav.approach}</a>
-          <a href="#eyes">{t.nav.capabilities}</a>
-          <a href="#arch">{t.nav.architecture}</a>
-          <a href="#standar">{t.nav.standards}</a>
-          <a onClick={onStructure} style={{ cursor: "pointer" }}>{lang === "en" ? "Army structure" : "Struktur TNI AD"}</a>
-        </nav>
         <span className="spacer" />
         <div className="lang-toggle" role="group" aria-label="Language">
           <button className={lang === "en" ? "on" : ""} onClick={() => changeLang("en")}>EN</button>
@@ -99,6 +111,23 @@ export default function Landing({ onEnter, onStructure }: { onEnter: () => void;
         </div>
         <a className="lp-cta-btn" onClick={onEnter}>{t.nav.openConsole}</a>
       </div>
+
+      {/* ── side rail: section navigator (moved from the top bar) ── */}
+      <nav className="lp-rail" aria-label="Sections">
+        {RAIL.map((r) => (
+          <a key={r.id} href={`#${r.id}`} className={active === r.id ? "on" : ""}
+            onClick={() => setActive(r.id)}>
+            <span className="lbl">{t.nav[r.k]}</span>
+            <span className="ix">{r.ix}</span>
+            <span className="tick" />
+          </a>
+        ))}
+        <a className="rt" href="#struktur" onClick={(e) => { e.preventDefault(); onStructure(); }}>
+          <span className="lbl">{lang === "en" ? "Army structure" : "Struktur TNI AD"}</span>
+          <span className="ix">↗</span>
+          <span className="tick" />
+        </a>
+      </nav>
 
       {/* ── hero ── */}
       <header className="lp-hero">
