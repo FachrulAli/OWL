@@ -376,29 +376,45 @@
 
 @media (max-width: 560px) { .st-cyber { flex-direction: column; gap: 14px; } }
 
-/* ── side rail: vertical section navigator (HUD scanner style) ── */
+/* ── bottom-right wheel navigator ── */
 .lp-rail {
-  position: fixed; z-index: 55; right: clamp(16px, 2.2vw, 34px); top: 50%; transform: translateY(-50%);
-  display: flex; flex-direction: column; gap: 2px; align-items: flex-end;
+  position: fixed; z-index: 55; right: clamp(22px, 2.6vw, 48px); bottom: clamp(20px, 3.4vh, 44px);
+  display: flex; flex-direction: column; gap: 6px; align-items: flex-end;
+}
+/* soft corner scrim (not a box) so labels stay legible over any slide */
+.lp-rail::before {
+  content: ""; position: absolute; right: -46px; bottom: -46px; width: 380px; height: 320px; z-index: -1;
+  pointer-events: none; background: radial-gradient(62% 62% at 82% 82%, rgba(6,14,26,0.62), transparent 72%);
+}
+/* decorative 3/4 wheel at the corner, slowly turning */
+.lp-wheel {
+  position: absolute; right: -104px; bottom: -104px; width: 320px; height: 320px; border-radius: 50%;
+  pointer-events: none; opacity: 0.55; animation: nmSpin 16s linear infinite;
+  background: conic-gradient(from 140deg, var(--brand) 0deg, rgba(61,155,255,0.06) 248deg, transparent 270deg 360deg);
+  -webkit-mask: radial-gradient(transparent 60%, #000 61%, #000 69%, transparent 70%);
+  mask: radial-gradient(transparent 60%, #000 61%, #000 69%, transparent 70%);
 }
 .lp-rail a {
   position: relative; display: flex; align-items: center; justify-content: flex-end; gap: 11px;
-  height: 32px; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  height: 30px; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: transform .35s cubic-bezier(.2,.7,.2,1);
 }
 .lp-rail .lbl {
   white-space: nowrap; font-size: 10.5px; text-transform: uppercase; letter-spacing: 1.2px;
-  font-weight: 500; color: var(--faint); transition: color .25s ease, transform .3s cubic-bezier(.2,.7,.2,1);
+  font-weight: 500; color: var(--faint); transform-origin: right center; display: inline-block;
+  transition: color .25s ease, transform .35s cubic-bezier(.2,.7,.2,1);
 }
 .lp-rail .ix { font-family: var(--font-mono); font-size: 10px; letter-spacing: .5px; color: var(--faint); width: 16px; text-align: right; transition: color .25s ease; }
-.lp-rail .tick { width: 20px; height: 2px; border-radius: 2px; background: rgba(255,255,255,0.18); transition: width .3s cubic-bezier(.2,.7,.2,1), background .25s ease, box-shadow .25s ease; }
-.lp-rail a:hover .lbl { color: var(--muted); transform: translateX(-3px); }
+.lp-rail .tick { width: 20px; height: 2px; border-radius: 2px; background: rgba(255,255,255,0.20); transition: width .3s cubic-bezier(.2,.7,.2,1), background .25s ease, box-shadow .25s ease; }
+.lp-rail a:hover .lbl { color: var(--muted); transform: scale(1.07); }
 .lp-rail a:hover .ix { color: var(--brand); }
 .lp-rail a:hover .tick { width: 34px; background: var(--brand); }
-.lp-rail a.on .lbl { color: var(--text); }
+.lp-rail a.on .lbl { color: var(--text); transform: scale(1.18); }
 .lp-rail a.on .ix { color: var(--brand); }
-.lp-rail a.on .tick { width: 40px; background: var(--brand); box-shadow: 0 0 10px var(--brand); }
+.lp-rail a.on .tick { width: 42px; background: var(--brand); box-shadow: 0 0 10px var(--brand); }
 .lp-rail a.rt .lbl { color: var(--gold-soft); }
 .lp-rail a.rt .ix { color: var(--gold); }
 .lp-rail a.rt:hover .tick { background: var(--gold); }
 @media (max-width: 1160px) { .lp-rail .lbl { display: none; } }
-@media (max-width: 920px) { .lp-rail { display: none; } }
+@media (max-width: 920px) { .lp-rail, .lp-wheel { display: none; } }
+@media (prefers-reduced-motion: reduce) { .lp-wheel { animation: none; } }

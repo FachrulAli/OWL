@@ -50,7 +50,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 96px; }
 
 /* page-level fade when switching between landing and console */
 @keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
-.app, .lp { animation: pageIn .4s ease; }
+.app, .lp, .st { animation: pageIn .45s ease; }
 
 body {
   background: var(--bg);
@@ -537,3 +537,44 @@ td b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .nm-foot { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--faint); text-align: center; }
 .nm-foot kbd { font-family: var(--font-mono); font-size: 10.5px; border: 1px solid var(--border-2); border-radius: 4px; padding: 1px 5px; color: var(--muted); }
 .map-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+/* ============================================================
+   Boot preloader + route transition
+   ============================================================ */
+.preloader {
+  position: fixed; inset: 0; z-index: 90; display: grid; place-items: center;
+  background: radial-gradient(1200px 720px at 50% 36%, #0c1b30, #060f1c 72%);
+  animation: plFade 4.2s ease forwards;
+}
+@keyframes plFade { 0%, 86% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+.pl-core { display: flex; flex-direction: column; align-items: center; gap: 18px; animation: plUp .8s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes plUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.pl-eye { position: relative; width: 94px; height: 94px; display: grid; place-items: center; }
+.pl-ring { position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid rgba(61,155,255,0.30); border-top-color: var(--brand); animation: plSpin 3s linear infinite; }
+.pl-ring2 { inset: 13px; border-style: dashed; border-color: rgba(61,155,255,0.22); border-top-color: transparent; animation: plSpin 6s linear infinite reverse; }
+.pl-scan { position: absolute; inset: 0; border-radius: 50%; animation: plSpin 2.2s linear infinite;
+  background: conic-gradient(from 0deg, transparent 0 290deg, rgba(61,155,255,0.35) 360deg);
+  -webkit-mask: radial-gradient(transparent 45%, #000 46%); mask: radial-gradient(transparent 45%, #000 46%); }
+.pl-pupil { width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 50% 38%, #eef6ff, var(--brand) 58%, #06233f); box-shadow: 0 0 20px var(--brand); animation: plPulse 1.6s ease-in-out infinite; }
+@keyframes plSpin { to { transform: rotate(360deg); } }
+@keyframes plPulse { 0%,100% { transform: scale(.82); opacity: .85; } 50% { transform: scale(1.12); opacity: 1; } }
+.pl-word { font-family: var(--font-serif); font-size: 27px; letter-spacing: 10px; color: var(--text); padding-left: 10px; animation: plTrack 1s ease both; }
+@keyframes plTrack { from { letter-spacing: 2px; opacity: 0; } to { letter-spacing: 10px; opacity: 1; } }
+.pl-sub { font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; min-height: 14px; }
+.pl-bar { width: 230px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+.pl-bar > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--brand), #9cc3ff); box-shadow: 0 0 10px var(--brand); animation: plBar 3.8s cubic-bezier(.4,0,.2,1) forwards; }
+@keyframes plBar { 0% { width: 0; } 100% { width: 100%; } }
+.pl-tag { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2.4px; color: var(--faint); text-transform: uppercase; margin-top: 2px; }
+
+/* route change: a translucent azure band sweeps across the viewport */
+.route-wipe { position: fixed; inset: 0; z-index: 70; pointer-events: none; transform: translateX(-120%);
+  background: linear-gradient(100deg, transparent 0%, rgba(61,155,255,0.10) 42%, rgba(10,22,38,0.92) 50%, rgba(61,155,255,0.10) 58%, transparent 100%);
+  animation: routeWipe .8s cubic-bezier(.76,0,.24,1) both; }
+@keyframes routeWipe { 0% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .preloader { animation: plFade 1.2s ease forwards; }
+  .pl-ring, .pl-ring2, .pl-scan, .pl-pupil { animation: none; }
+  .pl-bar > i { animation: plBar 1s linear forwards; }
+  .route-wipe { display: none; }
+}
