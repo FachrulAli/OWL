@@ -112,25 +112,20 @@ export default function Landing({ onEnter, onStructure }: { onEnter: () => void;
         <a className="lp-cta-btn" onClick={onEnter}>{t.nav.openConsole}</a>
       </div>
 
-      {/* ── bottom-right wheel navigator (moved from the top bar) ── */}
+      {/* ── bottom-right section navigator (moved from the top bar) ── */}
       <nav className="lp-rail" aria-label="Sections">
-        <span className="lp-wheel" aria-hidden="true" />
         {[
           ...RAIL.map((r) => ({ id: r.id, ix: r.ix, label: t.nav[r.k], route: false })),
           { id: "struktur", ix: "↗", label: lang === "en" ? "Army structure" : "Struktur TNI AD", route: true },
-        ].map((it, j, arr) => {
-          const bow = Math.sin((j / (arr.length - 1)) * Math.PI) * 30;
-          return (
-            <a key={it.id} href={it.route ? "#struktur" : `#${it.id}`}
-              className={`${it.route ? "rt " : ""}${active === it.id ? "on" : ""}`.trim()}
-              style={{ transform: `translateX(${-bow}px)` }}
-              onClick={it.route ? (e) => { e.preventDefault(); onStructure(); } : () => setActive(it.id)}>
-              <span className="lbl">{it.label}</span>
-              <span className="ix">{it.ix}</span>
-              <span className="tick" />
-            </a>
-          );
-        })}
+        ].map((it) => (
+          <a key={it.id} href={it.route ? "#struktur" : `#${it.id}`}
+            className={`${it.route ? "rt " : ""}${active === it.id ? "on" : ""}`.trim()}
+            onClick={it.route ? (e) => { e.preventDefault(); onStructure(); } : () => setActive(it.id)}>
+            <span className="lbl">{it.label}</span>
+            <span className="ix">{it.ix}</span>
+            <span className="tick" />
+          </a>
+        ))}
       </nav>
 
       {/* ── hero ── */}
