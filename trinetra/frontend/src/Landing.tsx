@@ -112,6 +112,9 @@ export default function Landing({ onEnter, onStructure }: { onEnter: () => void;
         <a className="lp-cta-btn" onClick={onEnter}>{t.nav.openConsole}</a>
       </div>
 
+      {/* scroll progress (scroll-driven where supported) */}
+      <span className="lp-progress" aria-hidden="true" />
+
       {/* ── bottom-right section navigator (moved from the top bar) ── */}
       <nav className="lp-rail" aria-label="Sections">
         {[
