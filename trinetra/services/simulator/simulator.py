@@ -38,10 +38,10 @@ NOISE_ANOMALY_RATE = float(os.getenv("NOISE_ANOMALY_RATE", "0.004"))
 
 # entity_id -> preferred scenario (story-driven); these are the insiders.
 INSIDERS = {
-    "usr-admin-02":    "data_exfiltration",   # admin pusat membocorkan data besar
-    "usr-analyst-b1":  "lateral_movement",    # analis bergerak lateral tak wajar
-    "usr-personel-a1": "usb_exfiltration",    # personel menyalin ke USB
-    "usr-op-c1":       "config_tampering",    # operator mematikan audit
+    "usr-admin-02":  "data_exfiltration",   # admin pusat membocorkan data besar
+    "usr-kodam-5":   "lateral_movement",    # analis Kodam V/Brawijaya (Surabaya)
+    "usr-kodam-14":  "config_tampering",    # operator Kodam XIV/Hasanuddin (Makassar)
+    "usr-kodam-17":  "usb_exfiltration",    # personel Kodam XVII/Cenderawasih (Papua)
 }
 
 

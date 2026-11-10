@@ -99,21 +99,33 @@ INSERT INTO roles (role, label, risk_level, base_weight) VALUES
     ('auditor',        'Auditor / Inspektor', 'medium', 1.0)
 ON CONFLICT DO NOTHING;
 
--- Orchestration tree: 1 pusat, 3 kodam, 5 satuan
+-- National orchestration tree: Pusat (Mabes TNI AD/Pussiberad) + 21 Kodam
+-- (15 lama + 6 baru XIX-XXIV per Agustus 2025), each at its real HQ city.
 INSERT INTO nodes (node_id, name, tier, parent_id) VALUES
-    ('pusat',   'Satsiber TNI AD / Pussiberad (Kartika CSIRT)', 0, NULL)
+    ('pusat', 'Mabes TNI AD / Pussiberad', 0, NULL)
 ON CONFLICT DO NOTHING;
 INSERT INTO nodes (node_id, name, tier, parent_id) VALUES
-    ('kodam-a', 'Kodam III / Siliwangi', 1, 'pusat'),
-    ('kodam-b', 'Kodam V / Brawijaya', 1, 'pusat'),
-    ('kodam-c', 'Kodam XIV / Hasanuddin', 1, 'pusat')
-ON CONFLICT DO NOTHING;
-INSERT INTO nodes (node_id, name, tier, parent_id) VALUES
-    ('satuan-a1', 'Satuan Bekasi', 2, 'kodam-a'),
-    ('satuan-a2', 'Satuan Cirebon', 2, 'kodam-a'),
-    ('satuan-b1', 'Satuan Semarang', 2, 'kodam-b'),
-    ('satuan-c1', 'Satuan Gowa', 2, 'kodam-c'),
-    ('satuan-c2', 'Satuan Mamuju', 2, 'kodam-c')
+    ('kodam-jaya', 'Kodam Jaya / Jayakarta', 1, 'pusat'),
+    ('kodam-im', 'Kodam Iskandar Muda', 1, 'pusat'),
+    ('kodam-1', 'Kodam I / Bukit Barisan', 1, 'pusat'),
+    ('kodam-2', 'Kodam II / Sriwijaya', 1, 'pusat'),
+    ('kodam-3', 'Kodam III / Siliwangi', 1, 'pusat'),
+    ('kodam-4', 'Kodam IV / Diponegoro', 1, 'pusat'),
+    ('kodam-5', 'Kodam V / Brawijaya', 1, 'pusat'),
+    ('kodam-6', 'Kodam VI / Mulawarman', 1, 'pusat'),
+    ('kodam-9', 'Kodam IX / Udayana', 1, 'pusat'),
+    ('kodam-12', 'Kodam XII / Tanjungpura', 1, 'pusat'),
+    ('kodam-13', 'Kodam XIII / Merdeka', 1, 'pusat'),
+    ('kodam-14', 'Kodam XIV / Hasanuddin', 1, 'pusat'),
+    ('kodam-16', 'Kodam XVI / Pattimura', 1, 'pusat'),
+    ('kodam-17', 'Kodam XVII / Cenderawasih', 1, 'pusat'),
+    ('kodam-18', 'Kodam XVIII / Kasuari', 1, 'pusat'),
+    ('kodam-19', 'Kodam XIX / Tuanku Tambusai', 1, 'pusat'),
+    ('kodam-20', 'Kodam XX / Tuanku Imam Bonjol', 1, 'pusat'),
+    ('kodam-21', 'Kodam XXI / Radin Inten', 1, 'pusat'),
+    ('kodam-22', 'Kodam XXII / Tambun Bungai', 1, 'pusat'),
+    ('kodam-23', 'Kodam XXIII / Palaka Wira', 1, 'pusat'),
+    ('kodam-24', 'Kodam XXIV / Mandala Trikora', 1, 'pusat')
 ON CONFLICT DO NOTHING;
 
 -- Role baseline thresholds (§11.2)
@@ -133,23 +145,30 @@ ON CONFLICT DO NOTHING;
 
 -- Entities (one+ per role across nodes)
 INSERT INTO entities (entity_id, display_name, role, node_id) VALUES
-    ('usr-admin-01',  'Admin Pusat 01',       'admin_satsiber', 'pusat'),
-    ('usr-admin-02',  'Admin Pusat 02',       'admin_satsiber', 'pusat'),
-    ('usr-analyst-a1','Analis Kodam A 01',     'csirt_analyst',  'kodam-a'),
-    ('usr-analyst-a2','Analis Kodam A 02',     'csirt_analyst',  'kodam-a'),
-    ('usr-analyst-b1','Analis Kodam B 01',     'csirt_analyst',  'kodam-b'),
-    ('usr-lead-a',    'Komandan CSIRT Kodam A','team_lead',      'kodam-a'),
-    ('usr-lead-c',    'Komandan CSIRT Kodam C','team_lead',      'kodam-c'),
-    ('usr-op-a1',     'Operator Satuan A1',    'operator',       'satuan-a1'),
-    ('usr-op-b1',     'Operator Satuan B1',    'operator',       'satuan-b1'),
-    ('usr-op-c1',     'Operator Satuan C1',    'operator',       'satuan-c1'),
-    ('usr-cust-a1',   'Custodian Satuan A1',   'data_custodian', 'satuan-a1'),
-    ('usr-cust-c2',   'Custodian Satuan C2',   'data_custodian', 'satuan-c2'),
-    ('usr-personel-a1','Personel Satuan A1',   'personel',       'satuan-a1'),
-    ('usr-personel-a2','Personel Satuan A2',   'personel',       'satuan-a2'),
-    ('usr-personel-b1','Personel Satuan B1',   'personel',       'satuan-b1'),
-    ('usr-personel-c1','Personel Satuan C1',   'personel',       'satuan-c1'),
-    ('usr-auditor-01','Auditor Pusat',         'auditor',        'pusat')
+    ('usr-admin-01', 'Admin Pusat 01', 'admin_satsiber', 'pusat'),
+    ('usr-admin-02', 'Admin Pusat 02', 'admin_satsiber', 'pusat'),
+    ('usr-auditor-01', 'Auditor Pusat', 'auditor', 'pusat'),
+    ('usr-kodam-jaya', 'Operator Jakarta', 'operator', 'kodam-jaya'),
+    ('usr-kodam-im', 'Analis CSIRT Banda Aceh', 'csirt_analyst', 'kodam-im'),
+    ('usr-kodam-1', 'Personel Medan', 'personel', 'kodam-1'),
+    ('usr-kodam-2', 'Custodian Palembang', 'data_custodian', 'kodam-2'),
+    ('usr-kodam-3', 'Komandan Bandung', 'team_lead', 'kodam-3'),
+    ('usr-kodam-4', 'Operator Semarang', 'operator', 'kodam-4'),
+    ('usr-kodam-5', 'Analis CSIRT Surabaya', 'csirt_analyst', 'kodam-5'),
+    ('usr-kodam-6', 'Personel Balikpapan', 'personel', 'kodam-6'),
+    ('usr-kodam-9', 'Custodian Denpasar', 'data_custodian', 'kodam-9'),
+    ('usr-kodam-12', 'Komandan Pontianak', 'team_lead', 'kodam-12'),
+    ('usr-kodam-13', 'Operator Manado', 'operator', 'kodam-13'),
+    ('usr-kodam-14', 'Operator Makassar', 'operator', 'kodam-14'),
+    ('usr-kodam-16', 'Personel Ambon', 'personel', 'kodam-16'),
+    ('usr-kodam-17', 'Personel Jayapura', 'personel', 'kodam-17'),
+    ('usr-kodam-18', 'Komandan Manokwari', 'team_lead', 'kodam-18'),
+    ('usr-kodam-19', 'Operator Pekanbaru', 'operator', 'kodam-19'),
+    ('usr-kodam-20', 'Analis CSIRT Padang', 'csirt_analyst', 'kodam-20'),
+    ('usr-kodam-21', 'Personel Bandar Lampung', 'personel', 'kodam-21'),
+    ('usr-kodam-22', 'Custodian Palangka Raya', 'data_custodian', 'kodam-22'),
+    ('usr-kodam-23', 'Komandan Palu', 'team_lead', 'kodam-23'),
+    ('usr-kodam-24', 'Operator Merauke', 'operator', 'kodam-24')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO entity_risk (entity_id, risk_score)
