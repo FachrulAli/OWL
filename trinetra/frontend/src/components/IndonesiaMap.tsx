@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Node } from "../lib/api";
 import { riskColor } from "../lib/util";
 import { VB, PROJ, projX, projY, PROVINCES, LAND_PATH, NODE_GEO } from "./indonesiaGeo";
@@ -14,6 +14,28 @@ export function IndonesiaMap({ nodes, onPick }: { nodes: Node[]; onPick?: (nodeI
   const [coord, setCoord] = useState<{ lon: number; lat: number } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const drag = useRef<{ x: number; y: number } | null>(null);
+  const viewRef = useRef(view);
+  viewRef.current = view;
+
+  // Zoom only on a pinch gesture (trackpad pinch / ctrl+wheel sends ctrlKey);
+  // a normal two-finger scroll is left alone so the page scrolls as usual.
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return; // normal scroll -> let the page handle it
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      const px = ((e.clientX - r.left) / r.width) * VB.w;
+      const py = ((e.clientY - r.top) / r.height) * VB.h;
+      const v = viewRef.current;
+      const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+      const k = clamp(v.k * factor, 1, 7);
+      setView({ k, tx: px - (px - v.tx) * (k / v.k), ty: py - (py - v.ty) * (k / v.k) });
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
 
   const graticule = useMemo(() => {
     const lon: number[] = [], lat: number[] = [];
@@ -30,16 +52,6 @@ export function IndonesiaMap({ nodes, onPick }: { nodes: Node[]; onPick?: (nodeI
   const toVB = (e: { clientX: number; clientY: number }) => {
     const r = svgRef.current!.getBoundingClientRect();
     return { x: ((e.clientX - r.left) / r.width) * VB.w, y: ((e.clientY - r.top) / r.height) * VB.h };
-  };
-  const onWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const p = toVB(e);
-    const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-    const k = clamp(view.k * factor, 1, 7);
-    // keep cursor-anchored
-    const tx = p.x - (p.x - view.tx) * (k / view.k);
-    const ty = p.y - (p.y - view.ty) * (k / view.k);
-    setView({ k, tx, ty });
   };
   const onDown = (e: React.PointerEvent) => { drag.current = { x: e.clientX, y: e.clientY }; (e.target as Element).setPointerCapture?.(e.pointerId); };
   const onMove = (e: React.PointerEvent) => {
@@ -79,13 +91,13 @@ export function IndonesiaMap({ nodes, onPick }: { nodes: Node[]; onPick?: (nodeI
           {coord && <span className="hud-coord">{Math.abs(coord.lat).toFixed(2)}°{coord.lat >= 0 ? "N" : "S"} {coord.lon.toFixed(2)}°E</span>}
         </div>
         <div className="map-ctrls">
-          <button onClick={() => setView((v) => ({ ...v, k: clamp(v.k * 1.3, 1, 7) }))}>+</button>
-          <button onClick={() => setView((v) => ({ ...v, k: clamp(v.k / 1.3, 1, 7) }))}>−</button>
-          <button onClick={reset} title="Reset">⌖</button>
+          <button onClick={() => setView((v) => ({ ...v, k: clamp(v.k * 1.3, 1, 7) }))} title="Perbesar">+</button>
+          <button onClick={() => setView((v) => ({ ...v, k: clamp(v.k / 1.3, 1, 7) }))} title="Perkecil">−</button>
+          <button onClick={reset} title="Reset tampilan">⌖</button>
         </div>
 
         <svg ref={svgRef} viewBox={`0 0 ${VB.w} ${VB.h}`} className="id-map"
-          onWheel={onWheel} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={() => { onUp(); setCoord(null); }}
+          onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={() => { onUp(); setCoord(null); }}
           style={{ cursor: drag.current ? "grabbing" : "grab" }} role="img" aria-label="Peta sebaran Kodam TNI AD">
           <defs>
             <radialGradient id="mapGlow" cx="50%" cy="42%" r="72%">

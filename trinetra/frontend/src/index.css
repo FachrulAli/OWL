@@ -282,7 +282,7 @@ td b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .map-panel { overflow: hidden; }
 .map-wrap { position: relative; margin: 0 -4px; }
 .id-map { width: 100%; height: auto; display: block; }
-.id-map { touch-action: none; }
+.id-map { touch-action: pan-y; }
 .province { fill: rgba(53,208,186,0.045); stroke: rgba(53,208,186,0.28); stroke-width: 0.5; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .graticule line { stroke: rgba(255,255,255,0.05); stroke-width: 0.5; vector-effect: non-scaling-stroke; }
 .base-link { stroke: rgba(216,185,130,0.22); fill: none; }
