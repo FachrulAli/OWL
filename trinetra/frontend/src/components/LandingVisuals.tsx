@@ -19,7 +19,7 @@ export function RadarEye() {
           <stop offset="100%" stopColor="var(--brand)" stopOpacity="0" />
         </radialGradient>
         <radialGradient id="irisGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#eafff9" />
+          <stop offset="0%" stopColor="#eef6ff" />
           <stop offset="35%" stopColor="var(--brand)" />
           <stop offset="100%" stopColor="#052018" />
         </radialGradient>
@@ -40,7 +40,7 @@ export function RadarEye() {
       {/* the eye */}
       <circle cx="160" cy="160" r="22" fill="url(#irisGrad)" className="radar-iris" />
       <circle cx="160" cy="160" r="7" fill="#03120d" />
-      <circle cx="153" cy="153" r="3" fill="#eafff9" opacity="0.8" />
+      <circle cx="153" cy="153" r="3" fill="#eef6ff" opacity="0.8" />
     </svg>
   );
 }

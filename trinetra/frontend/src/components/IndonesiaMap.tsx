@@ -108,16 +108,22 @@ export function IndonesiaMap({ nodes, onPick }: { nodes: Node[]; onPick?: (nodeI
           style={{ cursor: drag.current ? "grabbing" : "grab" }} role="img" aria-label="Peta sebaran Kodam TNI AD">
           <defs>
             <radialGradient id="mapGlow" cx="50%" cy="42%" r="72%">
-              <stop offset="0%" stopColor="rgba(53,208,186,0.08)" /><stop offset="100%" stopColor="transparent" />
+              <stop offset="0%" stopColor="rgba(61,155,255,0.08)" /><stop offset="100%" stopColor="transparent" />
             </radialGradient>
             <clipPath id="idLand"><path d={LAND_PATH} /></clipPath>
             <linearGradient id="sweepG" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="transparent" /><stop offset="100%" stopColor="rgba(53,208,186,0.14)" />
+              <stop offset="0%" stopColor="transparent" /><stop offset="100%" stopColor="rgba(61,155,255,0.14)" />
             </linearGradient>
           </defs>
           <rect x="0" y="0" width={VB.w} height={VB.h} fill="url(#mapGlow)" />
 
-          <g transform={`translate(${view.tx} ${view.ty}) scale(${view.k})`}>
+          <g style={{
+            transform: `translate(${view.tx}px, ${view.ty}px) scale(${view.k})`,
+            transformBox: "view-box", transformOrigin: "0 0",
+            // smooth glide while zooming; instant while dragging so pan stays 1:1
+            transition: drag.current ? "none" : "transform .17s cubic-bezier(.22,.61,.36,1)",
+            willChange: "transform",
+          }}>
             {/* graticule */}
             <g className="graticule">
               {graticule.lon.map((l) => <line key={"x" + l} x1={projX(l)} y1={projY(6)} x2={projX(l)} y2={projY(-11)} />)}

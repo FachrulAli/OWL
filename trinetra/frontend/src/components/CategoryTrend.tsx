@@ -16,7 +16,7 @@ export function CategoryTrend({ rows }: { rows: any[] }) {
     ...b,
     t: new Date(b.bucket).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
   }));
-  const colors = ["#ff4d57", "#f0883c", "#e3b23a", "#1fe08f", "#4f8cff", "#a779ff", "#2fb36a", "#35d0ba"];
+  const colors = ["#ff4d57", "#f0883c", "#e3b23a", "#1fe08f", "#4f8cff", "#a779ff", "#2fb36a", "#38bdf8"];
   const catList = Array.from(cats);
 
   return (
