@@ -1,15 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { api, Stats, Entity, Node, Case, Correlation, HeatCell } from "./lib/api";
+import { api, Stats, Entity, Node, Case } from "./lib/api";
 import { useLive } from "./lib/useLive";
 import { riskColor, CAT_LABEL, fmtTime } from "./lib/util";
 import { NODE_GEO } from "./components/indonesiaGeo";
 import { StatBar } from "./components/StatBar";
-import { Orchestration } from "./components/Orchestration";
-import { Heatmap } from "./components/Heatmap";
 import { EntityTable } from "./components/EntityTable";
-import { CategoryTrend } from "./components/CategoryTrend";
 import { Cases } from "./components/Cases";
-import { Correlations } from "./components/Correlations";
 import { EntityDrawer } from "./components/EntityDrawer";
 import { IndonesiaMap } from "./components/IndonesiaMap";
 import { MODE } from "./lib/demo";
@@ -23,9 +19,6 @@ export default function Console({ onExit }: { onExit: () => void }) {
   const [entities, setEntities] = useState<Entity[]>([]);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [cases, setCases] = useState<Case[]>([]);
-  const [corr, setCorr] = useState<Correlation[]>([]);
-  const [heat, setHeat] = useState<HeatCell[]>([]);
-  const [trend, setTrend] = useState<any[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [tier, setTier] = useState<TierFilter>("all");
 
@@ -34,9 +27,6 @@ export default function Console({ onExit }: { onExit: () => void }) {
     api.entities().then(setEntities).catch(() => {});
     api.nodes().then(setNodes).catch(() => {});
     api.cases().then(setCases).catch(() => {});
-    api.correlations().then(setCorr).catch(() => {});
-    api.heatmap().then(setHeat).catch(() => {});
-    api.categoryTimeline().then(setTrend).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -198,21 +188,13 @@ export default function Console({ onExit }: { onExit: () => void }) {
         </div>
       </div>
 
-      {/* ───────── deep-dive analytics ───────── */}
-      <div className="grid cols">
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div className="anim-up" style={{ animationDelay: ".04s" }}><Orchestration nodes={nodes} /></div>
-          <div className="anim-up" style={{ animationDelay: ".10s" }}><EntityTable entities={entities} onSelect={setSelected} /></div>
-          <div className="anim-up" style={{ animationDelay: ".16s" }}><Cases cases={cases} onSelect={setSelected} onChange={refresh} /></div>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div className="anim-right" style={{ animationDelay: ".10s" }}><Correlations items={corr} /></div>
-          <div className="anim-right" style={{ animationDelay: ".16s" }}><Heatmap cells={heat} /></div>
-          <div className="anim-right" style={{ animationDelay: ".22s" }}><CategoryTrend rows={trend} /></div>
-        </div>
+      {/* ───────── satu slide investigasi di bawah cockpit ───────── */}
+      <div className="grid cols" style={{ paddingTop: 4 }}>
+        <div className="anim-up"><EntityTable entities={entities} onSelect={setSelected} /></div>
+        <div className="anim-up" style={{ animationDelay: ".08s" }}><Cases cases={cases} onSelect={setSelected} onChange={refresh} /></div>
       </div>
 
-      <div style={{ textAlign: "center", padding: "10px 0 24px", color: "var(--faint)", fontSize: 11, fontFamily: "var(--font-mono)" }}>
+      <div style={{ textAlign: "center", padding: "6px 0 22px", color: "var(--faint)", fontSize: 11, fontFamily: "var(--font-mono)" }}>
         TRINETRA v2.0 · Kartika Cyber Hackathon 2026
       </div>
 
