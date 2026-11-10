@@ -11,6 +11,12 @@ import { KODAM_BY_ID, PUSSIBERAD } from "../data/tniad";
 const STATUS = (r: number) =>
   r >= 70 ? "KRITIS" : r >= 50 ? "WASPADA" : r >= 30 ? "PANTAU" : "AMAN";
 
+// Ground-level HQ building photos, by node_id. Drop a file in public/hq/<id>.jpg
+// and map it here; nodes without a photo fall back to the aerial banner.
+const HQ_PHOTO: Record<string, string> = {
+  pusat: "/hq/pusat.png",
+};
+
 // Aerial banner of the HQ location: a mosaic of Esri World Imagery tiles
 // centred on the node's coordinates. Self-hosted tiles aren't needed — these
 // are standard web-map tiles; attribution is shown. Falls back cleanly if the
@@ -95,7 +101,9 @@ export function NodeModal({
         <button className="nm-close" onClick={onClose} aria-label="Tutup">×</button>
 
         <div className="nm-head-wrap" style={{ ["--c" as any]: c }}>
-          {geo && <HqBanner lon={geo.lon} lat={geo.lat} />}
+          {HQ_PHOTO[node.node_id]
+            ? <div className="nm-banner"><img className="nm-photo" src={HQ_PHOTO[node.node_id]} alt="" draggable={false} /></div>
+            : geo && <HqBanner lon={geo.lon} lat={geo.lat} />}
           <div className="nm-head">
           <span className="nm-glyph" aria-hidden="true" />
           <div className="nm-id">
