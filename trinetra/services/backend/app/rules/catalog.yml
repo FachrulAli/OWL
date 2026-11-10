@@ -1,0 +1,98 @@
+# TRINETRA rule catalog — Sigma-inspired detection-as-code (§10.3 FR-08).
+# Each rule maps deterministic conditions on normalized events to an anomaly
+# category + severity weight. Conditions are ANDed; a field condition is
+# {field, op, value} where op in: eq, ne, gt, gte, lt, lte, in, contains, regex.
+# `value: $baseline:<param>:<attr>` resolves against the entity role baseline.
+
+- id: TRN-001
+  title: Large data egress
+  category: data_exfiltration
+  severity: 40
+  mitre: [T1567, T1048]
+  when:
+    - { field: egress_mb, op: gte, value: "$baseline:egress_mb:static_crit" }
+
+- id: TRN-002
+  title: Egress to external/foreign destination
+  category: data_exfiltration
+  severity: 25
+  mitre: [T1567]
+  when:
+    - { field: dest_class, op: in, value: ["foreign", "cloud_personal", "removable"] }
+    - { field: egress_mb, op: gte, value: 100 }
+
+- id: TRN-003
+  title: Suspicious command / tool execution
+  category: suspicious_process
+  severity: 45
+  mitre: [T1059, T1003]
+  when:
+    - { field: command, op: regex, value: "(?i)(mimikatz|rm -rf /|dd if=/dev/zero|nc -e|ncat --exec|certutil -urlcache|powershell -enc|wmic process call create|psexec|bloodhound)" }
+
+- id: TRN-004
+  title: Mass file access
+  category: mass_file_access
+  severity: 35
+  mitre: [T1119, T1005]
+  when:
+    - { field: files_accessed, op: gte, value: "$baseline:files_accessed:static_crit" }
+
+- id: TRN-005
+  title: Lateral movement — many endpoints touched
+  category: lateral_movement
+  severity: 35
+  mitre: [T1021, T1570]
+  when:
+    - { field: endpoints_touched, op: gte, value: 40 }
+
+- id: TRN-006
+  title: Off-hours interactive logon
+  category: logon_anomaly
+  severity: 20
+  mitre: [T1078]
+  when:
+    - { field: category, op: eq, value: logon }
+    - { field: off_hours, op: eq, value: 1 }
+
+- id: TRN-007
+  title: Logon from foreign / untrusted geo
+  category: logon_anomaly
+  severity: 35
+  mitre: [T1078, T1133]
+  when:
+    - { field: src_geo, op: in, value: ["CN", "RU", "NL-VPN", "SG-VPN", "US-CLOUD"] }
+    - { field: category, op: eq, value: logon }
+
+- id: TRN-008
+  title: Privilege escalation / change
+  category: privilege_abuse
+  severity: 40
+  mitre: [T1548, T1098]
+  when:
+    - { field: privilege_change, op: eq, value: 1 }
+
+- id: TRN-009
+  title: USB / removable media write
+  category: usb_exfiltration
+  severity: 35
+  mitre: [T1052, T1025]
+  when:
+    - { field: usb_event, op: eq, value: 1 }
+
+- id: TRN-010
+  title: Config tampering outside maintenance
+  category: config_tampering
+  severity: 35
+  mitre: [T1562, T1070]
+  when:
+    - { field: config_change, op: eq, value: 1 }
+    - { field: off_hours, op: eq, value: 1 }
+
+- id: TRN-011
+  title: USB usage by role that forbids it
+  category: usb_exfiltration
+  severity: 30
+  mitre: [T1052]
+  when:
+    - { field: usb_event, op: eq, value: 1 }
+    - { field: role, op: in, value: ["personel", "operator"] }

@@ -1,0 +1,19 @@
+# dependencies / builds
+node_modules/
+dist/
+.vite/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# env / secrets
+.env
+.env.*
+!.env.example
+deploy/k8s/secrets.yaml
+
+# os / editor
+.DS_Store
+*.log
+.vercel/

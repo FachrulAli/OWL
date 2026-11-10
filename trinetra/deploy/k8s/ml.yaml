@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trinetra-ml
+  labels: { app: trinetra-ml }
+spec:
+  replicas: 1          # stateful online baselines; scale with shared model store
+  selector:
+    matchLabels: { app: trinetra-ml }
+  template:
+    metadata:
+      labels: { app: trinetra-ml }
+    spec:
+      containers:
+        - name: ml
+          image: REGISTRY/trinetra-ml:latest
+          ports: [{ containerPort: 8001 }]
+          envFrom:
+            - secretRef: { name: trinetra-infra }
+          readinessProbe:
+            httpGet: { path: /health, port: 8001 }
+            initialDelaySeconds: 10
+          resources:
+            requests: { cpu: "250m", memory: "512Mi" }
+            limits: { cpu: "1", memory: "1Gi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trinetra-ml
+spec:
+  selector: { app: trinetra-ml }
+  ports:
+    - { port: 8001, targetPort: 8001 }
