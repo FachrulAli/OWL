@@ -67,7 +67,12 @@ export default function Console({ onExit }: { onExit: () => void }) {
       </div>
 
       <div className="grid" style={{ paddingBottom: 0 }}>
-        <div className="anim-scale" style={{ animationDelay: ".06s" }}><IndonesiaMap nodes={nodes} /></div>
+        <div className="anim-scale" style={{ animationDelay: ".06s" }}>
+          <IndonesiaMap nodes={nodes} onPick={(nid) => {
+            const top = entities.filter((e) => e.node_id === nid).sort((a, b) => b.risk_score - a.risk_score)[0];
+            if (top) setSelected(top.entity_id);
+          }} />
+        </div>
       </div>
 
       <div className="grid cols">
