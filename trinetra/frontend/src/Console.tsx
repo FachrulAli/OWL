@@ -10,6 +10,8 @@ import { CategoryTrend } from "./components/CategoryTrend";
 import { Cases } from "./components/Cases";
 import { Correlations } from "./components/Correlations";
 import { EntityDrawer } from "./components/EntityDrawer";
+import { IndonesiaMap } from "./components/IndonesiaMap";
+import { MODE } from "./lib/demo";
 
 // Tier-0 command console. Reached from the landing page via #/console.
 export default function Console({ onExit }: { onExit: () => void }) {
@@ -52,7 +54,7 @@ export default function Console({ onExit }: { onExit: () => void }) {
         <div style={{ display: "flex", alignItems: "center", gap: 7, marginLeft: 18 }}>
           <span className={`status-dot ${connected ? "on" : "off"}`} />
           <span className="muted" style={{ fontSize: 12, fontFamily: "var(--font-mono)" }}>
-            {connected ? "STREAM AKTIF" : "menyambung ulang…"}
+            {connected ? (MODE.demo ? "DEMO LANGSUNG" : "STREAM AKTIF") : "menyambung ulang…"}
           </span>
         </div>
         <div className="tagline">
@@ -61,24 +63,28 @@ export default function Console({ onExit }: { onExit: () => void }) {
       </div>
 
       <div className="grid" style={{ paddingBottom: 0 }}>
-        <StatBar stats={stats} />
+        <div className="anim-up"><StatBar stats={stats} /></div>
+      </div>
+
+      <div className="grid" style={{ paddingBottom: 0 }}>
+        <div className="anim-scale" style={{ animationDelay: ".06s" }}><IndonesiaMap nodes={nodes} /></div>
       </div>
 
       <div className="grid cols">
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <Orchestration nodes={nodes} />
-          <EntityTable entities={entities} onSelect={setSelected} />
-          <Cases cases={cases} onSelect={setSelected} onChange={refresh} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="anim-up" style={{ animationDelay: ".12s" }}><Orchestration nodes={nodes} /></div>
+          <div className="anim-up" style={{ animationDelay: ".18s" }}><EntityTable entities={entities} onSelect={setSelected} /></div>
+          <div className="anim-up" style={{ animationDelay: ".24s" }}><Cases cases={cases} onSelect={setSelected} onChange={refresh} /></div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <LiveFeed feed={feed} onSelect={setSelected} />
-          <Correlations items={corr} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="anim-right" style={{ animationDelay: ".16s" }}><LiveFeed feed={feed} onSelect={setSelected} /></div>
+          <div className="anim-right" style={{ animationDelay: ".22s" }}><Correlations items={corr} /></div>
         </div>
       </div>
 
       <div className="grid cols">
-        <Heatmap cells={heat} />
-        <CategoryTrend rows={trend} />
+        <div className="anim-left"><Heatmap cells={heat} /></div>
+        <div className="anim-left" style={{ animationDelay: ".08s" }}><CategoryTrend rows={trend} /></div>
       </div>
 
       <div style={{ textAlign: "center", padding: "10px 0 24px", color: "var(--faint)", fontSize: 11, fontFamily: "var(--font-mono)" }}>

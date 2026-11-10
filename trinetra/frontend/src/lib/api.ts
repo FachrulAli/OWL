@@ -7,9 +7,31 @@ export const API_BASE =
 export const WS_URL = `ws://${host}:8000/ws`;
 
 async function get<T>(path: string): Promise<T> {
-  const r = await fetch(`${API_BASE}${path}`);
-  if (!r.ok) throw new Error(`${path} -> ${r.status}`);
-  return r.json();
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), 3500);
+  try {
+    const r = await fetch(`${API_BASE}${path}`, { signal: ctrl.signal });
+    if (!r.ok) throw new Error(`${path} -> ${r.status}`);
+    return await r.json();
+  } finally {
+    clearTimeout(to);
+  }
+}
+
+// Route a call to the real backend, falling back to the in-browser demo engine
+// the first time the backend proves unreachable (e.g. hosted with no backend).
+type Eng = typeof import("./demo")["engine"];
+async function route<T>(path: string, demoFn: (e: Eng) => T): Promise<T> {
+  const { MODE, engine } = await import("./demo");
+  if (MODE.demo) return demoFn(engine);
+  try {
+    const v = await get<T>(path);
+    MODE.decided = true;
+    return v;
+  } catch {
+    MODE.demo = true; MODE.decided = true;
+    return demoFn(engine);
+  }
 }
 
 export interface Entity {
@@ -36,21 +58,27 @@ export interface Stats {
 export interface HeatCell { node_id: string; role: string; risk: number; }
 
 export const api = {
-  stats: () => get<Stats>("/stats"),
-  entities: () => get<Entity[]>("/entities"),
-  entity: (id: string) => get<any>(`/entities/${id}`),
-  cases: () => get<Case[]>("/cases"),
-  nodes: () => get<Node[]>("/nodes"),
-  correlations: () => get<Correlation[]>("/correlations"),
-  heatmap: () => get<HeatCell[]>("/heatmap"),
-  categoryTimeline: () => get<any[]>("/categories/timeline?hours=6"),
-  rules: () => get<any[]>("/rules"),
+  stats: () => route<Stats>("/stats", (e) => e.stats()),
+  entities: () => route<Entity[]>("/entities", (e) => e.entities()),
+  entity: (id: string) => route<any>(`/entities/${id}`, (e) => e.entity(id)),
+  cases: () => route<Case[]>("/cases", (e) => e.casesList()),
+  nodes: () => route<Node[]>("/nodes", (e) => e.nodes()),
+  correlations: () => route<Correlation[]>("/correlations", (e) => e.correlations()),
+  heatmap: () => route<HeatCell[]>("/heatmap", (e) => e.heatmap()),
+  categoryTimeline: () => route<any[]>("/categories/timeline?hours=6", (e) => e.categoryTimeline()),
+  rules: () => route<any[]>("/rules", () => []),
   verdict: async (caseId: number, verdict: string) => {
-    const r = await fetch(`${API_BASE}/cases/${caseId}/verdict`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ verdict }),
-    });
-    return r.json();
+    const { MODE, engine } = await import("./demo");
+    if (MODE.demo) return engine.setVerdict(caseId, verdict);
+    try {
+      const r = await fetch(`${API_BASE}/cases/${caseId}/verdict`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ verdict }),
+      });
+      return await r.json();
+    } catch {
+      MODE.demo = true;
+      return engine.setVerdict(caseId, verdict);
+    }
   },
 };

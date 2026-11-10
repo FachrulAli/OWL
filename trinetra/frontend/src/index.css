@@ -266,3 +266,36 @@ td b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* ============================================================
+   Console — entrance animations + Indonesia command map
+   ============================================================ */
+@keyframes animUp    { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@keyframes animLeft  { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+@keyframes animRight { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes animScale { from { opacity: 0; transform: scale(.975); } to { opacity: 1; transform: none; } }
+.anim-up    { animation: animUp    .6s cubic-bezier(.2,.7,.2,1) both; }
+.anim-left  { animation: animLeft  .6s cubic-bezier(.2,.7,.2,1) both; }
+.anim-right { animation: animRight .6s cubic-bezier(.2,.7,.2,1) both; }
+.anim-scale { animation: animScale .6s cubic-bezier(.2,.7,.2,1) both; }
+
+.map-panel { overflow: hidden; }
+.map-wrap { position: relative; margin: 0 -4px; }
+.id-map { width: 100%; height: auto; display: block; }
+.map-dots circle { fill: #1c3a39; opacity: .5; }
+.map-link { fill: none; stroke-width: 1.2; stroke-dasharray: 3 7; animation: mapFlow 1.5s linear infinite; }
+@keyframes mapFlow { to { stroke-dashoffset: -20; } }
+.map-link.to-kodam { stroke: rgba(216,185,130,.5); }
+.map-link.to-satuan { stroke: rgba(53,208,186,.32); }
+.map-node .map-label { fill: var(--text); font-size: 11px; font-family: var(--font-sans); font-weight: 500; paint-order: stroke; stroke: #05070b; stroke-width: 3px; }
+.map-node .halo { opacity: .16; }
+.map-node .ping { fill: none; stroke-width: 1.5; animation: mapPing 1.9s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes mapPing { 0% { transform: scale(1); opacity: .7; } 100% { transform: scale(3.6); opacity: 0; } }
+.map-tip { position: absolute; top: 10px; left: 10px; background: rgba(10,16,24,.93); border: 1px solid var(--border-2); border-radius: 8px; padding: 10px 13px; font-size: 12px; pointer-events: none; backdrop-filter: blur(6px); min-width: 180px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+.map-tip .mt-name { font-weight: 600; margin-bottom: 5px; }
+.map-tip .mt-row { display: flex; justify-content: space-between; gap: 12px; }
+.map-tip .mt-row b { font-family: var(--font-mono); }
+.map-tip .mt-meta { color: var(--muted); margin-top: 3px; font-size: 11px; }
+.map-legend { position: absolute; bottom: 8px; right: 12px; display: flex; gap: 14px; font-size: 10.5px; color: var(--muted); }
+.map-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.map-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
