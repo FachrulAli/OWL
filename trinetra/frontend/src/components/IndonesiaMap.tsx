@@ -85,6 +85,13 @@ export function IndonesiaMap({ nodes, onPick }: { nodes: Node[]; onPick?: (nodeI
     <div className="panel map-panel">
       <h2>Peta Komando — 21 Kodam TNI AD</h2>
       <div className="map-wrap">
+        <div className="map-frame" aria-hidden="true">
+          <span className="scan" />
+          <span className="xh xh-h" />
+          <span className="xh xh-v" />
+          <span className="tick tl" /><span className="tick tr" />
+          <span className="tick bl" /><span className="tick br" />
+        </div>
         <div className="map-hud">
           <span className="hud-dot" /> LIVE · {plotted.length} NODE ·
           <b style={{ color: "var(--critical)" }}> {threats.length} ANCAMAN</b>

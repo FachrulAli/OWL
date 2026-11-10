@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, Stats, Entity, Node, Case, Correlation, HeatCell } from "./lib/api";
 import { useLive } from "./lib/useLive";
+import { riskColor, CAT_LABEL, fmtTime } from "./lib/util";
+import { NODE_GEO } from "./components/indonesiaGeo";
 import { StatBar } from "./components/StatBar";
 import { Orchestration } from "./components/Orchestration";
 import { Heatmap } from "./components/Heatmap";
 import { EntityTable } from "./components/EntityTable";
-import { LiveFeed } from "./components/LiveFeed";
 import { CategoryTrend } from "./components/CategoryTrend";
 import { Cases } from "./components/Cases";
 import { Correlations } from "./components/Correlations";
@@ -13,7 +14,9 @@ import { EntityDrawer } from "./components/EntityDrawer";
 import { IndonesiaMap } from "./components/IndonesiaMap";
 import { MODE } from "./lib/demo";
 
-// Tier-0 command console. Reached from the landing page via #/console.
+type TierFilter = "all" | "pusat" | "kodam";
+
+// Tier-0 command console — cockpit layout (map centerpiece flanked by HUD rails).
 export default function Console({ onExit }: { onExit: () => void }) {
   const { feed, connected } = useLive();
   const [stats, setStats] = useState<Stats | null>(null);
@@ -24,6 +27,7 @@ export default function Console({ onExit }: { onExit: () => void }) {
   const [heat, setHeat] = useState<HeatCell[]>([]);
   const [trend, setTrend] = useState<any[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [tier, setTier] = useState<TierFilter>("all");
 
   const refresh = useCallback(() => {
     api.stats().then(setStats).catch(() => {});
@@ -40,6 +44,31 @@ export default function Console({ onExit }: { onExit: () => void }) {
     const t = setInterval(refresh, 3000);
     return () => clearInterval(t);
   }, [refresh]);
+
+  const pickTopEntity = useCallback((nid: string) => {
+    const top = entities.filter((e) => e.node_id === nid).sort((a, b) => b.risk_score - a.risk_score)[0];
+    if (top) setSelected(top.entity_id);
+  }, [entities]);
+
+  // left-rail roster: hub first, then nodes by descending risk, filtered by tier
+  const roster = useMemo(() => {
+    const plotted = nodes.filter((n) => NODE_GEO[n.node_id]);
+    const filtered = plotted.filter((n) =>
+      tier === "all" ? true : tier === "pusat" ? n.tier === 0 : n.tier === 1);
+    return filtered.sort((a, b) =>
+      (a.tier - b.tier) || (b.max_risk - a.max_risk));
+  }, [nodes, tier]);
+
+  // right-rail intel summary
+  const intel = useMemo(() => {
+    const total = entities.length;
+    const high = entities.filter((e) => e.risk_score >= 70).length;
+    const top = entities.reduce((m, e) => Math.max(m, e.risk_score), 0);
+    const critNodes = nodes.filter((n) => n.max_risk >= 70).length;
+    return { total, high, top, critNodes, cases: cases.length };
+  }, [entities, nodes, cases]);
+
+  const feedItems = feed.filter((m) => m.kind === "event" || m.kind === "case" || m.kind === "correlation").slice(0, 40);
 
   return (
     <div className="app">
@@ -62,34 +91,125 @@ export default function Console({ onExit }: { onExit: () => void }) {
         </div>
       </div>
 
-      <div className="grid" style={{ paddingBottom: 0 }}>
-        <div className="anim-up"><StatBar stats={stats} /></div>
-      </div>
+      {/* ───────── command-center cockpit ───────── */}
+      <div className="cc">
+        <div className="cc-grid">
+          {/* LEFT — command roster */}
+          <aside className="cc-rail anim-left" aria-label="Sebaran komando">
+            <div className="cc-h">Sebaran Komando <span>{roster.length} NODE</span></div>
+            <div className="cc-seg" role="group" aria-label="Saring tier">
+              <button aria-pressed={tier === "all"} onClick={() => setTier("all")}>Semua</button>
+              <button aria-pressed={tier === "pusat"} onClick={() => setTier("pusat")}>Pusat</button>
+              <button aria-pressed={tier === "kodam"} onClick={() => setTier("kodam")}>Kodam</button>
+            </div>
+            <div className="cc-roster cc-scroll">
+              {roster.map((n) => {
+                const isHub = n.tier === 0;
+                const c = riskColor(n.max_risk);
+                const label = isHub ? "Pussiberad" : n.name.replace(/^Kodam\s*/i, "");
+                return (
+                  <button
+                    key={n.node_id}
+                    className={`cc-node${isHub ? " is-hub" : ""}`}
+                    style={{ ["--c" as any]: c }}
+                    onClick={() => pickTopEntity(n.node_id)}
+                    title={`${n.name} — buka entitas berisiko tertinggi`}>
+                    <span className="nm">{label}</span>
+                    <span className="rk">{n.max_risk.toFixed(0)}</span>
+                    <span className="cy">{NODE_GEO[n.node_id]?.city ?? "—"} · {n.high_count}/{n.total} tinggi</span>
+                    <span className="cc-bar"><i style={{ ["--c" as any]: c, transform: `scaleX(${Math.max(0.03, n.max_risk / 100)})` }} /></span>
+                  </button>
+                );
+              })}
+              {roster.length === 0 && <div className="cc-note">Memuat node…</div>}
+            </div>
+          </aside>
 
-      <div className="grid" style={{ paddingBottom: 0 }}>
-        <div className="anim-scale" style={{ animationDelay: ".06s" }}>
-          <IndonesiaMap nodes={nodes} onPick={(nid) => {
-            const top = entities.filter((e) => e.node_id === nid).sort((a, b) => b.risk_score - a.risk_score)[0];
-            if (top) setSelected(top.entity_id);
-          }} />
+          {/* CENTER — map scope + telemetry strip */}
+          <section className="cc-center">
+            <div className="cc-map anim-scale" style={{ animationDelay: ".06s" }}>
+              <IndonesiaMap nodes={nodes} onPick={pickTopEntity} />
+            </div>
+            <div className="anim-up" style={{ animationDelay: ".12s" }}><StatBar stats={stats} /></div>
+          </section>
+
+          {/* RIGHT — intel summary + live feed */}
+          <aside className="cc-rail anim-right" aria-label="Ringkasan intel">
+            <div className="cc-h">Ringkasan Intel</div>
+            <div className="cc-metric">
+              <span className="lb">Entitas terpantau</span>
+              <span className="v accent">{intel.total}</span>
+              <span className="cc-bar"><i style={{ transform: "scaleX(1)" }} /></span>
+            </div>
+            <div className="cc-metric">
+              <span className="lb">Berisiko tinggi (≥70)</span>
+              <span className="v danger">{intel.high}</span>
+              <span className="cc-bar"><i style={{ ["--c" as any]: "var(--critical)", transform: `scaleX(${Math.max(0.02, intel.high / Math.max(1, intel.total))})` }} /></span>
+            </div>
+            <div className="cc-metric">
+              <span className="lb">Kasus aktif</span>
+              <span className="v">{intel.cases}</span>
+              <span className="cc-bar"><i style={{ ["--c" as any]: "var(--high)", transform: `scaleX(${Math.max(0.02, Math.min(1, intel.cases / 12))})` }} /></span>
+            </div>
+            <div className="cc-metric">
+              <span className="lb">Skor tertinggi · node kritis</span>
+              <span className="v" style={{ color: riskColor(intel.top) }}>{intel.top.toFixed(0)}<small style={{ color: "var(--faint)", fontSize: 13, fontFamily: "var(--font-mono)" }}> ·{intel.critNodes}</small></span>
+              <span className="cc-bar"><i style={{ ["--c" as any]: riskColor(intel.top), transform: `scaleX(${Math.max(0.02, intel.top / 100)})` }} /></span>
+            </div>
+
+            <div className="cc-div" />
+            <div className="cc-h">Aliran Langsung <span className="cc-note">realtime</span></div>
+            <div className="cc-feed">
+              {feedItems.map((m, i) => {
+                if (m.kind === "correlation") {
+                  const d = m.data;
+                  return (
+                    <div key={i} className="feed-item" style={{ borderLeftColor: "#b06cff", background: "rgba(176,108,255,0.08)" }}>
+                      <div className="line1">
+                        <span className="ent" style={{ color: "#c79bff" }}>⟐ KORELASI LINTAS NODE</span>
+                        <span style={{ color: "#c79bff", fontWeight: 700 }}>{Number(d.score).toFixed(0)}</span>
+                      </div>
+                      <div className="cats">{d.summary}</div>
+                    </div>
+                  );
+                }
+                const d = m.data;
+                const risk = d.entity_risk ?? d.risk_score ?? 0;
+                const cats: string[] = d.categories ?? [];
+                const isCase = m.kind === "case";
+                return (
+                  <div key={i} className="feed-item" style={{ borderLeftColor: riskColor(risk), cursor: "pointer" }} onClick={() => setSelected(d.entity_id)}>
+                    <div className="line1">
+                      <span className="ent">{isCase && <span style={{ color: riskColor(risk) }}>● </span>}{d.display_name ?? d.entity_id}</span>
+                      <span style={{ color: riskColor(risk), fontWeight: 700 }}>{Number(risk).toFixed(0)}</span>
+                    </div>
+                    <div className="cats">
+                      {d.node_id} · {isCase ? "CASE" : d.category}
+                      {d.ml_anomaly ? ` · UEBA ${Number(d.ml_anomaly).toFixed(2)}` : ""}
+                      {d.ts ? ` · ${fmtTime(d.ts)}` : ""}
+                    </div>
+                    <div>{cats.map((c) => <span className="cat-chip" key={c}>{CAT_LABEL[c] ?? c}</span>)}</div>
+                  </div>
+                );
+              })}
+              {feedItems.length === 0 && <div className="cc-note">Menunggu event…</div>}
+            </div>
+          </aside>
         </div>
       </div>
 
+      {/* ───────── deep-dive analytics ───────── */}
       <div className="grid cols">
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div className="anim-up" style={{ animationDelay: ".12s" }}><Orchestration nodes={nodes} /></div>
-          <div className="anim-up" style={{ animationDelay: ".18s" }}><EntityTable entities={entities} onSelect={setSelected} /></div>
-          <div className="anim-up" style={{ animationDelay: ".24s" }}><Cases cases={cases} onSelect={setSelected} onChange={refresh} /></div>
+          <div className="anim-up" style={{ animationDelay: ".04s" }}><Orchestration nodes={nodes} /></div>
+          <div className="anim-up" style={{ animationDelay: ".10s" }}><EntityTable entities={entities} onSelect={setSelected} /></div>
+          <div className="anim-up" style={{ animationDelay: ".16s" }}><Cases cases={cases} onSelect={setSelected} onChange={refresh} /></div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div className="anim-right" style={{ animationDelay: ".16s" }}><LiveFeed feed={feed} onSelect={setSelected} /></div>
-          <div className="anim-right" style={{ animationDelay: ".22s" }}><Correlations items={corr} /></div>
+          <div className="anim-right" style={{ animationDelay: ".10s" }}><Correlations items={corr} /></div>
+          <div className="anim-right" style={{ animationDelay: ".16s" }}><Heatmap cells={heat} /></div>
+          <div className="anim-right" style={{ animationDelay: ".22s" }}><CategoryTrend rows={trend} /></div>
         </div>
-      </div>
-
-      <div className="grid cols">
-        <div className="anim-left"><Heatmap cells={heat} /></div>
-        <div className="anim-left" style={{ animationDelay: ".08s" }}><CategoryTrend rows={trend} /></div>
       </div>
 
       <div style={{ textAlign: "center", padding: "10px 0 24px", color: "var(--faint)", fontSize: 11, fontFamily: "var(--font-mono)" }}>
