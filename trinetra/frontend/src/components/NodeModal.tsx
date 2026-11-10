@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Node, Entity, Case } from "../lib/api";
 import { LiveMsg } from "../lib/useLive";
 import { riskColor, sevClass, sevFromRisk, ROLE_LABEL, CAT_LABEL, fmtTime } from "../lib/util";
@@ -11,8 +11,9 @@ import { KODAM_BY_ID, PUSSIBERAD } from "../data/tniad";
 const STATUS = (r: number) =>
   r >= 70 ? "KRITIS" : r >= 50 ? "WASPADA" : r >= 30 ? "PANTAU" : "AMAN";
 
-// Ground-level HQ building photos, by node_id. Drop a file in public/hq/<id>.jpg
-// and map it here; nodes without a photo fall back to the aerial banner.
+// Ground-level HQ building photos. Explicit overrides here; otherwise the
+// header auto-tries /hq/<node_id>.jpg — so adding a photo is just dropping a
+// file in public/hq/ named by node_id, no code change. Missing → aerial banner.
 const HQ_PHOTO: Record<string, string> = {
   pusat: "/hq/pusat.png",
 };
@@ -64,6 +65,9 @@ export function NodeModal({
 
   const geo = NODE_GEO[node.node_id];
   const ref = KODAM_BY_ID[node.node_id];
+  const photoSrc = HQ_PHOTO[node.node_id] ?? `/hq/${node.node_id}.jpg`;
+  const [photoOk, setPhotoOk] = useState(true);
+  useEffect(() => { setPhotoOk(true); }, [node.node_id]);
   const isHub = node.tier === 0;
   const c = riskColor(node.max_risk);
   const status = STATUS(node.max_risk);
@@ -101,8 +105,8 @@ export function NodeModal({
         <button className="nm-close" onClick={onClose} aria-label="Tutup">×</button>
 
         <div className="nm-head-wrap" style={{ ["--c" as any]: c }}>
-          {HQ_PHOTO[node.node_id]
-            ? <div className="nm-banner"><img className="nm-photo" src={HQ_PHOTO[node.node_id]} alt="" draggable={false} /></div>
+          {photoOk
+            ? <div className="nm-banner"><img className="nm-photo" src={photoSrc} alt="" draggable={false} onError={() => setPhotoOk(false)} /></div>
             : geo && <HqBanner lon={geo.lon} lat={geo.lat} />}
           <div className="nm-head">
           <span className="nm-glyph" aria-hidden="true" />
