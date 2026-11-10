@@ -282,7 +282,9 @@ td b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .map-panel { overflow: hidden; }
 .map-wrap { position: relative; margin: 0 -4px; }
 .id-map { width: 100%; height: auto; display: block; }
-.map-dots circle { fill: #1c3a39; opacity: .5; }
+.id-land { fill: rgba(53,208,186,0.05); stroke: none; }
+.id-coast { fill: none; stroke: rgba(53,208,186,0.4); stroke-width: 1; stroke-linejoin: round; filter: drop-shadow(0 0 6px rgba(53,208,186,0.25)); }
+.map-dots circle { fill: #2d6b64; opacity: .7; }
 .map-link { fill: none; stroke-width: 1.2; stroke-dasharray: 3 7; animation: mapFlow 1.5s linear infinite; }
 @keyframes mapFlow { to { stroke-dashoffset: -20; } }
 .map-link.to-kodam { stroke: rgba(216,185,130,.5); }
