@@ -77,7 +77,8 @@ export default function Landing({ onEnter, onStructure }: { onEnter: () => void;
   const num = (v: number) => (v || v === 0 ? v : "—");
 
   return (
-    <div className="lp" style={{ transition: "opacity .22s ease", opacity: fading ? 0.25 : 1 }}>
+    <div className="lp" style={{ transition: "opacity .22s ease", opacity: fading ? 0.25 : 1 }}
+      onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 24)}>
       {/* ── nav ── */}
       <div ref={navRef} className={`lp-nav ${scrolled ? "scrolled" : ""}`}>
         <div className="wm" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
@@ -237,7 +238,8 @@ export default function Landing({ onEnter, onStructure }: { onEnter: () => void;
         </div>
       </section>
 
-      {/* ── cta band ── */}
+      {/* ── cta band + footer (final slide) ── */}
+      <div className="lp-end">
       <section className="lp-cta-band">
         <span className="eyebrow" style={{ justifyContent: "center" }}>{t.cta.eyebrow}</span>
         <h3>{t.cta.h}</h3>
@@ -255,6 +257,7 @@ export default function Landing({ onEnter, onStructure }: { onEnter: () => void;
         <div className="meta">{t.footer.meta1}</div>
         <div className="meta">{t.footer.meta2}</div>
       </footer>
+      </div>
     </div>
   );
 }
