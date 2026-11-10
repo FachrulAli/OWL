@@ -7,6 +7,7 @@ import { StatBar } from "./components/StatBar";
 import { EntityTable } from "./components/EntityTable";
 import { Cases } from "./components/Cases";
 import { EntityDrawer } from "./components/EntityDrawer";
+import { NodeModal } from "./components/NodeModal";
 import { IndonesiaMap } from "./components/IndonesiaMap";
 import { MODE } from "./lib/demo";
 
@@ -20,6 +21,7 @@ export default function Console({ onExit }: { onExit: () => void }) {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [cases, setCases] = useState<Case[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [nodeSel, setNodeSel] = useState<string | null>(null);
   const [tier, setTier] = useState<TierFilter>("all");
 
   const refresh = useCallback(() => {
@@ -35,10 +37,8 @@ export default function Console({ onExit }: { onExit: () => void }) {
     return () => clearInterval(t);
   }, [refresh]);
 
-  const pickTopEntity = useCallback((nid: string) => {
-    const top = entities.filter((e) => e.node_id === nid).sort((a, b) => b.risk_score - a.risk_score)[0];
-    if (top) setSelected(top.entity_id);
-  }, [entities]);
+  // clicking a node (map or roster) opens its command card popup
+  const openNode = useCallback((nid: string) => setNodeSel(nid), []);
 
   // left-rail roster: hub first, then nodes by descending risk, filtered by tier
   const roster = useMemo(() => {
@@ -102,8 +102,8 @@ export default function Console({ onExit }: { onExit: () => void }) {
                     key={n.node_id}
                     className={`cc-node${isHub ? " is-hub" : ""}`}
                     style={{ ["--c" as any]: c }}
-                    onClick={() => pickTopEntity(n.node_id)}
-                    title={`${n.name} — buka entitas berisiko tertinggi`}>
+                    onClick={() => openNode(n.node_id)}
+                    title={`${n.name} — buka kartu komando`}>
                     <span className="nm">{label}</span>
                     <span className="rk">{n.max_risk.toFixed(0)}</span>
                     <span className="cy">{NODE_GEO[n.node_id]?.city ?? "—"} · {n.high_count}/{n.total} tinggi</span>
@@ -118,7 +118,7 @@ export default function Console({ onExit }: { onExit: () => void }) {
           {/* CENTER — map scope + telemetry strip */}
           <section className="cc-center">
             <div className="cc-map anim-scale" style={{ animationDelay: ".06s" }}>
-              <IndonesiaMap nodes={nodes} onPick={pickTopEntity} />
+              <IndonesiaMap nodes={nodes} onPick={openNode} />
             </div>
             <div className="anim-up" style={{ animationDelay: ".12s" }}><StatBar stats={stats} /></div>
           </section>
@@ -198,6 +198,16 @@ export default function Console({ onExit }: { onExit: () => void }) {
         TRINETRA v2.0 · Kartika Cyber Hackathon 2026
       </div>
 
+      {nodeSel && nodes.find((n) => n.node_id === nodeSel) && (
+        <NodeModal
+          node={nodes.find((n) => n.node_id === nodeSel)!}
+          entities={entities}
+          cases={cases}
+          feed={feed}
+          onClose={() => setNodeSel(null)}
+          onSelectEntity={(id) => { setNodeSel(null); setSelected(id); }}
+        />
+      )}
       {selected && <EntityDrawer entityId={selected} onClose={() => setSelected(null)} />}
     </div>
   );

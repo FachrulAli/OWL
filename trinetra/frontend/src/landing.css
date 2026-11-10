@@ -220,3 +220,108 @@
   .reveal { opacity: 1; transform: none; transition: none; }
   .radar-sweep, .radar-blip, .radar-iris, .flow-line { animation: none !important; }
 }
+
+/* ============================================================
+   Structure page — TNI AD organisation reference
+   ============================================================ */
+.st {
+  position: relative; z-index: 1; min-height: 100vh; padding-bottom: 60px;
+  font-family: var(--font-sans);
+  --text: #ece9e2; --muted: #9b9c96; --faint: #6e6f68; --glass-br: rgba(255,255,255,0.09);
+  color: var(--text);
+  background:
+    radial-gradient(1100px 520px at 72% -8%, rgba(53,208,186,0.06), transparent 60%),
+    radial-gradient(900px 500px at 10% 4%, rgba(216,185,130,0.05), transparent 55%);
+}
+.st-hero { max-width: 1120px; margin: 0 auto; padding: 132px 24px 10px; }
+.st-kicker {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--gold); display: inline-flex; align-items: center; gap: 12px; font-weight: 500;
+}
+.st-kicker::before { content: ""; width: 26px; height: 1px; background: linear-gradient(90deg, var(--gold), transparent); }
+.st-hero h1 { font-family: var(--font-serif); font-weight: 500; font-size: clamp(32px, 5vw, 52px); letter-spacing: -0.5px; line-height: 1.04; margin: 16px 0 14px; }
+.st-hero h1 span { color: var(--gold); font-style: italic; }
+.st-hero p { color: var(--muted); max-width: 72ch; font-size: 15.5px; line-height: 1.65; margin: 0; }
+
+.st-sec { max-width: 1120px; margin: 0 auto; padding: 34px 24px 0; }
+.st-h {
+  font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--muted); display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+}
+.st-h::before { content: ""; width: 7px; height: 7px; border-radius: 1px; background: var(--gold); box-shadow: 0 0 10px rgba(216,185,130,0.5); }
+.st-sub { color: var(--faint); font-size: 13.5px; margin: -8px 0 18px; }
+
+/* chain of command */
+.st-chain { display: flex; flex-direction: column; align-items: center; }
+.st-top {
+  text-align: center; padding: 20px 30px; border-radius: 14px;
+  background: var(--glass); border: 1px solid rgba(216,185,130,0.26);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.4);
+  min-width: 320px;
+}
+.st-tier-tag { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); }
+.st-lead { font-family: var(--font-serif); font-size: 23px; font-weight: 500; margin: 6px 0 4px; }
+.st-lead-note { color: var(--muted); font-size: 12.5px; }
+.st-conn { width: 1px; height: 34px; background: linear-gradient(180deg, rgba(216,185,130,0.5), rgba(255,255,255,0.08)); }
+.st-staff { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 920px; }
+.st-staff-chip {
+  display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-radius: 10px;
+  background: var(--glass); border: 1px solid var(--glass-br); min-width: 150px;
+}
+.st-staff-chip b { font-family: var(--font-mono); font-size: 13px; color: var(--gold); letter-spacing: .5px; }
+.st-staff-chip span { font-size: 11.5px; color: var(--muted); }
+
+/* kotama grid */
+.st-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(248px, 1fr)); gap: 13px; }
+.st-card {
+  padding: 15px 17px; border-radius: 12px; background: var(--glass); border: 1px solid var(--glass-br);
+  transition: border-color .2s ease, transform .2s ease; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.st-card:hover { border-color: rgba(216,185,130,0.32); transform: translateY(-2px); }
+.st-card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.st-card-top b { font-family: var(--font-serif); font-size: 18px; font-weight: 500; letter-spacing: .3px; }
+.st-hq { font-family: var(--font-mono); font-size: 10.5px; color: var(--faint); border: 1px solid var(--glass-br); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+.st-card-name { font-size: 13px; color: var(--text); margin: 7px 0 5px; line-height: 1.35; }
+.st-card-role { font-size: 12px; color: var(--muted); line-height: 1.45; }
+
+/* pussiberad highlight */
+.st-cyber {
+  display: flex; gap: 20px; align-items: flex-start; padding: 22px 24px; border-radius: 16px;
+  background: linear-gradient(135deg, rgba(53,208,186,0.08), rgba(255,255,255,0.016));
+  border: 1px solid rgba(53,208,186,0.3); box-shadow: 0 24px 60px rgba(0,0,0,0.42);
+}
+.st-cyber-eye {
+  flex: none; width: 58px; height: 58px; border-radius: 14px;
+  background:
+    radial-gradient(circle at 50% 50%, #eafff9 0 12%, var(--brand) 13% 26%, #06131b 28% 52%, var(--brand) 54% 62%, transparent 64%),
+    linear-gradient(180deg, #0e1621, #080c13);
+  border: 1px solid rgba(53,208,186,0.4); box-shadow: 0 0 26px -6px var(--brand);
+}
+.st-cyber .st-card-top b { color: var(--brand); font-family: var(--font-mono); letter-spacing: .5px; }
+.st-cyber-role { color: var(--muted); font-size: 13.5px; line-height: 1.6; max-width: 72ch; margin: 8px 0 4px; }
+
+/* 21 kodam grid */
+.st-kodam-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 10px; }
+.st-kodam {
+  display: flex; align-items: center; gap: 13px; text-align: left; width: 100%;
+  padding: 11px 13px; border-radius: 11px; cursor: pointer;
+  background: var(--glass); border: 1px solid var(--glass-br); color: var(--text);
+  transition: border-color .18s ease, transform .18s ease, background .18s ease;
+}
+.st-kodam:hover { border-color: rgba(53,208,186,0.4); transform: translateX(3px); background: rgba(53,208,186,0.04); }
+.st-kodam.is-new:hover { border-color: rgba(216,185,130,0.5); }
+.st-num {
+  flex: none; min-width: 42px; height: 42px; padding: 0 8px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 14px; font-weight: 600; letter-spacing: -0.3px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--glass-br); color: var(--muted);
+}
+.st-kodam.is-new .st-num { color: var(--gold); border-color: rgba(216,185,130,0.4); background: rgba(216,185,130,0.08); }
+.st-kd-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.st-kd-name { font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.st-badge { font-family: var(--font-mono); font-style: normal; font-size: 9px; letter-spacing: .8px; color: #120d04; background: var(--gold); border-radius: 4px; padding: 1px 5px; }
+.st-kd-meta { font-size: 11.5px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.st-foot { max-width: 1120px; margin: 40px auto 0; padding: 20px 24px 0; border-top: 1px solid var(--glass-br); color: var(--faint); font-size: 11.5px; line-height: 1.6; text-align: center; }
+
+@media (max-width: 560px) { .st-cyber { flex-direction: column; gap: 14px; } }

@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
 import Landing from "./Landing";
 import Console from "./Console";
+import Structure from "./Structure";
 
-// Minimal hash router: #/console shows the command console, everything else
-// shows the product landing page. Keeps the SPA dependency-free.
-function routeFromHash() {
-  return window.location.hash.replace(/^#\/?/, "") === "console" ? "console" : "landing";
+// Minimal hash router: #/console → command console, #/struktur → TNI AD
+// organisation reference, everything else → the product landing page.
+function routeFromHash(): "console" | "struktur" | "landing" {
+  const h = window.location.hash.replace(/^#\/?/, "");
+  if (h === "console") return "console";
+  if (h === "struktur") return "struktur";
+  return "landing";
 }
 
 export default function App() {
-  const [route, setRoute] = useState<string>(routeFromHash());
+  const [route, setRoute] = useState(routeFromHash());
 
   useEffect(() => {
     const onHash = () => setRoute(routeFromHash());
@@ -17,14 +21,9 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  const goConsole = () => {
-    window.location.hash = "/console";
-    window.scrollTo({ top: 0 });
-  };
-  const goHome = () => {
-    window.location.hash = "";
-    window.scrollTo({ top: 0 });
-  };
+  const go = (hash: string) => { window.location.hash = hash; window.scrollTo({ top: 0 }); };
 
-  return route === "console" ? <Console onExit={goHome} /> : <Landing onEnter={goConsole} />;
+  if (route === "console") return <Console onExit={() => go("")} />;
+  if (route === "struktur") return <Structure onExit={() => go("")} onConsole={() => go("/console")} />;
+  return <Landing onEnter={() => go("/console")} onStructure={() => go("/struktur")} />;
 }

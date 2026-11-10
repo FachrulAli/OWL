@@ -46,7 +46,7 @@ function getInitialLang(): Lang {
   return "en"; // visitors default to English
 }
 
-export default function Landing({ onEnter }: { onEnter: () => void }) {
+export default function Landing({ onEnter, onStructure }: { onEnter: () => void; onStructure: () => void }) {
   const [lang, setLang] = useState<Lang>(getInitialLang);
   const [fading, setFading] = useState(false);
   const t = C[lang];
@@ -89,6 +89,7 @@ export default function Landing({ onEnter }: { onEnter: () => void }) {
           <a href="#eyes">{t.nav.capabilities}</a>
           <a href="#arch">{t.nav.architecture}</a>
           <a href="#standar">{t.nav.standards}</a>
+          <a onClick={onStructure} style={{ cursor: "pointer" }}>{lang === "en" ? "Army structure" : "Struktur TNI AD"}</a>
         </nav>
         <span className="spacer" />
         <div className="lang-toggle" role="group" aria-label="Language">
