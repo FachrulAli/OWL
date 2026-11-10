@@ -18,31 +18,51 @@ const HQ_PHOTO: Record<string, string> = {
   pusat: "/hq/pusat.png",
 };
 
-// Aerial banner of the HQ location: a mosaic of Esri World Imagery tiles
-// centred on the node's coordinates. Self-hosted tiles aren't needed — these
-// are standard web-map tiles; attribution is shown. Falls back cleanly if the
-// tiles don't load (the gradient + panel background remain).
-function HqBanner({ lon, lat }: { lon: number; lat: number }) {
-  const z = 16;
-  const n = 2 ** z;
-  const fx = ((lon + 180) / 360) * n;
-  const latRad = (lat * Math.PI) / 180;
-  const fy = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n;
-  const cx = Math.floor(fx), cy = Math.floor(fy);
-  const tiles: { tx: number; ty: number; ox: number; oy: number }[] = [];
-  for (let tx = cx - 2; tx <= cx + 2; tx++)
-    for (let ty = cy - 1; ty <= cy + 1; ty++)
-      tiles.push({ tx, ty, ox: (tx - fx) * 256, oy: (ty - fy) * 256 });
+// Generated crest banner for a node — a command-style insignia (rings, a
+// radiant star, the Kodam numeral + nickname) over a navy HUD field tinted by
+// the node's risk colour. Original art, so no sourcing/licensing issues, and
+// it actually signifies the unit (unlike a blurry satellite tile).
+function HqArt({ numeral, nick, c }: { numeral: string; nick: string; c: string }) {
+  const rays = Array.from({ length: 16 }, (_, i) => (i * 360) / 16);
   return (
-    <div className="nm-banner" aria-hidden="true">
-      <div className="nm-tiles">
-        {tiles.map((t, i) => (
-          <img key={i} alt="" loading="lazy" draggable={false}
-            src={`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${t.ty}/${t.tx}`}
-            style={{ left: `calc(50% + ${t.ox}px)`, top: `calc(50% + ${t.oy}px)` }} />
-        ))}
-      </div>
-      <span className="nm-attr">Citra © Esri</span>
+    <div className="nm-banner nm-art" aria-hidden="true" style={{ ["--c" as any]: c }}>
+      <svg viewBox="0 0 760 160" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <radialGradient id="nmArtGlow" cx="79%" cy="32%" r="62%">
+            <stop offset="0%" stopColor={c} stopOpacity="0.30" />
+            <stop offset="100%" stopColor={c} stopOpacity="0" />
+          </radialGradient>
+          <pattern id="nmArtGrid" width="26" height="26" patternUnits="userSpaceOnUse">
+            <path d="M26 0H0V26" fill="none" stroke="rgba(120,170,235,0.10)" strokeWidth="1" />
+          </pattern>
+          <linearGradient id="nmArtBg" x1="0" y1="0" x2="0.2" y2="1">
+            <stop offset="0%" stopColor="#13263f" />
+            <stop offset="100%" stopColor="#0a1626" />
+          </linearGradient>
+        </defs>
+        <rect width="760" height="160" fill="url(#nmArtBg)" />
+        <rect width="760" height="160" fill="url(#nmArtGrid)" />
+        <rect width="760" height="160" fill="url(#nmArtGlow)" />
+        {/* hazard chevrons, far left */}
+        <g opacity="0.07" stroke="#9cc3ff" strokeWidth="11" fill="none">
+          <path d="M-30 -10 L70 80 L-30 170" /><path d="M20 -10 L120 80 L20 170" />
+        </g>
+        {/* ghost nickname */}
+        <text x="38" y="138" fontFamily="'Playfair Display', serif" fontSize="70" fontWeight="600" fill="rgba(234,244,255,0.05)">{nick}</text>
+        {/* crest */}
+        <g transform="translate(606 80)">
+          <g className="nm-art-rays" opacity="0.5">
+            {rays.map((a, i) => (
+              <line key={i} x1="0" y1="-40" x2="0" y2="-52" stroke={c} strokeWidth="2"
+                transform={`rotate(${a})`} />
+            ))}
+          </g>
+          <circle r="62" fill="none" stroke={c} strokeWidth="1.5" opacity="0.45" />
+          <circle className="nm-art-ring" r="54" fill="none" stroke={c} strokeWidth="2" strokeDasharray="3 9" opacity="0.65" />
+          <circle r="40" fill="rgba(8,20,35,0.6)" stroke={c} strokeWidth="1.5" opacity="0.8" />
+          <text textAnchor="middle" y="15" fontFamily="'Fira Code', monospace" fontSize="38" fontWeight="700" fill="#eaf4ff">{numeral}</text>
+        </g>
+      </svg>
     </div>
   );
 }
@@ -107,7 +127,7 @@ export function NodeModal({
         <div className="nm-head-wrap" style={{ ["--c" as any]: c }}>
           {photoOk
             ? <div className="nm-banner"><img className="nm-photo" src={photoSrc} alt="" draggable={false} onError={() => setPhotoOk(false)} /></div>
-            : geo && <HqBanner lon={geo.lon} lat={geo.lat} />}
+            : <HqArt numeral={ref?.numeral ?? (isHub ? "★" : "•")} nick={ref?.nick ?? (isHub ? "PUSSIBERAD" : node.name)} c={c} />}
           <div className="nm-head">
           <span className="nm-glyph" aria-hidden="true" />
           <div className="nm-id">
