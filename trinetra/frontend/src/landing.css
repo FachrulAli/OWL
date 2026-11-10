@@ -87,7 +87,7 @@
 /* ───────────────── hero ───────────────── */
 .lp-hero {
   position: relative; min-height: 100vh; display: flex; flex-direction: column;
-  justify-content: center; padding: 150px clamp(20px, 5vw, 72px) 70px; overflow: hidden;
+  justify-content: center; padding: clamp(90px, 11vh, 120px) clamp(20px, 5vw, 72px) clamp(28px, 5vh, 54px); overflow: hidden;
 }
 .lp-hero::before {
   content: ""; position: absolute; inset: 0; z-index: -1;
@@ -96,11 +96,11 @@
     radial-gradient(680px 460px at 6% 88%, rgba(61,155,255,0.06), transparent 58%);
 }
 .lp-hero-grid { display: grid; grid-template-columns: 1.12fr 0.88fr; gap: 50px; align-items: center; max-width: 1400px; }
-.lp-hero h2 { font-size: clamp(44px, 6.6vw, 94px); line-height: 1.05; margin: 26px 0 0; max-width: 15ch; }
+.lp-hero h2 { font-size: clamp(40px, 5vw, 68px); line-height: 1.06; margin: clamp(14px, 1.8vh, 22px) 0 0; max-width: 16ch; }
 .lp-hero h2 .hl { font-style: italic; color: var(--gold); }
-.lp-hero p.sub { font-size: clamp(16px, 1.5vw, 19px); color: var(--muted); max-width: 54ch; margin: 30px 0 0; line-height: 1.75; font-weight: 300; }
-.lp-hero .quote { margin: 32px 0 0; padding-left: 20px; border-left: 1px solid var(--gold); font-family: var(--font-serif); font-style: italic; color: #cdddf0; max-width: 52ch; font-size: 17px; line-height: 1.5; }
-.lp-hero-actions { display: flex; gap: 16px; margin-top: 42px; flex-wrap: wrap; }
+.lp-hero p.sub { font-size: clamp(15px, 1.4vw, 18px); color: var(--muted); max-width: 56ch; margin: clamp(14px, 2vh, 22px) 0 0; line-height: 1.65; font-weight: 300; }
+.lp-hero .quote { margin: clamp(14px, 2vh, 22px) 0 0; padding-left: 18px; border-left: 1px solid var(--gold); font-family: var(--font-serif); font-style: italic; color: #cdddf0; max-width: 52ch; font-size: clamp(15px, 1.4vw, 17px); line-height: 1.45; }
+.lp-hero-actions { display: flex; gap: 14px; margin-top: clamp(18px, 2.6vh, 32px); flex-wrap: wrap; }
 .lp-hero-visual { display: flex; justify-content: center; }
 
 /* night-vision helmet hero — real photo feathered into the page with live overlays */
@@ -155,9 +155,9 @@
 
 /* live telemetry strip */
 .lp-live {
-  margin-top: 70px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 1000px;
+  margin-top: clamp(24px, 4vh, 48px); display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; max-width: 1000px;
 }
-.lp-live .cell { border-radius: 4px; padding: 22px 24px; }
+.lp-live .cell { border-radius: 4px; padding: clamp(13px, 1.8vh, 20px) 22px; }
 .lp-live .cell .v { font-family: var(--font-mono); font-size: 32px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--gold-soft); }
 .lp-live .cell .k { color: var(--muted); font-size: 10.5px; text-transform: uppercase; letter-spacing: 1.4px; margin-top: 6px; }
 .lp-live .live-tag { display: inline-flex; align-items: center; gap: 7px; font-size: 10px; color: var(--live); font-family: var(--font-mono); letter-spacing: 1.4px; margin-bottom: 4px; }
