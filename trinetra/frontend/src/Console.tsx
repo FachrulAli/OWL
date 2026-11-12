@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, Stats, Entity, Node, Case, ChainHit } from "./lib/api";
 import { useLive } from "./lib/useLive";
-import { riskColor, CAT_LABEL, fmtTime, STAGE_LABEL } from "./lib/util";
+import { riskColor, fmtTime, labels } from "./lib/util";
+import { useLang } from "./lib/lang";
+import { DOC } from "./lib/docText";
 import { NODE_GEO } from "./components/indonesiaGeo";
 import { StatBar } from "./components/StatBar";
 import { EntityTable } from "./components/EntityTable";
@@ -16,6 +18,9 @@ type TierFilter = "all" | "pusat" | "kodam";
 
 // Tier-0 command console — cockpit layout (map centerpiece flanked by HUD rails).
 export default function Console({ onExit }: { onExit: () => void }) {
+  const [lang, setLang] = useLang();
+  const t = DOC(lang).con;
+  const L = labels(lang);
   const { feed, connected } = useLive();
   const [stats, setStats] = useState<Stats | null>(null);
   const [entities, setEntities] = useState<Entity[]>([]);
@@ -70,32 +75,36 @@ export default function Console({ onExit }: { onExit: () => void }) {
   return (
     <div className="app">
       <div className="topbar">
-        <div className="brand" style={{ cursor: "pointer" }} onClick={onExit} title="Kembali ke beranda">
+        <div className="brand" style={{ cursor: "pointer" }} onClick={onExit} title={t.home}>
           <div className="eye" />
           <div>
             <h1>TRINETRA</h1>
-            <small>Tier 0 · Mobile Threat Defense</small>
+            <small>{t.sub}</small>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 7, marginLeft: 18 }}>
           <span className={`status-dot ${connected ? "on" : "off"}`} />
           <span className="muted" style={{ fontSize: 12, fontFamily: "var(--font-mono)" }}>
-            {connected ? (MODE.demo ? "DEMO LANGSUNG" : "STREAM AKTIF") : "menyambung ulang…"}
+            {connected ? (MODE.demo ? t.demo : t.live) : t.reconnect}
           </span>
         </div>
         <div className="tagline">
-          Satsiber TNI AD / Pussiberad · deteksi zero-click pada HP dinas, korelasi kill-chain, triase, dan eskalasi
+          {t.tagline}
         </div>
-        <div style={{ marginLeft: "auto", display: "flex", gap: 14, alignItems: "center" }}>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 12, alignItems: "center" }}>
+          <div className="lang-sw" role="group" aria-label="Language">
+            <button aria-pressed={lang === "en"} onClick={() => setLang("en")}>EN</button>
+            <button aria-pressed={lang === "id"} onClick={() => setLang("id")}>ID</button>
+          </div>
           <button className="pg-nav"
             onClick={() => { window.location.hash = "/deteksi"; }}
-            title="Lihat seluruh aturan deteksi yang dipakai: bobot, field yang dibaca, dan false positive yang diakui">
-            Aturan deteksi <span className="ix">→</span>
+            title={t.rulesTip}>
+            {t.rules} <span className="ix">→</span>
           </button>
           <button className="pg-nav"
             onClick={() => { window.location.hash = "/agent"; }}
-            title="Unduh agent MTD dan panduan pemasangannya di HP dinas">
-            Pasang agent <span className="ix">→</span>
+            title={t.agentTip}>
+            {t.agent} <span className="ix">→</span>
           </button>
         </div>
       </div>
@@ -104,12 +113,12 @@ export default function Console({ onExit }: { onExit: () => void }) {
       <div className="cc">
         <div className="cc-grid">
           {/* LEFT — command roster */}
-          <aside className="cc-rail anim-left" aria-label="Sebaran komando">
-            <div className="cc-h">Sebaran Komando <span>{roster.length} NODE</span></div>
-            <div className="cc-seg" role="group" aria-label="Saring tier">
-              <button aria-pressed={tier === "all"} onClick={() => setTier("all")}>Semua</button>
-              <button aria-pressed={tier === "pusat"} onClick={() => setTier("pusat")}>Pusat</button>
-              <button aria-pressed={tier === "kodam"} onClick={() => setTier("kodam")}>Kodam</button>
+          <aside className="cc-rail anim-left" aria-label={t.spread}>
+            <div className="cc-h">{t.spread} <span>{roster.length} {t.nodes}</span></div>
+            <div className="cc-seg" role="group" aria-label={t.filterTier}>
+              <button aria-pressed={tier === "all"} onClick={() => setTier("all")}>{t.all}</button>
+              <button aria-pressed={tier === "pusat"} onClick={() => setTier("pusat")}>{t.center}</button>
+              <button aria-pressed={tier === "kodam"} onClick={() => setTier("kodam")}>{t.kodam}</button>
             </div>
             <div className="cc-roster cc-scroll">
               {roster.map((n) => {
@@ -122,15 +131,15 @@ export default function Console({ onExit }: { onExit: () => void }) {
                     className={`cc-node${isHub ? " is-hub" : ""}`}
                     style={{ ["--c" as any]: c }}
                     onClick={() => openNode(n.node_id)}
-                    title={`${n.name} · buka kartu komando`}>
+                    title={`${n.name} · ${t.openCard}`}>
                     <span className="nm">{label}</span>
                     <span className="rk">{n.max_risk.toFixed(0)}</span>
-                    <span className="cy">{NODE_GEO[n.node_id]?.city ?? "—"} · {n.high_count}/{n.total} tinggi</span>
+                    <span className="cy">{NODE_GEO[n.node_id]?.city ?? "—"} · {n.high_count}/{n.total} {t.high}</span>
                     <span className="cc-bar"><i style={{ ["--c" as any]: c, transform: `scaleX(${Math.max(0.03, n.max_risk / 100)})` }} /></span>
                   </button>
                 );
               })}
-              {roster.length === 0 && <div className="cc-note">Memuat node…</div>}
+              {roster.length === 0 && <div className="cc-note">{t.loadingNodes}</div>}
             </div>
           </aside>
 
@@ -143,36 +152,36 @@ export default function Console({ onExit }: { onExit: () => void }) {
           </section>
 
           {/* RIGHT — intel summary + live feed */}
-          <aside className="cc-rail anim-right" aria-label="Ringkasan intel">
-            <div className="cc-h">Ringkasan Intel</div>
+          <aside className="cc-rail anim-right" aria-label={t.intel}>
+            <div className="cc-h">{t.intel}</div>
             <div className="cc-metric">
-              <span className="lb">HP dinas terpantau</span>
+              <span className="lb">{t.mDevices}</span>
               <span className="v accent">{intel.total}</span>
               <span className="cc-bar"><i style={{ transform: "scaleX(1)" }} /></span>
             </div>
             <div className="cc-metric">
-              <span className="lb">Berisiko tinggi (≥70)</span>
+              <span className="lb">{t.mHigh}</span>
               <span className="v danger">{intel.high}</span>
               <span className="cc-bar"><i style={{ ["--c" as any]: "var(--critical)", transform: `scaleX(${Math.max(0.02, intel.high / Math.max(1, intel.total))})` }} /></span>
             </div>
             <div className="cc-metric">
-              <span className="lb">Rantai kill-chain terbukti</span>
+              <span className="lb">{t.mChains}</span>
               <span className="v danger">{intel.chained}</span>
               <span className="cc-bar"><i style={{ ["--c" as any]: "var(--critical)", transform: `scaleX(${Math.max(0.02, intel.chained / Math.max(1, intel.total))})` }} /></span>
             </div>
             <div className="cc-metric">
-              <span className="lb">Kasus aktif</span>
+              <span className="lb">{t.mCases}</span>
               <span className="v">{intel.cases}</span>
               <span className="cc-bar"><i style={{ ["--c" as any]: "var(--high)", transform: `scaleX(${Math.max(0.02, Math.min(1, intel.cases / 12))})` }} /></span>
             </div>
             <div className="cc-metric">
-              <span className="lb">Skor tertinggi · node kritis</span>
+              <span className="lb">{t.mTop}</span>
               <span className="v" style={{ color: riskColor(intel.top) }}>{intel.top.toFixed(0)}<small style={{ color: "var(--faint)", fontSize: 13, fontFamily: "var(--font-mono)" }}> ·{intel.critNodes}</small></span>
               <span className="cc-bar"><i style={{ ["--c" as any]: riskColor(intel.top), transform: `scaleX(${Math.max(0.02, intel.top / 100)})` }} /></span>
             </div>
 
             <div className="cc-div" />
-            <div className="cc-h">Aliran Langsung <span className="cc-note">realtime</span></div>
+            <div className="cc-h">{t.feed} <span className="cc-note">{t.realtime}</span></div>
             <div className="cc-feed">
               {feedItems.map((m, i) => {
                 if (m.kind === "chain") {
@@ -184,7 +193,7 @@ export default function Console({ onExit }: { onExit: () => void }) {
                       onClick={() => setSelected(d.entity_id)}>
                       <div className="line1">
                         <span className="ent" style={{ color: "#ff9d9d" }}>
-                          ⛓ RANTAI TERBUKTI
+                          ⛓ {t.chainFired}
                         </span>
                         <span style={{ color: "#ff9d9d", fontWeight: 700 }}>
                           {Number(d.severity).toFixed(0)}
@@ -195,7 +204,7 @@ export default function Console({ onExit }: { onExit: () => void }) {
                         {d.ts ? ` · ${fmtTime(d.ts)}` : ""}
                       </div>
                       <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2, lineHeight: 1.4 }}>
-                        {stages.map((s) => STAGE_LABEL[s] ?? s).join(" → ")}
+                        {stages.map((s) => L.stage[s] ?? s).join(" → ")}
                       </div>
                     </div>
                   );
@@ -205,7 +214,7 @@ export default function Console({ onExit }: { onExit: () => void }) {
                   return (
                     <div key={i} className="feed-item" style={{ borderLeftColor: "#b06cff", background: "rgba(176,108,255,0.08)" }}>
                       <div className="line1">
-                        <span className="ent" style={{ color: "#c79bff" }}>⟐ KORELASI LINTAS NODE</span>
+                        <span className="ent" style={{ color: "#c79bff" }}>⟐ {t.crossNode}</span>
                         <span style={{ color: "#c79bff", fontWeight: 700 }}>{Number(d.score).toFixed(0)}</span>
                       </div>
                       <div className="cats">{d.summary}</div>
@@ -223,16 +232,16 @@ export default function Console({ onExit }: { onExit: () => void }) {
                       <span style={{ color: riskColor(risk), fontWeight: 700 }}>{Number(risk).toFixed(0)}</span>
                     </div>
                     <div className="cats">
-                      {d.node_id} · {isCase ? "CASE" : (CAT_LABEL[d.category] ?? d.category)}
-                      {d.benign ? " · indikator tunggal (bukan kasus)" : ""}
+                      {d.node_id} · {isCase ? "CASE" : (L.cat[d.category] ?? d.category)}
+                      {d.benign ? ` · ${t.benign}` : ""}
                       {d.ml_anomaly ? ` · UEBA ${Number(d.ml_anomaly).toFixed(2)}` : ""}
                       {d.ts ? ` · ${fmtTime(d.ts)}` : ""}
                     </div>
-                    <div>{cats.map((c) => <span className="cat-chip" key={c}>{CAT_LABEL[c] ?? c}</span>)}</div>
+                    <div>{cats.map((c) => <span className="cat-chip" key={c}>{L.cat[c] ?? c}</span>)}</div>
                   </div>
                 );
               })}
-              {feedItems.length === 0 && <div className="cc-note">Menunggu event…</div>}
+              {feedItems.length === 0 && <div className="cc-note">{t.waiting}</div>}
             </div>
           </aside>
         </div>
@@ -252,10 +261,10 @@ export default function Console({ onExit }: { onExit: () => void }) {
         </div>
         <div className="anim-up" style={{ animationDelay: ".12s" }}>
           <div className="panel">
-            <h2>Rantai Terbaru · Rinci</h2>
+            <h2>{t.latestChain}</h2>
             {chains[0]
               ? <KillChainTimeline hit={chains[0]} />
-              : <div className="muted">Menunggu rantai pertama…</div>}
+              : <div className="muted">{t.awaitChain}</div>}
           </div>
         </div>
       </div>

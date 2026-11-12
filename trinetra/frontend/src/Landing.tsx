@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { setLang as setLangShared } from "./lib/lang";
 import { api, Stats, Entity, Node, Case } from "./lib/api";
 import { C, Lang } from "./i18n";
 import { RadarEye, Sparkline, TierDiagram, CapIcon, EyeGlyph, StdMark } from "./components/LandingVisuals";
@@ -90,7 +91,7 @@ export default function Landing({ onEnter, onStructure, onRules }:
 
   useEffect(() => {
     document.documentElement.lang = lang;
-    try { localStorage.setItem("trinetra_lang", lang); } catch { /* ignore */ }
+    setLangShared(lang);   // siarkan agar console & halaman lain ikut berubah
   }, [lang]);
 
   const openCases = cases.filter((c) => c.status !== "closed").length;

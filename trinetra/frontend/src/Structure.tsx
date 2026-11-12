@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { setLang as setLangShared } from "./lib/lang";
 import { LEADERSHIP, STAF_UMUM, KOTAMA, PUSSIBERAD, KODAM } from "./data/tniad";
 
 type Lang = "en" | "id";
@@ -42,7 +43,7 @@ export default function Structure({ onExit, onConsole }: { onExit: () => void; o
   const t = T[lang];
   useEffect(() => {
     document.documentElement.lang = lang;
-    try { localStorage.setItem("trinetra_lang", lang); } catch { /* ignore */ }
+    setLangShared(lang);   // siarkan agar console & halaman lain ikut berubah
   }, [lang]);
 
   return (

@@ -1,8 +1,10 @@
 import { Entity } from "../lib/api";
 import {
-  riskColor, ROLE_LABEL, sevClass, fmtTime, silence, holderLabel,
-  platformIcon, patchRisk,
+  riskColor, sevClass, fmtTime, silenceL, holderLabel,
+  platformIcon, patchRisk, labels,
 } from "../lib/util";
+import { useLang } from "../lib/lang";
+import { DOC } from "../lib/docText";
 
 /**
  * Daftar HP dinas berisiko tertinggi.
@@ -20,30 +22,28 @@ import {
 export function EntityTable(
   { entities, onSelect }: { entities: Entity[]; onSelect: (id: string) => void },
 ) {
+  const [lang] = useLang();
+  const t = DOC(lang).con;
+  const L = labels(lang);
   const top = entities.slice(0, 12);
   return (
     <div className="panel">
       <h2>
-        HP Dinas Berisiko Tertinggi
+        {t.tableH}
         <span className="muted" style={{ fontSize: 11, fontWeight: 400, marginLeft: 8 }}>
-          klik satu baris untuk membuka riwayat perangkatnya
+          {t.tableSub}
         </span>
       </h2>
       <table className="dev-table">
         <thead>
           <tr>
-            <th>Pemegang</th>
-            <th>Perangkat</th>
-            <th>Komando</th>
-            <th>Risiko</th>
-            <th>Status</th>
-            <th>Terakhir lapor</th>
+            {t.cols.map((c) => <th key={c}>{c}</th>)}
           </tr>
         </thead>
         <tbody>
           {top.map((e) => {
             const h = holderLabel(e);
-            const sil = silence(e.last_seen ?? e.last_event);
+            const sil = silenceL(e.last_seen ?? e.last_event, lang);
             const patch = typeof e.patch_age_days === "number" && e.patch_age_days > 0
               ? patchRisk(e.patch_age_days) : null;
             return (
@@ -56,7 +56,7 @@ export function EntityTable(
                     {h.name}
                   </div>
                   <div className="dev-sub">
-                    <span className="muted">{ROLE_LABEL[e.role] ?? e.role}</span>
+                    <span className="muted">{L.role[e.role] ?? e.role}</span>
                     {e.holder_nrp && <span className="mono">NRP {e.holder_nrp}</span>}
                   </div>
                 </td>
@@ -64,7 +64,7 @@ export function EntityTable(
                   <div className="dev-model">
                     {e.device_model || "—"}
                     {e.live_agent && (
-                      <span className="dev-tag live" title="Telemetri dari agent MTD sungguhan di perangkat, bukan simulasi">
+                      <span className="dev-tag live" title={t.liveAgentTip}>
                         AGENT NYATA
                       </span>
                     )}
@@ -77,7 +77,7 @@ export function EntityTable(
                     )}
                     {patch && (
                       <span className="dev-tag" style={{ color: patch.color }}
-                        title="Umur patch keamanan. Perangkat dengan patch kedaluwarsa rentan terhadap rantai eksploitasi yang sudah ditambal.">
+                        title={t.patchTip}>
                         patch {e.patch_age_days}h
                       </span>
                     )}
@@ -100,7 +100,7 @@ export function EntityTable(
                   <div className="muted">{fmtTime(e.last_seen ?? e.last_event)}</div>
                   {sil.stale && (
                     <div className="dev-silent"
-                      title="Perangkat berhenti melapor. Pada sistem pemantauan, perangkat yang senyap bukan berarti aman, melainkan titik buta.">
+                      title={t.silentTip}>
                       {sil.label}
                     </div>
                   )}
@@ -109,14 +109,11 @@ export function EntityTable(
             );
           })}
           {top.length === 0 && (
-            <tr><td colSpan={6} className="muted">Menunggu telemetri HP… (warm-up baseline)</td></tr>
+            <tr><td colSpan={6} className="muted">{t.tableWait}</td></tr>
           )}
         </tbody>
       </table>
-      <div className="dev-foot muted">
-        Nama personel pada data ini <b>fiktif</b>. Spesifikasi perangkat diambil
-        dari telemetri terakhir yang diterima, bukan dari yang didaftarkan.
-      </div>
+      <div className="dev-foot muted" dangerouslySetInnerHTML={{ __html: t.tableFoot }} />
     </div>
   );
 }

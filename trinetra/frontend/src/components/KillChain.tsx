@@ -1,8 +1,7 @@
 import { ChainHit } from "../lib/api";
-import {
-  CAT_LABEL, STAGE_LABEL, RESPONSE_LABEL, RESPONSE_HINT, fmtSpan, fmtTime,
-  riskColor,
-} from "../lib/util";
+import { RESPONSE_HINT, fmtSpan, fmtTime, riskColor, labels } from "../lib/util";
+import { useLang } from "../lib/lang";
+import { DOC } from "../lib/docText";
 
 // Warna per tahap kill-chain: dingin di awal rantai, memanas ke arah
 // pengumpulan data, supaya mata langsung menangkap seberapa jauh penyerang
@@ -26,16 +25,18 @@ const stageColor = (s: string) => STAGE_COLOR[s] ?? "#8b5cf6";
 export function KillChainTimeline(
   { hit, compact = false }: { hit: ChainHit; compact?: boolean },
 ) {
+  const [lang] = useLang();
+  const t = DOC(lang).con;
+  const L = labels(lang);
   const members = hit.members ?? [];
-  const t0 = members.length ? new Date(members[0].ts).getTime() : 0;
 
   return (
     <div className="kc">
       <div className="kc-head">
         <div className="kc-title">
           <span className="kc-badge" data-type={hit.corr_type}>
-            {hit.corr_type === "temporal_ordered" ? "BERURUTAN"
-              : hit.corr_type === "event_count" ? "BERULANG" : "BERSAMAAN"}
+            {hit.corr_type === "temporal_ordered" ? t.kcOrdered
+              : hit.corr_type === "event_count" ? t.kcRepeated : t.kcCo}
           </span>
           <b>{hit.title}</b>
         </div>
@@ -47,12 +48,12 @@ export function KillChainTimeline(
       <div className="kc-meta">
         <span className="mono">{hit.corr_id}</span>
         <span>·</span>
-        <span>{CAT_LABEL[hit.category] ?? hit.category}</span>
+        <span>{L.cat[hit.category] ?? hit.category}</span>
         <span>·</span>
         {/* Rentang nyata vs jendela aturan: kalau rantai jauh lebih rapat
             daripada jendela yang diizinkan, itu justru memperkuat temuan. */}
         <span>
-          rantai {fmtSpan(hit.span_s)} dalam jendela {fmtSpan(hit.timespan_s)}
+          {t.kcSpan} {fmtSpan(hit.span_s)} {t.kcWindow} {fmtSpan(hit.timespan_s)}
         </span>
         {hit.display_name && (<><span>·</span><span>{hit.display_name}</span></>)}
         <span>·</span>
@@ -70,13 +71,13 @@ export function KillChainTimeline(
               <div className="kc-step-body">
                 <div className="kc-step-top">
                   <span className="kc-stage" style={{ color: c }}>
-                    {String(i + 1).padStart(2, "0")} · {STAGE_LABEL[m.stage] ?? m.stage}
+                    {String(i + 1).padStart(2, "0")} · {L.stage[m.stage] ?? m.stage}
                   </span>
                   <span className="kc-time mono">{fmtTime(m.ts)}</span>
                 </div>
                 <div className="kc-rule mono">{m.rule}</div>
                 {i > 0 && (
-                  <div className="kc-gap">+{gap}s setelah tahap sebelumnya</div>
+                  <div className="kc-gap">+{gap}s {t.kcAfter}</div>
                 )}
               </div>
             </li>
@@ -86,15 +87,11 @@ export function KillChainTimeline(
 
       {!compact && (
         <>
-          <div className="kc-idle">
-            Seluruh tahap di atas terjadi saat perangkat <b>idle</b>: layar mati,
-            tanpa sentuhan, tanpa aplikasi di depan. Pemegang HP tidak melakukan
-            apa pun.
-          </div>
+          <div className="kc-idle" dangerouslySetInnerHTML={{ __html: t.kcIdle }} />
 
           <div className="kc-resp">
             <div className="kc-resp-h">
-              Tindakan disarankan: <b>{RESPONSE_LABEL[hit.response] ?? hit.response}</b>
+              {t.kcAction}: <b>{L.response[hit.response] ?? hit.response}</b>
             </div>
             <div className="kc-resp-b">{RESPONSE_HINT[hit.response] ?? ""}</div>
           </div>
@@ -119,13 +116,16 @@ export function ChainList(
   { chains, onSelect, limit = 8 }:
   { chains: ChainHit[]; onSelect?: (id: string) => void; limit?: number },
 ) {
+  const [lang] = useLang();
+  const t = DOC(lang).con;
+  const L = labels(lang);
   const items = chains.slice(0, limit);
   return (
     <div className="panel">
       <h2>
-        Rantai Kill-Chain Terbukti
+        {t.chainsH}
         <span className="muted" style={{ fontSize: 11, fontWeight: 400, marginLeft: 8 }}>
-          korelasi Sigma terpenuhi, bukan indikator lepas
+          {t.chainsSub}
         </span>
       </h2>
       <div className="scroll">
@@ -137,7 +137,7 @@ export function ChainList(
             style={{ cursor: onSelect ? "pointer" : "default" }}>
             <KillChainTimeline hit={h} compact />
             <div className="kc-card-foot">
-              <span className="cat-chip">{RESPONSE_LABEL[h.response] ?? h.response}</span>
+              <span className="cat-chip">{L.response[h.response] ?? h.response}</span>
               {h.mitre?.slice(0, 3).map((t) => (
                 <span className="cat-chip" key={t}>{t}</span>
               ))}
@@ -145,11 +145,7 @@ export function ChainList(
           </div>
         ))}
         {items.length === 0 && (
-          <div className="muted">
-            Belum ada rantai terbukti. Indikator tunggal yang menyala sengaja
-            tidak ditampilkan di sini, karena satu indikator tidak cukup untuk
-            menuduh.
-          </div>
+          <div className="muted">{t.chainsEmpty}</div>
         )}
       </div>
     </div>

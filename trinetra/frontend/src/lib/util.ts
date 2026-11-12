@@ -160,3 +160,72 @@ export function holderLabel(e: {
   if (n) return { rank: r, name: n };
   return { rank: "", name: e.display_name || "—" };
 }
+
+/* ────────────────────────────────────────────────────────────────────
+   Label dua bahasa.
+
+   Peta di atas (ROLE_LABEL, CAT_LABEL, STAGE_LABEL, RESPONSE_LABEL) tetap
+   dipakai sebagai sumber bahasa Indonesia. Di bawah ini padanannya dalam
+   bahasa Inggris, lalu `labels(lang)` memilih pasangan yang tepat.
+
+   Nama satuan dan pangkat TIDAK diterjemahkan: Kodam, Pussiberad, NRP, dan
+   jenjang kepangkatan adalah nama lembaga, bukan kosakata umum. Yang
+   diterjemahkan hanya jabatan fungsionalnya.
+   ──────────────────────────────────────────────────────────────────── */
+
+const ROLE_EN: Record<string, string> = {
+  pati: "General officer", pamen_intel: "Intelligence officer",
+  pamen_ops: "Operations officer", pama_siber: "Cyber officer",
+  bintara_komlek: "Signals NCO", ajudan: "Aide-de-camp", prajurit: "Enlisted",
+  admin_satsiber: "Cyber admin", csirt_analyst: "CSIRT analyst",
+  team_lead: "Team lead", operator: "Operator",
+  data_custodian: "Data custodian", personel: "Personnel", auditor: "Auditor",
+};
+
+const CAT_EN: Record<string, string> = {
+  zero_click_delivery: "Silent Delivery", zero_click_exploit: "Zero-Click Exploit",
+  spyware_implant: "Spyware Implant", covert_surveillance: "Covert Surveillance",
+  covert_exfiltration: "Covert Exfiltration", c2_beacon: "C2 Beacon",
+  malicious_app: "Malicious App", device_tampering: "Device Tampering",
+  mitm: "TLS Interception", radio_attack: "Radio / IMSI Attack",
+  vulnerable_posture: "Vulnerable Posture",
+  data_exfiltration: "Data Exfiltration", privilege_abuse: "Privilege Abuse",
+  lateral_movement: "Lateral Movement", logon_anomaly: "Logon Anomaly",
+  suspicious_process: "Suspicious Process", mass_file_access: "Mass File Access",
+  usb_exfiltration: "USB Exfiltration", config_tampering: "Config Tampering",
+};
+
+const STAGE_EN: Record<string, string> = {
+  posture: "Vulnerable Posture", delivery: "Delivery", exploit: "Exploitation",
+  install: "Installation", privilege: "Privilege Escalation",
+  persistence: "Persistence", implant: "Implant Active", tampering: "Tampering",
+  mitm: "TLS Interception", c2: "Command & Control", collection: "Collection",
+  radio: "Radio Attack",
+};
+
+const RESPONSE_EN: Record<string, string> = {
+  isolate: "Isolate device", quarantine: "Quarantine app",
+  investigate: "Investigate manually", patch: "Prioritise patching",
+};
+
+export function labels(lang: "en" | "id") {
+  const id = lang === "id";
+  return {
+    role: id ? ROLE_LABEL : ROLE_EN,
+    cat: id ? CAT_LABEL : CAT_EN,
+    stage: id ? STAGE_LABEL : STAGE_EN,
+    response: id ? RESPONSE_LABEL : RESPONSE_EN,
+  };
+}
+
+/** Keheningan perangkat dalam bahasa yang dipilih. */
+export function silenceL(lastSeen: string | null | undefined, lang: "en" | "id") {
+  const s = silence(lastSeen);
+  if (!s.stale) return s;
+  const id = lang === "id";
+  if (s.mins === Infinity) return { ...s, label: id ? "belum pernah melapor" : "never reported" };
+  const m = s.mins;
+  const n = m < 60 ? Math.round(m) : m < 1440 ? Math.round(m / 60) : Math.round(m / 1440);
+  const unit = m < 60 ? (id ? "mnt" : "min") : m < 1440 ? (id ? "jam" : "h") : (id ? "hari" : "d");
+  return { ...s, label: `${id ? "senyap" : "silent"} ${n} ${unit}` };
+}
