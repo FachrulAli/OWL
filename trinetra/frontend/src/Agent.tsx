@@ -28,51 +28,54 @@ export default function Agent(
   }, []);
 
   return (
-    <div className="dac">
-      <div className="dac-top">
-        <button className="base-link" onClick={onExit}>← Beranda</button>
-        <button className="base-link" onClick={onConsole}>Buka console →</button>
+    <div className="doc">
+      <div className="doc-top">
+        <button className="pg-nav" onClick={onExit}><span className="ix">←</span> Beranda</button>
+        <button className="pg-nav" onClick={onConsole}>Buka console <span className="ix">→</span></button>
       </div>
 
-      <header className="dac-head">
-        <div className="dac-kicker">Pemasangan · agent MTD Android</div>
+      <header className="doc-head">
+        <div className="doc-kicker">Pemasangan · agent MTD Android</div>
         <h1>Pasang agent di HP dinas</h1>
-        <p className="dac-lede">
+        <p className="doc-lede">
           Agent mengirim <b>metadata perilaku</b> perangkat ke TRINETRA: layar
           nyala atau mati, jumlah byte naik-turun, suhu, aplikasi yang
           terpasang, dan apakah sebuah pesan masuk memunculkan notifikasi.
-          Agent <b>tidak</b> mengambil keputusan deteksi — itu dikerjakan di
+          Agent <b>tidak</b> mengambil keputusan deteksi. Itu dikerjakan di
           server, supaya perangkat yang sudah dikuasai penyerang tidak ikut
           menentukan hasil pemeriksaan atas dirinya sendiri.
         </p>
 
-        <div className="ag-dl">
-          <a className="ag-btn" href={APK} download>
-            Unduh APK
-            <span className="ag-btn-sub">app-debug.apk · 8,1 MB · Android 10+</span>
+        <div className="dl-row">
+          <a className="dl-btn" href={APK} download>
+            <span className="dl-icon" aria-hidden="true">↓</span>
+            <span>
+              <span className="dl-main">Unduh APK agent</span>
+              <span className="dl-meta">app-debug.apk · 8,1 MB · Android 10+</span>
+            </span>
           </a>
-          <div className="ag-dl-note muted">
-            Berkas <b>debug</b>, ditandatangani kunci pengembang — untuk uji
-            coba, bukan distribusi ke pasukan. Penggelaran sungguhan memakai
+          <div className="dl-side">
+            Berkas <b>debug</b>, ditandatangani kunci pengembang, untuk uji coba
+            dan bukan untuk disebar ke pasukan. Penggelaran sungguhan memakai
             APK rilis bertanda tangan resmi dan disebar lewat MDM.
           </div>
         </div>
       </header>
 
       {/* ── status agent yang sedang hidup ── */}
-      <section className="dac-sec">
-        <h2>Agent yang sedang aktif<span className="dac-count">{live.length}</span></h2>
+      <section className="doc-sec">
+        <h2>Agent yang sedang aktif<span className="doc-count">{live.length}</span></h2>
         {live.length === 0 ? (
-          <p className="dac-sub">
+          <p className="doc-sub">
             Belum ada perangkat yang mengirim telemetri sungguhan. Seluruh data
             di console saat ini berasal dari simulator.
           </p>
         ) : (
-          <div className="ag-live">
+          <div className="live-list">
             {live.map((e) => {
               const sil = silence(e.last_seen ?? e.last_event);
               return (
-                <div key={e.entity_id} className="ag-live-row">
+                <div key={e.entity_id} className="live-row">
                   <div>
                     <b>{e.holder_rank} {e.holder_name}</b>
                     <div className="dev-sub">
@@ -81,8 +84,9 @@ export default function Agent(
                       <span>Android {e.os_version}</span>
                     </div>
                   </div>
-                  <div className="ag-live-status">
+                  <div className="live-right">
                     <span className={`dev-tag ${sil.stale ? "" : "live"}`}>
+                      {!sil.stale && <span className="live-dot" />}
                       {sil.stale ? sil.label : "mengirim"}
                     </span>
                     <span className="muted" style={{ fontSize: 11 }}>
@@ -97,39 +101,39 @@ export default function Agent(
       </section>
 
       {/* ── langkah pemasangan ── */}
-      <section className="dac-sec">
+      <section className="doc-sec">
         <h2>Langkah pemasangan</h2>
-        <ol className="ag-steps">
+        <ol className="steps">
           <li>
-            <b>Daftarkan perangkat lebih dulu.</b>
+            <h3>Daftarkan perangkat lebih dulu</h3>
             <p>
               Server menolak telemetri dari perangkat yang tidak ada di
               registry. ID perangkat ditentukan satuan, bukan diklaim sendiri
-              oleh aplikasi — inilah yang mencegah sebuah HP mengaku sebagai HP
+              oleh aplikasi. Inilah yang mencegah sebuah HP mengaku sebagai HP
               perwira lain. Tunggu <b>sekitar 30 detik</b> setelah pendaftaran:
               server menyegarkan daftar identitas secara berkala, dan kiriman
               sebelum itu akan ditolak.
             </p>
           </li>
           <li>
-            <b>Izinkan pemasangan dari sumber ini.</b>
+            <h3>Izinkan pemasangan dari sumber ini</h3>
             <p>
               Android akan menolak APK di luar Play Store sampai diizinkan.
               Setelan → Aplikasi → Akses khusus → Pasang aplikasi tak dikenal.
             </p>
           </li>
           <li>
-            <b>Pasang dan buka aplikasinya.</b>
+            <h3>Pasang dan buka aplikasinya</h3>
             <p>
               Isi alamat server, ID perangkat, dan token penggelaran, lalu tekan
               <b> Simpan &amp; mulai pemantauan</b>.
             </p>
           </li>
           <li>
-            <b>Aktifkan dua izin khusus.</b>
+            <h3>Aktifkan dua izin khusus</h3>
             <p>
               Keduanya tidak bisa diberikan lewat dialog biasa dan harus
-              dinyalakan manual — tombolnya ada di layar aplikasi. Tanpa
+              dinyalakan manual lewat tombol di layar aplikasi. Tanpa
               keduanya agent tetap berjalan, tetapi <b>buta terhadap sinyal
               terpentingnya</b>.
             </p>
@@ -138,37 +142,37 @@ export default function Agent(
       </section>
 
       {/* ── izin dan alasannya ── */}
-      <section className="dac-sec">
+      <section className="doc-sec">
         <h2>Izin yang diminta, dan alasannya</h2>
-        <p className="dac-sub">
+        <p className="doc-sub">
           Setiap izin dipakai untuk satu sinyal deteksi yang spesifik. Tidak ada
           izin yang diminta "untuk nanti".
         </p>
-        <div className="dac-table-wrap">
-          <table className="dac-table">
+        <div className="doc-table-wrap">
+          <table className="doc-table">
             <thead>
               <tr><th>Izin</th><th>Dipakai untuk</th><th>Bila tidak diberikan</th></tr>
             </thead>
             <tbody>
               <tr>
-                <td><b>Akses Penggunaan</b><div className="dac-id mono">PACKAGE_USAGE_STATS</div></td>
-                <td>Trafik keluar per selang waktu dan aplikasi yang sedang di depan — dasar untuk mengenali aktivitas saat perangkat tidak dipakai.</td>
-                <td className="ag-bad">Sinyal eksfiltrasi tidak terbaca sama sekali.</td>
+                <td><b>Akses Penggunaan</b><div className="doc-id">PACKAGE_USAGE_STATS</div></td>
+                <td>Trafik keluar per selang waktu dan aplikasi yang sedang di depan. Keduanya dasar untuk mengenali aktivitas saat perangkat tidak dipakai.</td>
+                <td className="doc-fp-cell">Sinyal eksfiltrasi tidak terbaca sama sekali.</td>
               </tr>
               <tr>
-                <td><b>Akses Notifikasi</b><div className="dac-id mono">NotificationListenerService</div></td>
+                <td><b>Akses Notifikasi</b><div className="doc-id">NotificationListenerService</div></td>
                 <td>Mengetahui apakah sebuah pesan masuk <i>memunculkan</i> notifikasi. Isi notifikasi tidak dibaca.</td>
-                <td className="ag-bad">Pengiriman senyap — tahap pertama zero-click — tidak terdeteksi.</td>
+                <td className="doc-fp-cell">Pengiriman senyap, tahap pertama zero-click, tidak terdeteksi.</td>
               </tr>
               <tr>
-                <td><b>SMS</b><div className="dac-id mono">RECEIVE_SMS, RECEIVE_WAP_PUSH</div></td>
+                <td><b>SMS</b><div className="doc-id">RECEIVE_SMS, RECEIVE_WAP_PUSH</div></td>
                 <td>Metadata pesan masuk: waktu, aplikasi, biner atau teks, dan hash pengirim. <b>Isi pesan tidak pernah dibaca.</b></td>
-                <td className="ag-bad">Vektor SMS biner operator tidak terpantau.</td>
+                <td className="doc-fp-cell">Vektor SMS biner operator tidak terpantau.</td>
               </tr>
               <tr>
-                <td><b>Status telepon</b><div className="dac-id mono">READ_PHONE_STATE</div></td>
-                <td>Generasi jaringan (2G/3G/4G/5G) untuk mengenali penurunan paksa ke 2G — pola IMSI catcher.</td>
-                <td className="ag-bad">Serangan radio tidak terdeteksi.</td>
+                <td><b>Status telepon</b><div className="doc-id">READ_PHONE_STATE</div></td>
+                <td>Generasi jaringan (2G/3G/4G/5G) untuk mengenali penurunan paksa ke 2G, pola khas IMSI catcher.</td>
+                <td className="doc-fp-cell">Serangan radio tidak terdeteksi.</td>
               </tr>
             </tbody>
           </table>
@@ -176,11 +180,11 @@ export default function Agent(
       </section>
 
       {/* ── privasi ── */}
-      <section className="dac-sec">
+      <section className="doc-sec">
         <h2>Yang tidak pernah diambil</h2>
-        <div className="ag-privacy">
-          <div>
-            <h3 className="ag-yes">Dikumpulkan</h3>
+        <div className="privacy">
+          <div className="privacy-col yes">
+            <h3>Dikumpulkan</h3>
             <ul>
               <li>layar nyala/mati, aplikasi di depan</li>
               <li>jumlah byte naik/turun per selang waktu</li>
@@ -192,8 +196,8 @@ export default function Agent(
               <li>hash pengirim pesan (satu arah, terpotong)</li>
             </ul>
           </div>
-          <div>
-            <h3 className="ag-no">Tidak pernah diambil</h3>
+          <div className="privacy-col no">
+            <h3>Tidak pernah diambil</h3>
             <ul>
               <li>isi pesan, isi notifikasi, isi berkas</li>
               <li>nomor telepon, daftar kontak</li>
@@ -203,20 +207,21 @@ export default function Agent(
             </ul>
           </div>
         </div>
-        <div className="dac-note" style={{ marginTop: 14 }}>
+        <div className="doc-note" style={{ marginTop: 14 }}>
           Agent berjalan <b>terbuka</b>: ada notifikasi tetap di status bar
           selama pemantauan aktif, dan pemegang HP dapat menghentikannya kapan
-          saja dari layar aplikasi. Alat pemantau yang bersembunyi dari
-          pemakainya akan berperilaku persis seperti stalkerware yang justru ia
-          deteksi.
+          saja dari layar aplikasi. Keterbukaan ini bukan pilihan gaya. Agent
+          yang menyembunyikan dirinya memakai teknik yang sama dengan
+          stalkerware, dan program pemantauan yang diam-diam tidak akan
+          bertahan begitu pasukan mengetahuinya.
         </div>
       </section>
 
       {/* ── batas yang diakui ── */}
-      <section className="dac-sec">
+      <section className="doc-sec">
         <h2>Batas yang diakui</h2>
-        <div className="ag-limits">
-          <div className="ag-limit">
+        <div className="limits">
+          <div className="limit-card">
             <h3>Crash proses sistem tidak terbaca</h3>
             <p>
               Yaitu tahap <i>eksploitasi</i> pada rantai zero-click. Android
@@ -226,7 +231,7 @@ export default function Agent(
               dinas yang di-provision sebagai Device Owner.
             </p>
           </div>
-          <div className="ag-limit">
+          <div className="limit-card">
             <h3>Tidak ada agent untuk iPhone</h3>
             <p>
               iOS tidak memberi aplikasi pihak ketiga akses ke proses sistem,
@@ -235,11 +240,11 @@ export default function Agent(
               perangkat menarik bundel diagnostik, lalu dianalisis di server.
             </p>
           </div>
-          <div className="ag-limit">
+          <div className="limit-card">
             <h3>Belum diuji di perangkat fisik</h3>
             <p>
               Agent sudah dikompilasi, dipasang, dijalankan, dan terbukti
-              mengirim telemetri yang tembus ke dashboard — tetapi pada
+              mengirim telemetri yang tembus ke dashboard, tetapi semua itu di
               emulator. Status termal, mikrofon/kamera, dan penurunan baterai
               alami belum teruji pada HP sungguhan.
             </p>
@@ -247,7 +252,7 @@ export default function Agent(
         </div>
       </section>
 
-      <footer className="dac-foot">
+      <footer className="doc-foot">
         Rincian teknis, daftar sinyal, dan cara membangun dari sumber ada di{" "}
         <span className="mono">agent/README.md</span> di repositori.
       </footer>

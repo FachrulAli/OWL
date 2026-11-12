@@ -1,5 +1,6 @@
 """REST API for the command-center dashboard."""
 import json
+from datetime import timezone
 
 from fastapi import (APIRouter, File, Header, HTTPException, UploadFile,
                      WebSocket, WebSocketDisconnect)
@@ -15,6 +16,27 @@ from ..consumer import STATS
 from ..ws import hub
 
 router = APIRouter()
+
+
+def _iso_utc(dt):
+    """Serialkan waktu dari ClickHouse sebagai UTC yang eksplisit.
+
+    ClickHouse mengembalikan datetime TANPA zona waktu, padahal isinya UTC.
+    `datetime.isoformat()` pada nilai naive menghasilkan '2026-11-12T04:12:56'
+    tanpa penanda apa pun, dan `new Date(...)` di peramban membacanya sebagai
+    waktu LOKAL. Di Indonesia (UTC+7) akibatnya setiap timestamp tampak tujuh
+    jam lebih tua — perangkat yang baru saja melapor ditandai "senyap 7 jam",
+    dan operator menyimpulkan ada titik buta yang sebenarnya tidak ada.
+
+    Ditemukan saat memverifikasi tampilan di peramban sungguhan; tidak
+    terlihat sama sekali dari sisi API karena nilainya "kelihatan benar".
+    """
+    if dt is None or not hasattr(dt, "isoformat"):
+        return None
+    if getattr(dt, "tzinfo", None) is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.isoformat()
+
 
 
 @router.get("/health")
@@ -80,7 +102,7 @@ async def _device_facts() -> dict:
             "device_model": d.get("device_model") or "",
             "patch_age_days": int(d.get("patch_age_days") or 0),
             "net_gen": d.get("net_gen") or "",
-            "last_seen": ls.isoformat() if hasattr(ls, "isoformat") else None,
+            "last_seen": _iso_utc(ls),
             # Perangkat dengan event berlabel live_agent = telemetri dari agent
             # MTD sungguhan di HP, bukan dari simulator.
             "live_agent": int(d.get("live_events") or 0) > 0,
@@ -169,7 +191,7 @@ async def entity_detail(entity_id: str):
         """, {"e": entity_id})
     timeline = [dict(zip(tl_cols, r)) for r in tl_rows]
     for t in timeline:
-        t["ts"] = t["ts"].isoformat()
+        t["ts"] = _iso_utc(t["ts"])
 
     # raw recent events
     ev_rows, ev_cols = await ch_query(
@@ -180,7 +202,7 @@ async def entity_detail(entity_id: str):
         """, {"e": entity_id})
     events = [dict(zip(ev_cols, r)) for r in ev_rows]
     for e in events:
-        e["ts"] = e["ts"].isoformat()
+        e["ts"] = _iso_utc(e["ts"])
 
     live = entity_risk(entity_id)
     return {
@@ -317,7 +339,8 @@ async def category_timeline(hours: int = 6):
         )
         GROUP BY bucket, category ORDER BY bucket
         """, {"h": hours})
-    return [{"bucket": r[0].isoformat(), "category": r[1], "count": int(r[2])} for r in rows]
+    return [{"bucket": _iso_utc(r[0]), "category": r[1], "count": int(r[2])}
+            for r in rows]
 
 
 @router.get("/sigma/rules")
@@ -495,7 +518,7 @@ async def chain_hits(limit: int = 50, entity_id: str | None = None):
     out = []
     for r in rows:
         d = dict(zip(cols, r))
-        d["ts"] = d["ts"].isoformat() if hasattr(d["ts"], "isoformat") else d["ts"]
+        d["ts"] = _iso_utc(d["ts"])
         d["display_name"] = (ents.get(d["entity_id"]) or {}).get(
             "display_name", d["entity_id"])
         try:

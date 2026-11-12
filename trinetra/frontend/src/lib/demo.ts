@@ -136,7 +136,7 @@ interface ChainDef {
 const CHAIN_DEFS: Record<string, ChainDef> = {
   zeroclick_imessage: {
     corr_id: "corr_zeroclick_fullchain",
-    title: "Rantai zero-click lengkap — pengiriman, eksploitasi, eksfiltrasi",
+    title: "Rantai zero-click lengkap: pengiriman, eksploitasi, eksfiltrasi",
     category: "zero_click_exploit", severity: 85, level: "critical",
     response: "isolate", corr_type: "temporal_ordered", timespan_s: 600,
     mitre: ["T1203", "T1660", "T1639"],
@@ -150,7 +150,7 @@ const CHAIN_DEFS: Record<string, ChainDef> = {
   },
   zeroclick_whatsapp: {
     corr_id: "corr_zeroclick_fullchain",
-    title: "Rantai zero-click lengkap — pengiriman, eksploitasi, eksfiltrasi",
+    title: "Rantai zero-click lengkap: pengiriman, eksploitasi, eksfiltrasi",
     category: "zero_click_exploit", severity: 85, level: "critical",
     response: "isolate", corr_type: "temporal_ordered", timespan_s: 600,
     mitre: ["T1203", "T1660", "T1639"],
@@ -163,7 +163,7 @@ const CHAIN_DEFS: Record<string, ChainDef> = {
   },
   zeroclick_sms_wap: {
     corr_id: "corr_zeroclick_beacon_chain",
-    title: "Rantai zero-click via SMS biner — pengiriman, eksploitasi, denyut kendali",
+    title: "Rantai zero-click via SMS biner: pengiriman, eksploitasi, denyut kendali",
     category: "zero_click_exploit", severity: 82, level: "critical",
     response: "isolate", corr_type: "temporal_ordered", timespan_s: 900,
     mitre: ["T1203", "T1437"],
@@ -171,7 +171,7 @@ const CHAIN_DEFS: Record<string, ChainDef> = {
       { stage: "delivery", rule: "mob_silent_inbound", detail: "SMS biner dari pengirim tak dikenal, tidak muncul di inbox" },
       { stage: "exploit", rule: "mob_parser_crash_idle", detail: "com.android.phone berhenti tidak wajar" },
       { stage: "persistence", rule: "mob_ca_cert_added", detail: "DNS perangkat ditimpa tanpa sepengetahuan pengguna" },
-      { stage: "c2", rule: "mob_beacon_regular", detail: "denyut 0,12 MB tiap 300 detik — pola mesin, bukan manusia" },
+      { stage: "c2", rule: "mob_beacon_regular", detail: "denyut 0,12 MB tiap 300 detik, pola mesin dan bukan manusia" },
     ],
   },
   sideload_rat: {
@@ -195,7 +195,7 @@ const CHAIN_DEFS: Record<string, ChainDef> = {
     steps: [
       { stage: "c2", rule: "mob_ioc_domain", detail: "tujuan cocok indikator kampanye Pegasus (daftar Amnesty)" },
       { stage: "c2", rule: "mob_beacon_regular", detail: "denyut berinterval tetap saat perangkat idle" },
-      { stage: "c2", rule: "mob_beacon_regular", detail: "denyut berulang — bukan keep-alive aplikasi sah" },
+      { stage: "c2", rule: "mob_beacon_regular", detail: "denyut berulang, bukan keep-alive aplikasi sah" },
     ],
   },
   imsi_catcher: {
@@ -206,7 +206,7 @@ const CHAIN_DEFS: Record<string, ChainDef> = {
     mitre: ["T1430"],
     steps: [
       { stage: "radio", rule: "mob_radio_downgrade", detail: "dipaksa turun ke 2G, enkripsi radio mati, cell ID tak dikenal" },
-      { stage: "radio", rule: "mob_radio_downgrade", detail: "terulang dalam 10 menit — bukan sekadar area blankspot" },
+      { stage: "radio", rule: "mob_radio_downgrade", detail: "terulang dalam 10 menit, bukan sekadar area blankspot" },
     ],
   },
 };
@@ -224,10 +224,10 @@ const COMPROMISED: Record<string, string> = {
 // Penyimpangan jinak: satu indikator menyala, TIDAK membentuk rantai, tidak
 // pernah menjadi kasus. Inilah yang membedakan detektor bagus dari yang berisik.
 const BENIGN = [
-  { rule: "mob_covert_egress_idle", detail: "backup iCloud tengah malam — satu indikator, tanpa rantai" },
+  { rule: "mob_covert_egress_idle", detail: "backup iCloud tengah malam: satu indikator, tanpa rantai" },
   { rule: "mob_thermal_idle", detail: "HP panas saat sinyal lemah di daerah blankspot" },
   { rule: "mob_silent_inbound", detail: "notifikasi dibisukan pengguna sendiri" },
-  { rule: "mob_patch_stale", detail: "patch keamanan tertinggal — postur, bukan serangan" },
+  { rule: "mob_patch_stale", detail: "patch keamanan tertinggal: postur, bukan serangan" },
 ];
 
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
@@ -410,7 +410,7 @@ class Engine {
     const c: Case = {
       case_id: this.caseSeq++, entity_id: d.id, role: d.role, node_id: d.node,
       tier: d.tier, severity: sev(s.risk), risk_score: Math.round(s.risk),
-      categories: cats, title: `${devName(d)} — ${def.title}`,
+      categories: cats, title: `${devName(d)} · ${def.title}`,
       summary: `Rantai ${def.corr_type} terpenuhi pada ${d.model} `
         + `(${d.platform.toUpperCase()} ${d.os}) di ${d.node}. `
         + `Tindakan disarankan: ${def.response}.`,
@@ -437,7 +437,7 @@ class Engine {
         node_ids: Array.from(nodes),
         score: Math.min(100, 72 + nodes.size * 7),
         summary: `Rantai '${corrId}' terdeteksi di ${nodes.size} komando `
-          + `(${Array.from(nodes).join(", ")}) — indikasi kampanye terkoordinasi, `
+          + `(${Array.from(nodes).join(", ")}). Ini indikasi kampanye terkoordinasi, `
           + `bukan insiden tunggal.`,
         created_at: new Date().toISOString(),
       });
@@ -567,7 +567,7 @@ class Engine {
         { name: "mvt-project/mvt-indicators", license: "MIT", campaigns: IOC_CAMPAIGNS.filter((c) => c !== "Pegasus") },
       ],
       catatan: "Indikator bersifat historis dan bisa menghasilkan false positive, "
-        + "karena itu tidak pernah dipakai sebagai bukti tunggal — selalu "
+        + "karena itu tidak pernah dipakai sebagai bukti tunggal dan selalu "
         + "dikorelasikan dengan perilaku perangkat.",
     };
   }
@@ -593,8 +593,8 @@ const SIGMA_DEMO: SigmaCatalog = {
   note: "Aturan dievaluasi oleh engine streaming TRINETRA sendiri, bukan "
     + "diterjemahkan ke backend SIEM eksternal.",
   atomic: [
-    { id: "mob_silent_inbound", sigma_id: "", title: "Pesan masuk senyap dari pengirim tak dikenal", description: "Pesan/lampiran dari pengirim tak dikenal, tanpa notifikasi, saat perangkat idle. Pola PENGIRIMAN zero-click. Sendirian bukan bukti.", level: "low", category: "zero_click_delivery", severity: 12, stage: "delivery", mitre: ["T1660"], domain: "mobile", service: "messaging", fields: ["silent_inbound"], falsepositives: ["Aplikasi pesan yang notifikasinya dibisukan pengguna"] },
-    { id: "mob_parser_crash_idle", sigma_id: "", title: "Crash proses parser OS saat perangkat idle", description: "Proses sistem pemroses masukan luar (IMTransferAgent, BlastDoor, mediaserver) berhenti tidak wajar saat idle — permukaan tahap EKSPLOITASI.", level: "medium", category: "zero_click_exploit", severity: 30, stage: "exploit", mitre: ["T1203"], domain: "mobile", service: "process", fields: ["parser_crash"], falsepositives: ["Bug OS setelah pembaruan besar"] },
+    { id: "mob_silent_inbound", sigma_id: "", title: "Pesan masuk senyap dari pengirim tak dikenal", description: "Pesan atau lampiran dari pengirim tak dikenal, tanpa notifikasi, saat perangkat idle. Ini pola PENGIRIMAN zero-click, dan sendirian belum jadi bukti.", level: "low", category: "zero_click_delivery", severity: 12, stage: "delivery", mitre: ["T1660"], domain: "mobile", service: "messaging", fields: ["silent_inbound"], falsepositives: ["Aplikasi pesan yang notifikasinya dibisukan pengguna"] },
+    { id: "mob_parser_crash_idle", sigma_id: "", title: "Crash proses parser OS saat perangkat idle", description: "Proses sistem pemroses masukan luar (IMTransferAgent, BlastDoor, mediaserver) berhenti tidak wajar saat idle. Inilah permukaan tahap EKSPLOITASI.", level: "medium", category: "zero_click_exploit", severity: 30, stage: "exploit", mitre: ["T1203"], domain: "mobile", service: "process", fields: ["parser_crash"], falsepositives: ["Bug OS setelah pembaruan besar"] },
     { id: "mob_thermal_idle", sigma_id: "", title: "Perangkat panas dan baterai terkuras saat idle", description: "Proksi beban komputasi tersembunyi: implan baru aktif atau sedang mengompresi data sebelum eksfiltrasi.", level: "medium", category: "spyware_implant", severity: 22, stage: "implant", mitre: [], domain: "mobile", service: "power", fields: ["idle_thermal", "battery_drop_pct"], falsepositives: ["Sinkronisasi besar di latar belakang", "Sinyal lemah membuat radio bekerja keras"] },
     { id: "mob_covert_egress_idle", sigma_id: "", title: "Trafik keluar tersembunyi saat perangkat idle", description: "Unggahan bervolume ke ASN non-arus-utama saat idle. Backup resmi Apple/Google/Microsoft dikecualikan oleh filter.", level: "medium", category: "covert_exfiltration", severity: 28, stage: "c2", mitre: ["T1639"], domain: "mobile", service: "network", fields: ["idle", "egress_mb", "dest_asn"], falsepositives: ["Backup pihak ketiga terjadwal tengah malam"] },
     { id: "mob_covert_sensor", sigma_id: "", title: "Mikrofon atau kamera aktif tanpa aplikasi di depan", description: "Layar mati, tanpa interaksi, tanpa aplikasi foreground. Hampir tidak ada alasan sah pada HP dinas.", level: "high", category: "covert_surveillance", severity: 35, stage: "collection", mitre: ["T1429", "T1512"], domain: "mobile", service: "media", fields: ["covert_sensor"], falsepositives: ["Asisten suara selalu-siaga (perlu allowlist)", "Perekam panggilan resmi"] },
@@ -602,23 +602,23 @@ const SIGMA_DEMO: SigmaCatalog = {
     { id: "mob_accessibility_abuse", sigma_id: "", title: "Izin Accessibility atau Device Admin diberikan saat idle", description: "Dua izin yang memberi kendali penuh layar & masukan. Pemberian tanpa interaksi berarti otomatis.", level: "high", category: "malicious_app", severity: 30, stage: "privilege", mitre: ["T1626"], domain: "mobile", service: "integrity", fields: ["idle", "accessibility_granted", "device_admin_granted"], falsepositives: [] },
     { id: "mob_hidden_persistent_app", sigma_id: "", title: "Aplikasi tersembunyi persisten dengan izin sensitif", description: "Tanpa ikon launcher, berjalan terus, memegang izin mikrofon/kamera/lokasi/SMS. Pola khas stalkerware.", level: "high", category: "spyware_implant", severity: 30, stage: "implant", mitre: ["T1625"], domain: "mobile", service: "package", fields: ["pkg_hidden", "perm_sensitive"], falsepositives: [] },
     { id: "mob_ioc_domain", sigma_id: "", title: "Koneksi ke infrastruktur spyware yang sudah dikenal", description: "Tujuan cocok indikator STIX2 publik (Pegasus, Predator, KingsPawn dsb). Historis dan bisa salah, jadi tetap dikorelasikan.", level: "high", category: "c2_beacon", severity: 45, stage: "c2", mitre: ["T1437"], domain: "mobile", service: "network", fields: ["ioc_match"], falsepositives: ["Domain yang pernah disalahgunakan lalu kembali sah", "Kunjungan lampau yang tidak lagi aktif"] },
-    { id: "mob_beacon_regular", sigma_id: "", title: "Beacon berpola teratur saat perangkat idle", description: "Koneksi kecil berinterval tetap — pola denyut kendali, bukan pola pemakaian manusia.", level: "medium", category: "c2_beacon", severity: 24, stage: "c2", mitre: [], domain: "mobile", service: "network", fields: ["idle", "beacon_interval_s"], falsepositives: ["Keep-alive push notification aplikasi sah"] },
+    { id: "mob_beacon_regular", sigma_id: "", title: "Beacon berpola teratur saat perangkat idle", description: "Koneksi kecil berinterval tetap. Ini pola denyut kendali, bukan pola pemakaian manusia.", level: "medium", category: "c2_beacon", severity: 24, stage: "c2", mitre: [], domain: "mobile", service: "network", fields: ["idle", "beacon_interval_s"], falsepositives: ["Keep-alive push notification aplikasi sah"] },
     { id: "mob_rogue_profile", sigma_id: "", title: "Profil manajemen perangkat tidak terpercaya terpasang", description: "Jalur klasik pengambilalihan perangkat lewat rekayasa sosial.", level: "high", category: "device_tampering", severity: 30, stage: "tampering", mitre: [], domain: "mobile", service: "integrity", fields: ["profile_added", "profile_trusted"], falsepositives: [] },
-    { id: "mob_ca_cert_added", sigma_id: "", title: "Sertifikat CA atau konfigurasi jaringan diubah diam-diam", description: "Penambahan CA, penimpaan DNS, atau proxy — membuka penyadapan TLS seluruh perangkat.", level: "high", category: "device_tampering", severity: 32, stage: "tampering", mitre: ["T1557"], domain: "mobile", service: "integrity", fields: ["tamper_detail"], falsepositives: [] },
+    { id: "mob_ca_cert_added", sigma_id: "", title: "Sertifikat CA atau konfigurasi jaringan diubah diam-diam", description: "Penambahan CA, penimpaan DNS, atau proxy. Ketiganya membuka penyadapan TLS pada seluruh perangkat.", level: "high", category: "device_tampering", severity: 32, stage: "tampering", mitre: ["T1557"], domain: "mobile", service: "integrity", fields: ["tamper_detail"], falsepositives: [] },
     { id: "mob_tls_mitm", sigma_id: "", title: "Indikasi penyadapan TLS pada lalu lintas perangkat", description: "Rantai sertifikat tidak cocok dengan yang disematkan (pinning gagal).", level: "high", category: "mitm", severity: 30, stage: "mitm", mitre: ["T1557"], domain: "mobile", service: "network", fields: ["tls_mitm"], falsepositives: [] },
-    { id: "mob_radio_downgrade", sigma_id: "", title: "Penurunan paksa ke 2G tanpa enkripsi pada sel tak dikenal", description: "Pola IMSI catcher / BTS palsu — relevan untuk pengamanan kegiatan pimpinan di lapangan.", level: "high", category: "radio_attack", severity: 28, stage: "radio", mitre: ["T1430"], domain: "mobile", service: "radio", fields: ["net_gen", "cell_unknown", "cell_encryption"], falsepositives: ["Daerah blankspot yang hanya terlayani 2G"] },
+    { id: "mob_radio_downgrade", sigma_id: "", title: "Penurunan paksa ke 2G tanpa enkripsi pada sel tak dikenal", description: "Pola IMSI catcher atau BTS palsu, relevan untuk pengamanan kegiatan pimpinan di lapangan.", level: "high", category: "radio_attack", severity: 28, stage: "radio", mitre: ["T1430"], domain: "mobile", service: "radio", fields: ["net_gen", "cell_unknown", "cell_encryption"], falsepositives: ["Daerah blankspot yang hanya terlayani 2G"] },
     { id: "mob_integrity_fail", sigma_id: "", title: "Integritas perangkat gagal (root/jailbreak/bootloader terbuka)", description: "Pada HP dinas ini pelanggaran kebijakan sekaligus prasyarat banyak implan.", level: "medium", category: "device_tampering", severity: 25, stage: "tampering", mitre: ["T1631"], domain: "mobile", service: "integrity", fields: ["integrity_fail"], falsepositives: [] },
-    { id: "mob_patch_stale", sigma_id: "", title: "Patch keamanan perangkat kedaluwarsa", description: "Lebih tua dari 180 hari. Bukan serangan melainkan POSTUR — dipakai sebagai pengali risiko, bukan alarm.", level: "informational", category: "vulnerable_posture", severity: 8, stage: "posture", mitre: [], domain: "mobile", service: "integrity", fields: ["patch_age_days"], falsepositives: [] },
+    { id: "mob_patch_stale", sigma_id: "", title: "Patch keamanan perangkat kedaluwarsa", description: "Lebih tua dari 180 hari. Bukan serangan melainkan POSTUR, dipakai sebagai pengali risiko dan bukan alarm.", level: "informational", category: "vulnerable_posture", severity: 8, stage: "posture", mitre: [], domain: "mobile", service: "integrity", fields: ["patch_age_days"], falsepositives: [] },
   ],
   correlation: [
-    { id: "corr_zeroclick_fullchain", sigma_id: "", title: "Rantai zero-click lengkap — pengiriman, eksploitasi, eksfiltrasi", description: "Pesan senyap, lalu crash proses parser OS, lalu unggahan keluar — satu perangkat, 10 menit, perangkat idle. Praktis tidak punya padanan sah.", type: "temporal_ordered", rules: ["mob_silent_inbound", "mob_parser_crash_idle", "mob_covert_egress_idle"], timespan_s: 600, group_by: ["entity_id"], count_gte: 1, level: "critical", category: "zero_click_exploit", severity: 85, kill_chain: ["delivery", "exploit", "c2"], response: "isolate", mitre: ["T1203"] },
-    { id: "corr_zeroclick_beacon_chain", sigma_id: "", title: "Rantai zero-click via SMS biner — pengiriman, eksploitasi, denyut kendali", description: "Varian yang TIDAK mengunggah data besar; implan hanya berdenyut dan menunggu perintah. Menutup celah aturan fullchain yang menuntut volume.", type: "temporal_ordered", rules: ["mob_silent_inbound", "mob_parser_crash_idle", "mob_beacon_regular"], timespan_s: 900, group_by: ["entity_id"], count_gte: 1, level: "critical", category: "zero_click_exploit", severity: 82, kill_chain: ["delivery", "exploit", "c2"], response: "isolate", mitre: ["T1203", "T1437"] },
+    { id: "corr_zeroclick_fullchain", sigma_id: "", title: "Rantai zero-click lengkap: pengiriman, eksploitasi, eksfiltrasi", description: "Pesan senyap, lalu crash proses parser OS, lalu unggahan keluar: satu perangkat, 10 menit, perangkat idle. Praktis tidak punya padanan sah.", type: "temporal_ordered", rules: ["mob_silent_inbound", "mob_parser_crash_idle", "mob_covert_egress_idle"], timespan_s: 600, group_by: ["entity_id"], count_gte: 1, level: "critical", category: "zero_click_exploit", severity: 85, kill_chain: ["delivery", "exploit", "c2"], response: "isolate", mitre: ["T1203"] },
+    { id: "corr_zeroclick_beacon_chain", sigma_id: "", title: "Rantai zero-click via SMS biner: pengiriman, eksploitasi, denyut kendali", description: "Varian yang TIDAK mengunggah data besar; implan hanya berdenyut dan menunggu perintah. Menutup celah aturan fullchain yang menuntut volume.", type: "temporal_ordered", rules: ["mob_silent_inbound", "mob_parser_crash_idle", "mob_beacon_regular"], timespan_s: 900, group_by: ["entity_id"], count_gte: 1, level: "critical", category: "zero_click_exploit", severity: 82, kill_chain: ["delivery", "exploit", "c2"], response: "isolate", mitre: ["T1203", "T1437"] },
     { id: "corr_zeroclick_surveillance", sigma_id: "", title: "Rantai zero-click dengan penyadapan sensor", description: "Crash parser OS diikuti mikrofon/kamera aktif tanpa aplikasi di depan: implan sudah berjalan dan mulai menyadap.", type: "temporal_ordered", rules: ["mob_parser_crash_idle", "mob_covert_sensor"], timespan_s: 900, group_by: ["entity_id"], count_gte: 1, level: "critical", category: "covert_surveillance", severity: 78, kill_chain: ["exploit", "collection"], response: "isolate", mitre: ["T1429"] },
     { id: "corr_sideload_to_surveillance", sigma_id: "", title: "APK sideload menjadi penyadapan penuh", description: "Sideload, lalu Accessibility/Device Admin tanpa interaksi, lalu sensor menyala. Rantai khas RAT Android.", type: "temporal_ordered", rules: ["mob_sideload_install", "mob_accessibility_abuse", "mob_covert_sensor"], timespan_s: 1800, group_by: ["entity_id"], count_gte: 1, level: "critical", category: "malicious_app", severity: 75, kill_chain: ["install", "privilege", "collection"], response: "quarantine", mitre: ["T1476"] },
     { id: "corr_mitm_chain", sigma_id: "", title: "Penyadapan TLS melalui profil dan sertifikat jahat", description: "Profil tidak terpercaya, lalu CA/DNS diubah, lalu indikasi penyadapan TLS. Seluruh komunikasi perangkat terbuka.", type: "temporal_ordered", rules: ["mob_rogue_profile", "mob_ca_cert_added", "mob_tls_mitm"], timespan_s: 1800, group_by: ["entity_id"], count_gte: 1, level: "critical", category: "mitm", severity: 70, kill_chain: ["install", "tampering", "mitm"], response: "isolate", mitre: ["T1557"] },
-    { id: "corr_implant_active", sigma_id: "", title: "Implan aktif — beban tersembunyi diikuti eksfiltrasi", description: "Panas & baterai terkuras saat idle, lalu unggahan ke ASN non-arus-utama.", type: "temporal_ordered", rules: ["mob_thermal_idle", "mob_covert_egress_idle"], timespan_s: 1200, group_by: ["entity_id"], count_gte: 1, level: "high", category: "spyware_implant", severity: 60, kill_chain: ["implant", "c2"], response: "investigate", mitre: [] },
+    { id: "corr_implant_active", sigma_id: "", title: "Implan aktif: beban tersembunyi diikuti eksfiltrasi", description: "Panas & baterai terkuras saat idle, lalu unggahan ke ASN non-arus-utama.", type: "temporal_ordered", rules: ["mob_thermal_idle", "mob_covert_egress_idle"], timespan_s: 1200, group_by: ["entity_id"], count_gte: 1, level: "high", category: "spyware_implant", severity: 60, kill_chain: ["implant", "c2"], response: "investigate", mitre: [] },
     { id: "corr_beacon_persistent", sigma_id: "", title: "Denyut kendali berulang ke luar", description: "Satu beacon bisa keep-alive sah; tiga dengan interval seragam saat idle tidak.", type: "event_count", rules: ["mob_beacon_regular"], timespan_s: 900, group_by: ["entity_id"], count_gte: 3, level: "high", category: "c2_beacon", severity: 55, kill_chain: ["c2"], response: "investigate", mitre: ["T1437"] },
-    { id: "corr_imsi_catcher", sigma_id: "", title: "Indikasi IMSI catcher berulang", description: "Penurunan paksa ke 2G tanpa enkripsi lebih dari sekali dalam 10 menit — bukan sekadar blankspot.", type: "event_count", rules: ["mob_radio_downgrade"], timespan_s: 600, group_by: ["entity_id"], count_gte: 2, level: "high", category: "radio_attack", severity: 52, kill_chain: ["radio"], response: "investigate", mitre: ["T1430"] },
+    { id: "corr_imsi_catcher", sigma_id: "", title: "Indikasi IMSI catcher berulang", description: "Penurunan paksa ke 2G tanpa enkripsi lebih dari sekali dalam 10 menit, bukan sekadar blankspot.", type: "event_count", rules: ["mob_radio_downgrade"], timespan_s: 600, group_by: ["entity_id"], count_gte: 2, level: "high", category: "radio_attack", severity: 52, kill_chain: ["radio"], response: "investigate", mitre: ["T1430"] },
     { id: "corr_silent_delivery_burst", sigma_id: "", title: "Gelombang pengiriman senyap ke satu perangkat", description: "Penyerang sering mencoba beberapa kali ketika upaya pertama gagal.", type: "event_count", rules: ["mob_silent_inbound"], timespan_s: 300, group_by: ["entity_id"], count_gte: 3, level: "medium", category: "zero_click_delivery", severity: 40, kill_chain: ["delivery"], response: "investigate", mitre: ["T1660"] },
     { id: "corr_vulnerable_targeted", sigma_id: "", title: "Perangkat rentan menjadi sasaran pengiriman senyap", description: "Bukan bukti kompromi, tapi menentukan perangkat mana yang harus ditambal lebih dulu.", type: "temporal", rules: ["mob_patch_stale", "mob_silent_inbound"], timespan_s: 3600, group_by: ["entity_id"], count_gte: 1, level: "medium", category: "vulnerable_posture", severity: 30, kill_chain: ["posture", "delivery"], response: "patch", mitre: [] },
   ],

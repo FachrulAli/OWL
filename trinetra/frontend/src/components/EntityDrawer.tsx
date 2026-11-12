@@ -122,7 +122,7 @@ function RiskTimeline({ timeline }: { timeline: any[] }) {
   }));
   return (
     <div style={{ marginBottom: 20 }}>
-      <h2 style={{ fontSize: 12 }}>Investigation Timeline — Evolusi Risk Score</h2>
+      <h2 style={{ fontSize: 12 }}>Lini Masa Investigasi · Perubahan Skor Risiko</h2>
       <ResponsiveContainer width="100%" height={180}>
         <LineChart data={data}>
           <CartesianGrid stroke="#182435" strokeDasharray="3 3" />

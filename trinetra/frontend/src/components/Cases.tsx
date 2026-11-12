@@ -13,7 +13,7 @@ export function Cases({ cases, onSelect, onChange }: {
   };
   return (
     <div className="panel">
-      <h2>Case Management — Triage & Investigasi</h2>
+      <h2>Manajemen Kasus · Triase dan Investigasi</h2>
       <div className="scroll">
         <table>
           <thead>

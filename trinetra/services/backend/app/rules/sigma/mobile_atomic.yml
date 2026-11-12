@@ -1,4 +1,4 @@
-# TRINETRA — aturan deteksi MOBILE (MTD), format Sigma.
+# TRINETRA: aturan deteksi MOBILE (MTD), format Sigma.
 # Ditulis mengikuti Sigma specification v2 (public domain). Dievaluasi oleh
 # engine TRINETRA sendiri (lihat rules/sigma_loader.py) agar tidak bergantung
 # pada backend SIEM eksternal.
@@ -242,8 +242,8 @@ id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1009
 status: stable
 description: >
   Domain/IP tujuan cocok dengan indikator spyware yang dipublikasikan
-  (berkas STIX2 `mvt-indicators`, lisensi MIT — kelas Pegasus, Predator,
-  KingsPawn). Kecocokan IOC bersifat historis dan bisa salah, karena itu
+  (berkas STIX2 `mvt-indicators`, lisensi MIT, mencakup kelas Pegasus,
+  Predator, dan KingsPawn). Kecocokan IOC bersifat historis dan bisa salah, karena itu
   tetap dikorelasikan dengan perilaku, tidak dipakai sebagai satu-satunya bukti.
 logsource:
   product: mobile
@@ -270,8 +270,8 @@ name: mob_beacon_regular
 id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1010
 status: experimental
 description: >
-  Koneksi keluar kecil dengan interval tetap saat perangkat idle — pola
-  denyut kendali (C2) bukan pola pemakaian manusia.
+  Koneksi keluar kecil dengan interval tetap saat perangkat idle. Ini pola
+  denyut kendali (C2), bukan pola pemakaian manusia.
 logsource:
   product: mobile
   service: network
@@ -370,8 +370,8 @@ id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1014
 status: experimental
 description: >
   Perangkat dipaksa turun ke 2G, enkripsi radio mati, dan menempel pada
-  cell ID yang belum pernah terlihat di wilayah itu. Pola IMSI catcher /
-  BTS palsu — relevan untuk pengamanan kegiatan pimpinan di lapangan.
+  cell ID yang belum pernah terlihat di wilayah itu. Pola IMSI catcher atau
+  BTS palsu, relevan untuk pengamanan kegiatan pimpinan di lapangan.
 logsource:
   product: mobile
   service: radio

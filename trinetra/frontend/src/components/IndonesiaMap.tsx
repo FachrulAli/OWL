@@ -88,7 +88,7 @@ export function IndonesiaMap({ nodes, onPick }: { nodes: Node[]; onPick?: (nodeI
 
   return (
     <div className="panel map-panel">
-      <h2>Peta Komando — 21 Kodam TNI AD</h2>
+      <h2>Peta Komando · 21 Kodam TNI AD</h2>
       <div className="map-wrap">
         <div className="map-frame" aria-hidden="true">
           <span className="scan" />

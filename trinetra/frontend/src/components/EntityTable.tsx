@@ -15,7 +15,7 @@ import {
  * Yang sengaja TIDAK ditampilkan di sini: jumlah signal, kategori, ASN, dan
  * rincian teknis lain. Semua itu ada di panel perangkat saat baris diklik.
  * Tabel ini untuk memutuskan "tangani yang mana dulu", bukan untuk
- * menginvestigasi — menaruh semuanya di sini justru memperlambat keputusan.
+ * menginvestigasi. Menaruh semuanya di sini justru memperlambat keputusan.
  */
 export function EntityTable(
   { entities, onSelect }: { entities: Entity[]; onSelect: (id: string) => void },
@@ -100,7 +100,7 @@ export function EntityTable(
                   <div className="muted">{fmtTime(e.last_seen ?? e.last_event)}</div>
                   {sil.stale && (
                     <div className="dev-silent"
-                      title="Perangkat berhenti melapor. Pada sistem pemantauan, perangkat yang senyap bukan berarti aman — itu titik buta.">
+                      title="Perangkat berhenti melapor. Pada sistem pemantauan, perangkat yang senyap bukan berarti aman, melainkan titik buta.">
                       {sil.label}
                     </div>
                   )}

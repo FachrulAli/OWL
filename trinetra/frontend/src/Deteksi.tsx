@@ -9,7 +9,7 @@ import {
  *
  * Alasan halaman ini ada: aturan deteksi yang hanya hidup di dalam kode tidak
  * bisa diaudit oleh orang yang harus mempercayainya. Di sini setiap aturan
- * ditampilkan apa adanya — kondisinya, bobotnya, false positive yang diakui,
+ * ditampilkan apa adanya: kondisinya, bobotnya, false positive yang diakui,
  * dan aturan atomik mana yang menyusun setiap rantai. Siapa pun bisa menilai
  * apakah logikanya masuk akal, tanpa membaca Python.
  */
@@ -39,75 +39,77 @@ export default function Deteksi(
     [cat]);
 
   return (
-    <div className="dac">
-      <div className="dac-top">
-        <button className="base-link" onClick={onExit}>← Beranda</button>
-        <button className="base-link" onClick={onConsole}>Buka console →</button>
+    <div className="doc">
+      <div className="doc-top">
+        <button className="pg-nav" onClick={onExit}><span className="ix">←</span> Beranda</button>
+        <button className="pg-nav" onClick={onConsole}>Buka console <span className="ix">→</span></button>
       </div>
 
-      <header className="dac-head">
-        <div className="dac-kicker">Transparansi · deteksi sebagai kode</div>
+      <header className="doc-head">
+        <div className="doc-kicker">Transparansi · deteksi sebagai kode</div>
         <h1>Aturan yang dipakai TRINETRA</h1>
-        <p className="dac-lede">
-          Seluruh logika deteksi ditulis dalam <b>format Sigma</b> — standar
-          terbuka untuk aturan deteksi, spesifikasinya berstatus domain publik.
+        <p className="doc-lede">
+          Seluruh logika deteksi ditulis dalam <b>format Sigma</b>, standar
+          terbuka untuk aturan deteksi yang spesifikasinya berstatus domain
+          publik.
           Artinya aturan di bawah bukan kotak hitam: bisa dibaca, dikritik,
           diperbaiki, dan dibagikan antar satuan sebagai berkas teks biasa.
         </p>
-        <div className="dac-note">
+        <div className="doc-note">
           <b>Prinsip yang menentukan semua angka di halaman ini:</b> aturan
-          atomik sengaja diberi bobot <b>rendah</b> (8–45), karena satu
+          atomik sengaja diberi bobot <b>rendah</b>, 8 sampai 45, karena satu
           indikator perilaku di HP selalu ambigu. Tuduhan hanya lahir dari
-          <b> correlation rule</b> (bobot 30–85) yang menuntut beberapa aturan
-          menyala <b>berurutan</b> pada satu perangkat dalam jendela waktu
-          pendek. Detektor yang menuduh dari satu indikator akan membanjiri
-          operator dengan alarm palsu, dan alarm yang tidak dipercaya sama
-          saja dengan tidak ada alarm.
+          <b> correlation rule</b> dengan bobot 30 sampai 85, yang menuntut
+          beberapa aturan menyala <b>berurutan</b> pada satu perangkat dalam
+          jendela waktu pendek. Detektor yang menuduh dari satu indikator akan
+          menghasilkan alarm palsu setiap hari, dan operator berhenti
+          membukanya dalam hitungan minggu.
         </div>
       </header>
 
       {/* ───────── correlation rules ───────── */}
-      <section className="dac-sec">
+      <section className="doc-sec">
         <h2>
           Correlation rule
-          <span className="dac-count">{corrSorted.length}</span>
+          <span className="doc-count">{corrSorted.length}</span>
         </h2>
-        <p className="dac-sub">
+        <p className="doc-sub">
           Di sinilah zero-click sebenarnya ditangkap. <code>temporal_ordered</code>{" "}
           berarti aturan-aturan harus menyala <b>dalam urutan tertentu</b> di
           dalam satu rentang waktu; <code>event_count</code> menuntut satu
           aturan berulang; <code>temporal</code> hanya menuntut bersamaan.
         </p>
 
-        <div className="dac-grid">
+        <div className="doc-grid">
           {corrSorted.map((c) => (
-            <article key={c.id} className="dac-card">
-              <div className="dac-card-h">
-                <span className="kc-badge" data-type={c.type}>
+            <article key={c.id} className="doc-card">
+              <div className="doc-card-h">
+                <span className="corr-badge" data-type={c.type}>
                   {c.type === "temporal_ordered" ? "BERURUTAN"
                     : c.type === "event_count" ? "BERULANG" : "BERSAMAAN"}
                 </span>
-                <span className="dac-sev" style={{ color: riskColor(c.severity) }}>
+                <span className="doc-sev" style={{ color: riskColor(c.severity) }}>
                   {c.severity}
                 </span>
               </div>
               <h3>{c.title}</h3>
-              <div className="dac-id mono">{c.id}</div>
-              <p className="dac-desc">{c.description}</p>
+              <div className="doc-id">{c.id}</div>
+              <p className="doc-desc">{c.description}</p>
 
-              {/* rantai aturan penyusun — klik untuk melihat aturan atomiknya */}
-              <div className="dac-chain">
+              {/* rantai aturan penyusun; klik untuk melihat aturan atomiknya */}
+              <div className="doc-chain">
                 {(c.rules ?? []).map((rid, i) => {
                   const r = byId.get(rid);
                   return (
-                    <span key={`${rid}-${i}`} className="dac-link-wrap">
+                    <span key={`${rid}-${i}`} className="doc-link-wrap">
                       {i > 0 && (
-                        <span className="dac-arrow">
+                        <span className="doc-arrow">
                           {c.type === "temporal_ordered" ? "→" : "+"}
                         </span>
                       )}
                       <button
-                        className="dac-rule-chip"
+                        className="rule-chip"
+                        aria-expanded={open === rid}
                         onClick={() => setOpen(open === rid ? null : rid)}
                         title={r?.title ?? rid}>
                         {r?.stage ? (STAGE_LABEL[r.stage] ?? r.stage) : rid}
@@ -117,7 +119,7 @@ export default function Deteksi(
                 })}
               </div>
 
-              <div className="dac-facts">
+              <div className="doc-facts">
                 <span>jendela <b>{fmtSpan(c.timespan_s ?? 0)}</b></span>
                 {c.type === "event_count" && (
                   <span>minimal <b>{c.count_gte}×</b></span>
@@ -126,7 +128,7 @@ export default function Deteksi(
                 <span>→ <b>{RESPONSE_LABEL[c.response ?? ""] ?? c.response}</b></span>
               </div>
 
-              <div className="dac-tags">
+              <div className="doc-tags">
                 <span className="cat-chip">{CAT_LABEL[c.category] ?? c.category}</span>
                 {(c.mitre ?? []).map((t) => (
                   <span className="cat-chip" key={t}>{t}</span>
@@ -146,20 +148,20 @@ export default function Deteksi(
       </section>
 
       {/* ───────── atomic rules ───────── */}
-      <section className="dac-sec">
+      <section className="doc-sec">
         <h2>
           Aturan atomik
-          <span className="dac-count">{atomSorted.length}</span>
+          <span className="doc-count">{atomSorted.length}</span>
         </h2>
-        <p className="dac-sub">
+        <p className="doc-sub">
           Masing-masing mengamati <b>satu</b> perilaku. Kolom “diakui bisa
-          salah” bukan kelemahan yang disembunyikan — itu bagian wajib dari
+          salah” bukan kelemahan yang disembunyikan. Kolom itu bagian wajib dari
           sebuah aturan Sigma, dan justru menjelaskan mengapa aturan ini tidak
           boleh dipakai sendirian.
         </p>
 
-        <div className="dac-table-wrap">
-          <table className="dac-table">
+        <div className="doc-table-wrap">
+          <table className="doc-table">
             <thead>
               <tr>
                 <th>Aturan</th>
@@ -174,7 +176,7 @@ export default function Deteksi(
                 <tr key={r.id}>
                   <td>
                     <b>{r.title}</b>
-                    <div className="dac-id mono">{r.id}</div>
+                    <div className="doc-id">{r.id}</div>
                   </td>
                   <td className="muted">
                     {r.stage ? (STAGE_LABEL[r.stage] ?? r.stage) : "—"}
@@ -184,10 +186,10 @@ export default function Deteksi(
                   </td>
                   <td>
                     {(r.fields ?? []).map((f) => (
-                      <span className="dac-field mono" key={f}>{f}</span>
+                      <span className="field-chip" key={f}>{f}</span>
                     ))}
                   </td>
-                  <td className="muted dac-fp">
+                  <td className="doc-fp-cell">
                     {(r.falsepositives ?? []).length
                       ? (r.falsepositives ?? []).join("; ")
                       : "—"}
@@ -200,42 +202,42 @@ export default function Deteksi(
       </section>
 
       {/* ───────── lapisan intel ───────── */}
-      <section className="dac-sec">
-        <h2>Lapisan intel — indikator publik</h2>
+      <section className="doc-sec">
+        <h2>Lapisan intel: indikator publik</h2>
         {ioc ? (
           <>
-            <p className="dac-sub">
+            <p className="doc-sub">
               <b>{ioc.indicators.toLocaleString("id-ID")}</b> indikator dari{" "}
               <b>{ioc.campaigns.length}</b> kampanye spyware yang
               dipublikasikan. Lapisan ini hanya mengenali infrastruktur yang
               <b> sudah diketahui</b>; tugas mengenali yang belum dikenal ada
               pada aturan perilaku di atas.
             </p>
-            <div className="dac-ioc">
+            <div className="doc-tags">
               {ioc.campaigns.map((c) => (
                 <span className="cat-chip" key={c}>{c}</span>
               ))}
             </div>
-            <div className="dac-facts" style={{ marginTop: 10 }}>
+            <div className="doc-facts" style={{ marginTop: 10 }}>
               {Object.entries(ioc.tables).map(([k, v]) => (
                 <span key={k}>{k} <b>{v}</b></span>
               ))}
             </div>
-            <div className="dac-sources">
+            <div className="doc-sources">
               {ioc.sources.map((s) => (
                 <div key={s.name}>
-                  <b className="mono">{s.name}</b> — lisensi {s.license}
+                  <b className="mono">{s.name}</b>, lisensi {s.license}
                 </div>
               ))}
             </div>
-            <div className="dac-note" style={{ marginTop: 12 }}>
+            <div className="doc-note" style={{ marginTop: 12 }}>
               {ioc.catatan}
             </div>
           </>
         ) : <div className="muted">Memuat status indikator…</div>}
       </section>
 
-      <footer className="dac-foot">
+      <footer className="doc-foot">
         <div>
           Format: {cat?.format ?? "Sigma specification v2"}
         </div>
@@ -258,22 +260,22 @@ export default function Deteksi(
 /** Rincian satu aturan atomik, dibuka dari rantai correlation rule. */
 function AtomicDetail({ rule }: { rule: SigmaRule }) {
   return (
-    <div className="dac-detail">
-      <div className="dac-detail-h">
+    <div className="doc-detail">
+      <div className="doc-detail-h">
         <b>{rule.title}</b>
         <span className="mono">bobot {rule.severity}</span>
       </div>
       <p>{rule.description}</p>
       {rule.condition && (
-        <div className="dac-cond mono">condition: {rule.condition}</div>
+        <div className="doc-cond">condition: {rule.condition}</div>
       )}
-      <div className="dac-facts">
+      <div className="doc-facts">
         {(rule.fields ?? []).map((f) => (
-          <span className="dac-field mono" key={f}>{f}</span>
+          <span className="field-chip" key={f}>{f}</span>
         ))}
       </div>
       {(rule.falsepositives ?? []).length > 0 && (
-        <div className="dac-fp-box">
+        <div className="doc-fp">
           <b>Bisa salah karena:</b> {(rule.falsepositives ?? []).join("; ")}
         </div>
       )}

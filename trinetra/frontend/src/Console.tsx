@@ -58,7 +58,7 @@ export default function Console({ onExit }: { onExit: () => void }) {
     const high = entities.filter((e) => e.risk_score >= 70).length;
     const top = entities.reduce((m, e) => Math.max(m, e.risk_score), 0);
     const critNodes = nodes.filter((n) => n.max_risk >= 70).length;
-    // perangkat yang punya rantai terbukti — angka inilah yang benar-benar
+    // perangkat yang punya rantai terbukti. Angka inilah yang benar-benar
     // berarti; "indikator menyala" saja tidak dihitung sebagai temuan.
     const chained = new Set(chains.map((c) => c.entity_id)).size;
     return { total, high, top, critNodes, cases: cases.length, chained };
@@ -84,18 +84,18 @@ export default function Console({ onExit }: { onExit: () => void }) {
           </span>
         </div>
         <div className="tagline">
-          Satsiber TNI AD / Pussiberad — deteksi zero-click pada HP dinas, korelasi kill-chain, triase, dan eskalasi
+          Satsiber TNI AD / Pussiberad · deteksi zero-click pada HP dinas, korelasi kill-chain, triase, dan eskalasi
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: 14, alignItems: "center" }}>
-          <button className="base-link"
+          <button className="pg-nav"
             onClick={() => { window.location.hash = "/deteksi"; }}
-            title="Lihat seluruh aturan deteksi yang dipakai — bobot, field yang dibaca, dan false positive yang diakui">
-            Aturan deteksi →
+            title="Lihat seluruh aturan deteksi yang dipakai: bobot, field yang dibaca, dan false positive yang diakui">
+            Aturan deteksi <span className="ix">→</span>
           </button>
-          <button className="base-link"
+          <button className="pg-nav"
             onClick={() => { window.location.hash = "/agent"; }}
             title="Unduh agent MTD dan panduan pemasangannya di HP dinas">
-            Pasang agent →
+            Pasang agent <span className="ix">→</span>
           </button>
         </div>
       </div>
@@ -122,7 +122,7 @@ export default function Console({ onExit }: { onExit: () => void }) {
                     className={`cc-node${isHub ? " is-hub" : ""}`}
                     style={{ ["--c" as any]: c }}
                     onClick={() => openNode(n.node_id)}
-                    title={`${n.name} — buka kartu komando`}>
+                    title={`${n.name} · buka kartu komando`}>
                     <span className="nm">{label}</span>
                     <span className="rk">{n.max_risk.toFixed(0)}</span>
                     <span className="cy">{NODE_GEO[n.node_id]?.city ?? "—"} · {n.high_count}/{n.total} tinggi</span>
@@ -252,7 +252,7 @@ export default function Console({ onExit }: { onExit: () => void }) {
         </div>
         <div className="anim-up" style={{ animationDelay: ".12s" }}>
           <div className="panel">
-            <h2>Rantai Terbaru — Rinci</h2>
+            <h2>Rantai Terbaru · Rinci</h2>
             {chains[0]
               ? <KillChainTimeline hit={chains[0]} />
               : <div className="muted">Menunggu rantai pertama…</div>}

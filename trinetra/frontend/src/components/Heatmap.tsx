@@ -10,7 +10,7 @@ export function Heatmap({ cells }: { cells: HeatCell[] }) {
   const grid = `110px repeat(${roles.length}, 1fr)`;
   return (
     <div className="panel">
-      <h2>Risk Heatmap — Node × Role</h2>
+      <h2>Peta Panas Risiko · Komando × Pangkat</h2>
       <div className="heatmap" style={{ gridTemplateColumns: grid }}>
         <div className="heat-corner" />
         {roles.map((r) => (

@@ -5,13 +5,13 @@ import { riskColor } from "../lib/util";
 export function Orchestration({ nodes }: { nodes: Node[] }) {
   const byTier = (t: number) => nodes.filter((n) => n.tier === t);
   const tiers = [
-    { t: 0, label: "Tier 0 — Satsiber TNI AD / Pussiberad (Pusat)" },
-    { t: 1, label: "Tier 1 — CSIRT Kodam" },
-    { t: 2, label: "Tier 2 — Satuan / Wilayah" },
+    { t: 0, label: "Tier 0 · Satsiber TNI AD / Pussiberad (Pusat)" },
+    { t: 1, label: "Tier 1 · CSIRT Kodam" },
+    { t: 2, label: "Tier 2 · Satuan / Wilayah" },
   ];
   return (
     <div className="panel">
-      <h2>Orkestrasi Berjenjang — Command Tree</h2>
+      <h2>Orkestrasi Berjenjang · Pohon Komando</h2>
       <div className="tier-tree">
         {tiers.map((tier) => (
           <div key={tier.t}>

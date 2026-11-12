@@ -1,4 +1,4 @@
-# TRINETRA — correlation rules, format Sigma correlation (spec v2).
+# TRINETRA: correlation rules, format Sigma correlation (spec v2).
 #
 # INI INTI DETEKSI ZERO-CLICK. Satu indikator perilaku di HP selalu ambigu:
 # HP panas bisa karena main game, upload besar bisa karena backup, pesan dari
@@ -9,13 +9,13 @@
 # `temporal_ordered` = kelompok aturan yang harus terjadi DALAM URUTAN
 # tertentu di dalam satu rentang waktu (Sigma specification v2).
 ---
-title: Rantai zero-click lengkap — pengiriman, eksploitasi, eksfiltrasi
+title: "Rantai zero-click lengkap: pengiriman, eksploitasi, eksfiltrasi"
 name: corr_zeroclick_fullchain
 id: 9c2e5a10-33b7-4a8d-9f10-0a0d1e3f2001
 status: experimental
 description: >
   Pesan senyap dari pengirim tak dikenal, diikuti crash proses parser OS,
-  diikuti unggahan data keluar — ketiganya pada satu perangkat dalam 10 menit
+  diikuti unggahan data keluar. Ketiganya pada satu perangkat dalam 10 menit
   sementara perangkat idle. Ini bentuk permukaan dari rantai eksploitasi
   zero-click dan praktis tidak punya padanan sah.
 author: TRINETRA / Pussiberad Kartika Hackathon 2026
@@ -46,7 +46,7 @@ id: 9c2e5a10-33b7-4a8d-9f10-0a0d1e3f2002
 status: experimental
 description: >
   Crash proses parser OS diikuti mikrofon/kamera aktif tanpa aplikasi di
-  depan. Menandakan implan sudah berjalan dan mulai menyadap — tahap paling
+  depan. Menandakan implan sudah berjalan dan mulai menyadap, tahap paling
   berbahaya bagi keamanan informasi pimpinan.
 correlation:
   type: temporal_ordered
@@ -67,7 +67,7 @@ trinetra:
   kill_chain: [exploit, collection]
   response: isolate
 ---
-title: Implan aktif — beban tersembunyi diikuti eksfiltrasi
+title: "Implan aktif: beban tersembunyi diikuti eksfiltrasi"
 name: corr_implant_active
 id: 9c2e5a10-33b7-4a8d-9f10-0a0d1e3f2003
 status: experimental
@@ -179,7 +179,7 @@ id: 9c2e5a10-33b7-4a8d-9f10-0a0d1e3f2007
 status: experimental
 description: >
   Penurunan paksa ke 2G tanpa enkripsi pada sel tak dikenal terjadi lebih dari
-  sekali dalam 10 menit — menandakan perangkat ditarik ke BTS palsu, bukan
+  sekali dalam 10 menit. Itu menandakan perangkat ditarik ke BTS palsu, bukan
   sekadar berada di area blankspot.
 correlation:
   type: event_count
@@ -250,7 +250,7 @@ trinetra:
   kill_chain: [posture, delivery]
   response: patch
 ---
-title: Rantai zero-click via SMS biner — pengiriman, eksploitasi, denyut kendali
+title: "Rantai zero-click via SMS biner: pengiriman, eksploitasi, denyut kendali"
 name: corr_zeroclick_beacon_chain
 id: 9c2e5a10-33b7-4a8d-9f10-0a0d1e3f2010
 status: experimental
@@ -259,7 +259,7 @@ description: >
   senyap dan crash proses parser, implan hanya mengirim denyut kendali kecil
   dan menunggu perintah. Aturan corr_zeroclick_fullchain melewatkan pola ini
   karena menuntut volume unggahan; celah itu ditutup di sini. Operator
-  spyware yang sabar justru berperilaku seperti ini — volume kecil supaya
+  spyware yang sabar justru berperilaku seperti ini: volume kecil supaya
   tidak terlihat pada tagihan data maupun pemantauan trafik.
 author: TRINETRA / Pussiberad Kartika Hackathon 2026
 correlation:

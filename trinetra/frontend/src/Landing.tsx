@@ -117,7 +117,7 @@ export default function Landing({ onEnter, onStructure, onRules }:
       <nav className="lp-rail" aria-label="Sections">
         {[
           ...RAIL.map((r) => ({ id: r.id, ix: r.ix, label: t.nav[r.k], route: "" })),
-          // Katalog aturan deteksi: ditaruh di navigasi utama dengan sengaja —
+          // Katalog aturan deteksi: ditaruh di navigasi utama dengan sengaja,
           // keterbukaan logika deteksi adalah bagian dari argumen produk,
           // bukan lampiran teknis yang disembunyikan.
           { id: "deteksi", ix: "↗", label: lang === "en" ? "Detection rules" : "Aturan deteksi", route: "/deteksi" },
@@ -173,7 +173,7 @@ export default function Landing({ onEnter, onStructure, onRules }:
       {/* ── 01 the gap ── */}
       <section className="lp-section" id="gap">
         <div className="head reveal">
-          <span className="eyebrow">01 — {t.gap.eyebrow}</span>
+          <span className="eyebrow">01 · {t.gap.eyebrow}</span>
           <h3>{t.gap.h}</h3>
           <p>{t.gap.p}</p>
         </div>
@@ -200,7 +200,7 @@ export default function Landing({ onEnter, onStructure, onRules }:
       {/* ── 02 three eyes ── */}
       <section className="lp-section alt" id="eyes">
         <div className="head reveal">
-          <span className="eyebrow">02 — {t.eyes.eyebrow}</span>
+          <span className="eyebrow">02 · {t.eyes.eyebrow}</span>
           <h3>{t.eyes.h}</h3>
           <p>{t.eyes.p}</p>
         </div>
@@ -219,7 +219,7 @@ export default function Landing({ onEnter, onStructure, onRules }:
       {/* ── 03 architecture ── */}
       <section className="lp-section" id="arch">
         <div className="head reveal">
-          <span className="eyebrow">03 — {t.arch.eyebrow}</span>
+          <span className="eyebrow">03 · {t.arch.eyebrow}</span>
           <h3>{t.arch.h}</h3>
           <p>{t.arch.p}</p>
         </div>
@@ -248,7 +248,7 @@ export default function Landing({ onEnter, onStructure, onRules }:
       {/* ── 04 capabilities ── */}
       <section className="lp-section alt">
         <div className="head reveal">
-          <span className="eyebrow">04 — {t.caps.eyebrow}</span>
+          <span className="eyebrow">04 · {t.caps.eyebrow}</span>
           <h3>{t.caps.h}</h3>
           <p>{t.caps.p}</p>
         </div>
@@ -266,7 +266,7 @@ export default function Landing({ onEnter, onStructure, onRules }:
       {/* ── 05 standards ── */}
       <section className="lp-section" id="standar">
         <div className="head reveal">
-          <span className="eyebrow">05 — {t.standards.eyebrow}</span>
+          <span className="eyebrow">05 · {t.standards.eyebrow}</span>
           <h3>{t.standards.h}</h3>
         </div>
         <div className="lp-standards reveal">

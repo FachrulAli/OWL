@@ -5,7 +5,7 @@ import {
 } from "../lib/util";
 
 // Warna per tahap kill-chain: dingin di awal rantai, memanas ke arah
-// pengumpulan data — supaya mata langsung menangkap seberapa jauh penyerang
+// pengumpulan data, supaya mata langsung menangkap seberapa jauh penyerang
 // sudah berjalan.
 const STAGE_COLOR: Record<string, string> = {
   posture: "#6b7280", delivery: "#3b82f6", exploit: "#8b5cf6",
@@ -87,7 +87,7 @@ export function KillChainTimeline(
       {!compact && (
         <>
           <div className="kc-idle">
-            Seluruh tahap di atas terjadi saat perangkat <b>idle</b> — layar mati,
+            Seluruh tahap di atas terjadi saat perangkat <b>idle</b>: layar mati,
             tanpa sentuhan, tanpa aplikasi di depan. Pemegang HP tidak melakukan
             apa pun.
           </div>
@@ -125,7 +125,7 @@ export function ChainList(
       <h2>
         Rantai Kill-Chain Terbukti
         <span className="muted" style={{ fontSize: 11, fontWeight: 400, marginLeft: 8 }}>
-          korelasi Sigma terpenuhi — bukan indikator lepas
+          korelasi Sigma terpenuhi, bukan indikator lepas
         </span>
       </h2>
       <div className="scroll">
@@ -147,7 +147,8 @@ export function ChainList(
         {items.length === 0 && (
           <div className="muted">
             Belum ada rantai terbukti. Indikator tunggal yang menyala sengaja
-            tidak ditampilkan di sini — satu indikator tidak cukup untuk menuduh.
+            tidak ditampilkan di sini, karena satu indikator tidak cukup untuk
+            menuduh.
           </div>
         )}
       </div>
