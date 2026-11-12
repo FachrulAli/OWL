@@ -127,8 +127,8 @@ export const C: Record<Lang, Copy> = {
       eyebrow: "Deteksi Ancaman Orang Dalam · Intelijen Zero Trust",
       lead: "Akses yang sah belum tentu ",
       hl: "niat yang sah.",
-      sub: "TRINETRA mempelajari cara kerja normal setiap peran di lingkungan CSIRT TNI AD — admin, analis, operator, sampai pengelola data — lalu menyorot aktivitas yang keluar dari pola itu: data yang diam-diam dibawa keluar, hak akses yang tiba-tiba naik, perpindahan antar sistem yang tak masuk akal. Pengawasannya menghadap ke dalam, bukan cuma ke pagar luar.",
-      quote: "\"Musuh yang sesungguhnya bukan di balik pagar — ia sudah berada di dalam, di antara kita.\"",
+      sub: "TRINETRA mempelajari cara kerja normal setiap peran di lingkungan CSIRT TNI AD (admin, analis, operator, sampai pengelola data), lalu menyorot aktivitas yang keluar dari pola itu: data yang diam-diam dibawa keluar, hak akses yang tiba-tiba naik, perpindahan antar sistem yang tak masuk akal. Pengawasannya menghadap ke dalam, bukan cuma ke pagar luar.",
+      quote: "\"Musuh yang sesungguhnya bukan di balik pagar. Ia sudah berada di dalam, di antara kita.\"",
       ctaPrimary: "Buka command console →",
       ctaGhost: "Lihat arsitekturnya",
       liveTag: "LANGSUNG",
@@ -158,9 +158,9 @@ export const C: Record<Lang, Copy> = {
       h: "Tiga sudut pengamatan yang saling mengunci.",
       p: "TRINETRA berarti \"tiga mata\", dan ketiganya memang memetakan lapisan yang memisahkan pekerjaan wajar dari penyalahgunaan akses.",
       cards: [
-        { idx: "MATA 01", title: "Identitas & Perilaku", body: "Pola normal disusun untuk tiap peran dari seberapa banyak data keluar, kapan dan dari mana login dilakukan, berapa berkas dibuka, dan perintah apa yang dijalankan. Penyimpangan dihitung sebagai jarak dari rekan seperan — bukan sekadar firasat." },
+        { idx: "MATA 01", title: "Identitas & Perilaku", body: "Pola normal disusun untuk tiap peran dari seberapa banyak data keluar, kapan dan dari mana login dilakukan, berapa berkas dibuka, dan perintah apa yang dijalankan. Penyimpangan dihitung sebagai jarak dari rekan seperan, bukan sekadar firasat." },
         { idx: "MATA 02", title: "Data & Endpoint", body: "Jejak proses, berkas, jaringan, login, dan media lepas dikumpulkan dari tiap perangkat Windows maupun Linux, lalu diseragamkan ke format OCSF sebelum masuk ke mesin penilai." },
-        { idx: "MATA 03", title: "Jaringan & Komando", body: "Anomali yang tertangkap di lapangan naik ke pusat. Pola serupa yang muncul berbarengan di beberapa Kodam disatukan jadi satu insiden — hal yang tak terlihat kalau tiap node berdiri sendiri." },
+        { idx: "MATA 03", title: "Jaringan & Komando", body: "Anomali yang tertangkap di lapangan naik ke pusat. Pola serupa yang muncul berbarengan di beberapa Kodam disatukan jadi satu insiden, hal yang tak terlihat kalau tiap node berdiri sendiri." },
       ],
     },
     arch: {
@@ -207,7 +207,7 @@ export const C: Record<Lang, Copy> = {
     cta: {
       eyebrow: "Purwarupa aktif",
       h: "Console menampilkan data yang sama, secara langsung.",
-      p: "Angka di halaman ini diambil dari pipeline yang sama dengan console: telemetri yang mengalir, skor risiko yang bergerak, dan korelasi yang terbentuk — diperbarui tiap detik.",
+      p: "Angka di halaman ini diambil dari pipeline yang sama dengan console: telemetri yang mengalir, skor risiko yang bergerak, dan korelasi yang terbentuk, diperbarui tiap detik.",
       button: "Masuk ke console →",
     },
     footer: {
