@@ -1,7 +1,10 @@
 name: trinetra
 
 # TRINETRA — Full-architecture stack (Kartika Cyber Hackathon 2026)
-# 3-tier insider threat detection: telemetry -> ingestion -> detection -> scoring -> orchestration -> dashboard
+# Mobile Threat Defense (MTD): deteksi zero-click di HP prajurit lewat perilaku,
+# plus modul insider-threat endpoint (SIM_MODE=endpoint) di mesin yang sama.
+# telemetry -> ingestion -> normalize -> rules(Sigma)+UEBA -> korelasi kill-chain
+#           -> risk scoring -> orchestration -> dashboard
 #
 #   Redpanda      Kafka-compatible event bus (ingestion & buffer)
 #   ClickHouse    time-series telemetry + risk score store
@@ -108,6 +111,18 @@ services:
       CLICKHOUSE_USER: trinetra
       CLICKHOUSE_PASSWORD: trinetra
       ML_URL: http://ml:8001
+      # jalur masuk agent MTD nyata di HP prajurit (ganti di penggelaran nyata)
+      INGEST_TOKEN: ${INGEST_TOKEN:-trinetra-demo-token}
+      INDICATORS_DIR: /app/indicators
+      YARA_DIR: /app/yara
+      # Jumlah event yang hanya dipakai melatih baseline, tanpa penilaian.
+      # Nilai realistis 4000; scripts/demo-cepat.sh menurunkannya untuk rekaman.
+      WARMUP_CONSUME: ${WARMUP_CONSUME:-4000}
+    volumes:
+      # indikator spyware publik (STIX2) + aturan YARA, read-only.
+      # Dipasang sebagai volume supaya bisa diperbarui tanpa build ulang image.
+      - ./infra/indicators/stix2:/app/indicators:ro
+      - ./infra/yara:/app/yara:ro
     depends_on:
       redpanda:
         condition: service_healthy
@@ -124,9 +139,19 @@ services:
     build: ./services/simulator
     environment:
       KAFKA_BOOTSTRAP: redpanda:29092
-      EVENTS_PER_SECOND: "40"
-      INSIDER_ANOMALY_RATE: "0.14"
-      NOISE_ANOMALY_RATE: "0"
+      # mobile = fleet HP prajurit (MTD, mode utama) | endpoint = insider threat
+      SIM_MODE: ${SIM_MODE:-mobile}
+      # Ditulis sebagai ${VAR:-bawaan}, bukan angka literal: nilai literal di
+      # compose MENANG atas variabel lingkungan dari luar, sehingga mode demo
+      # cepat tidak akan berefek apa pun.
+      EVENTS_PER_SECOND: ${EVENTS_PER_SECOND:-40}
+      WARMUP_EVENTS: ${WARMUP_EVENTS:-4000}
+      # mode mobile
+      CHAIN_RATE: ${CHAIN_RATE:-0.055}
+      BENIGN_ODDITY_RATE: ${BENIGN_ODDITY_RATE:-0.02}
+      # mode endpoint (dipakai hanya bila SIM_MODE=endpoint)
+      INSIDER_ANOMALY_RATE: ${INSIDER_ANOMALY_RATE:-0.14}
+      NOISE_ANOMALY_RATE: ${NOISE_ANOMALY_RATE:-0}
     depends_on:
       redpanda:
         condition: service_healthy
