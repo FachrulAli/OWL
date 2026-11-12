@@ -10,7 +10,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import android.app.Activity
 import androidx.core.app.ActivityCompat
 
 /**
@@ -21,7 +21,11 @@ import androidx.core.app.ActivityCompat
  * bukan hanya soal etika — itu juga membuat program tidak layak digelar ke
  * pasukan. Kejelasan di sini adalah bagian dari produk, bukan hiasan.
  */
-class MainActivity : AppCompatActivity() {
+// Sengaja memakai android.app.Activity, BUKAN AppCompatActivity:
+// AppCompatActivity menuntut tema turunan Theme.AppCompat, dan menambahkan
+// tema hanya untuk satu layar konfigurasi berisi beberapa tombol adalah
+// beban yang tidak dibayar manfaatnya.
+class MainActivity : Activity() {
 
     private lateinit var status: TextView
 

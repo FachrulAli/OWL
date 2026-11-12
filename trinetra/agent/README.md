@@ -6,24 +6,55 @@ aturan Sigma, dan mengkorelasikan rantai kill-chain. Agent **tidak** mengambil
 keputusan deteksi apa pun — itu disengaja, supaya perangkat yang sudah dikuasai
 penyerang tidak bisa memanipulasi hasil deteksi tentang dirinya sendiri.
 
-## Status kejujuran
+## Status pengujian
+
+Diuji pada **2026-11-12**, emulator **Android 15 (API 35), arm64-v8a**.
 
 | Hal | Status |
 |---|---|
-| Kode | Lengkap (Kotlin, 925 baris) |
-| Kompilasi | **Belum pernah dikompilasi.** Tidak ada APK. |
-| Uji di perangkat / emulator | **Belum, nol eksekusi.** |
-| Gradle wrapper (`gradlew`) | **Belum ada** — lihat di bawah |
-| Dipakai di demo | Opsional. Demo utama memakai simulator. |
+| Kompilasi | ✅ **BUILD SUCCESSFUL**, 0 galat, 2 peringatan *deprecated* |
+| APK | ✅ `app-debug.apk`, 8,1 MB |
+| Pemasangan | ✅ `adb install` → Success |
+| Aplikasi dibuka | ✅ tidak crash |
+| Layanan latar depan | ✅ berjalan |
+| Membaca izinnya sendiri | ✅ "Akses Penggunaan: AKTIF" |
+| Mengirim ke `/ingest/mobile` | ✅ **diterima, 0 ditolak** |
+| Tembus ke ClickHouse & dashboard | ✅ muncul sebagai perangkat `hp-uji-01` |
 
-**Jangan sebut agent ini "sudah jalan" atau "sudah teruji" di hadapan juri
-sebelum benar-benar dijalankan di perangkat.** Yang sudah terbukti di proyek
-ini adalah mesin deteksinya, bukan sensor ini.
+Telemetri nyata yang terbaca (bukan contoh):
 
-Konsekuensi yang paling mungkin ketika pertama kali dikompilasi: ada beberapa
-galat kompilasi yang harus dibereskan (impor, tanda tangan API, varian
-`minSdk`). Itu normal untuk kode yang belum pernah dilewatkan kompilator —
-sediakan waktu, jangan jadwalkan tepat sebelum tampil.
+```
+device_model    Google sdk_gphone64_arm64    Build.MANUFACTURER/MODEL
+os_version      15
+patch_age_days  798                          Build.VERSION.SECURITY_PATCH
+egress_mb       0.041   ingress_mb  4.296    NetworkStatsManager
+net_gen         3G                           TelephonyManager
+label_scenario  live_agent                   penanda data sungguhan
+```
+
+**Belum diuji di perangkat fisik.** Emulator tidak dapat menguji tiga hal:
+status termal (selalu `NONE`), mikrofon/kamera, dan penurunan baterai yang
+alami. Ketiganya perlu HP sungguhan.
+
+### Dua bug yang ditemukan dan ditambal sebelum kompilasi pertama
+
+Keduanya lolos kompilator dan hanya muncul saat dijalankan:
+
+1. `AppCompatActivity` tanpa tema `Theme.AppCompat` → aplikasi crash begitu
+   dibuka. Diganti ke `android.app.Activity`.
+2. Layanan latar depan `dataSync` dimulai dari `BOOT_COMPLETED` → ditolak
+   sejak Android 14. Tanpa penjagaan, agent **diam-diam tidak pernah hidup
+   lagi setelah reboot** — kegagalan terburuk untuk alat pemantau, karena
+   dashboard tampak "aman" padahal buta. Kini `start()` mengembalikan boolean
+   dan pemegang HP diberi tahu bila gagal.
+
+### Yang TIDAK diukur agent ini
+
+`cpu_pct` sengaja tidak dikirim. Aplikasi tanpa hak istimewa tidak dapat
+membaca pemakaian CPU perangkat pada Android modern. Mengirim 0 akan tampil
+sebagai "CPU 0%" — angka yang terlihat seperti hasil pengukuran padahal tidak
+pernah diukur. Tidak ada aturan deteksi yang bergantung padanya; beban
+komputasi tersembunyi diukur lewat status termal dan penurunan baterai.
 
 ## Membangun
 

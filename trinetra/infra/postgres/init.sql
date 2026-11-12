@@ -268,3 +268,13 @@ ON CONFLICT (role, parameter) DO NOTHING;
 
 INSERT INTO entity_risk (entity_id, risk_score)
 SELECT entity_id, 0 FROM entities ON CONFLICT (entity_id) DO NOTHING;
+
+-- Perangkat UJI LAPANGAN: satu-satunya entity yang datanya datang dari agent
+-- MTD nyata di perangkat Android, bukan dari simulator. Sengaja dipisah agar
+-- pada dashboard jelas mana telemetri sungguhan dan mana yang disimulasikan;
+-- label_scenario pada event dari agent bernilai 'live_agent'.
+INSERT INTO entities (entity_id, display_name, role, node_id) VALUES
+    ('hp-uji-01', 'Pama Siber · HP Uji Lapangan (agent nyata)', 'pama_siber', 'kodam-jaya')
+ON CONFLICT (entity_id) DO NOTHING;
+INSERT INTO entity_risk (entity_id, risk_score) VALUES ('hp-uji-01', 0)
+ON CONFLICT (entity_id) DO NOTHING;

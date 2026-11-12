@@ -38,9 +38,23 @@ class TelemetryService : Service() {
         private const val CHANNEL = "trinetra_agent"
         private const val NOTIF_ID = 4201
 
-        fun start(ctx: Context) {
-            val i = Intent(ctx, TelemetryService::class.java)
-            ctx.startForegroundService(i)
+        /**
+         * Mulai layanan. Mengembalikan false bila sistem menolak.
+         *
+         * Sejak Android 14, layanan latar depan bertipe dataSync tidak boleh
+         * dimulai dari latar belakang — dan BOOT_COMPLETED termasuk latar
+         * belakang. Panggilan tanpa penjagaan melempar
+         * ForegroundServiceStartNotAllowedException dan mematikan penerima,
+         * sehingga agent diam-diam tidak pernah hidup lagi setelah perangkat
+         * dinyalakan ulang. Kegagalan itu harus terlihat, bukan hilang.
+         */
+        fun start(ctx: Context): Boolean = try {
+            ctx.startForegroundService(Intent(ctx, TelemetryService::class.java))
+            true
+        } catch (e: Exception) {
+            android.util.Log.w("TrinetraAgent",
+                "layanan tidak boleh dimulai dari sini: ${e.javaClass.simpleName}")
+            false
         }
 
         fun stop(ctx: Context) {
@@ -128,8 +142,18 @@ class TelemetryService : Service() {
             try { Collectors.cameraManager(applicationContext)
                 .unregisterAvailabilityCallback(it) } catch (_: Exception) {}
         }
-        // upaya terakhir mengirim sisa antrean
-        try { Uploader.flush(applicationContext) } catch (_: Exception) {}
+        // Upaya terakhir mengirim sisa antrean — WAJIB di luar main thread.
+        //
+        // onDestroy() berjalan di main thread, dan Android melempar
+        // NetworkOnMainThreadException untuk setiap operasi jaringan di sana.
+        // Versi pertama memanggil Uploader.flush() langsung di sini, sehingga
+        // pengiriman terakhir SELALU gagal dan antrean hilang justru pada saat
+        // paling penting: ketika layanan dihentikan. Terlihat hanya setelah
+        // aplikasi dijalankan sungguhan.
+        val ctx = applicationContext
+        Thread {
+            try { Uploader.flush(ctx) } catch (_: Exception) {}
+        }.start()
         super.onDestroy()
     }
 

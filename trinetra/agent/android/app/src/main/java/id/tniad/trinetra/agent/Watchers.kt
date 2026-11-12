@@ -141,12 +141,43 @@ class PackageWatcher : BroadcastReceiver() {
     }
 }
 
-/** Menyalakan agent kembali setelah perangkat dinyalakan ulang. */
+/**
+ * Menyalakan agent kembali setelah perangkat dinyalakan ulang.
+ *
+ * Pada Android 14+ sistem dapat menolak permulaan layanan latar depan dari
+ * sini. Bila ditolak, pemegang HP harus tahu — agent yang diam-diam mati
+ * setelah reboot jauh lebih berbahaya daripada agent yang jelas-jelas mati,
+ * karena dashboard akan tampak "aman" padahal sebenarnya buta.
+ */
 class BootWatcher : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED &&
-            Config.isConfigured(ctx)) {
-            TelemetryService.start(ctx)
+        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+        if (!Config.isConfigured(ctx)) return
+        if (!TelemetryService.start(ctx)) {
+            NotifyUser.warn(ctx,
+                "TRINETRA tidak dapat menyala otomatis",
+                "Buka aplikasi TRINETRA untuk melanjutkan pemantauan.")
+        }
+    }
+}
+
+/** Pemberitahuan sekali-jalan ketika agent tidak dapat berjalan sendiri. */
+object NotifyUser {
+    private const val CHANNEL = "trinetra_agent"
+
+    fun warn(ctx: Context, title: String, text: String) {
+        try {
+            val nm = ctx.getSystemService(android.app.NotificationManager::class.java)
+            nm.createNotificationChannel(android.app.NotificationChannel(
+                CHANNEL, "TRINETRA Agent",
+                android.app.NotificationManager.IMPORTANCE_DEFAULT))
+            nm.notify(4202, android.app.Notification.Builder(ctx, CHANNEL)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setSmallIcon(android.R.drawable.stat_sys_warning)
+                .setAutoCancel(true)
+                .build())
+        } catch (_: Exception) {
         }
     }
 }

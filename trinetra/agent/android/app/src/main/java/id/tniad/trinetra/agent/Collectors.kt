@@ -200,6 +200,16 @@ object Collectors {
      * dan `covert_sensor` TIDAK dihitung di sini — itu dihitung oleh backend
      * pada tahap normalisasi, supaya definisinya satu dan tidak bisa
      * dipalsukan oleh perangkat yang sudah dikuasai penyerang.
+     *
+     * FIELD YANG SENGAJA TIDAK DIKIRIM: `cpu_pct`.
+     * Aplikasi tanpa hak istimewa tidak dapat membaca pemakaian CPU
+     * perangkat pada Android modern (/proc dibatasi sejak Android 8, dan
+     * dikunci lebih jauh sesudahnya). Mengirimkan nilai 0 akan tampil di
+     * dashboard sebagai "CPU 0%" — sebuah angka yang terlihat seperti hasil
+     * pengukuran padahal tidak pernah diukur. Lebih baik field itu kosong
+     * dan jelas tidak tersedia. Tidak ada aturan deteksi yang bergantung
+     * padanya; beban komputasi tersembunyi diukur lewat status termal dan
+     * penurunan baterai, yang keduanya memang bisa dibaca.
      */
     fun sample(ctx: Context, state: AgentState): JSONObject {
         val screen = screenOn(ctx)
