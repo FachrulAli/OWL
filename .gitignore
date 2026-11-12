@@ -1,19 +1,20 @@
+
+!.env.example
 # dependencies / builds
-node_modules/
-dist/
+# env / secrets
+# os / editor
+*.log
+*.pyc
+.DS_Store
+.env
+.env*
+.env.*
+.venv/
+.vercel
+.vercel/
 .vite/
 __pycache__/
-*.pyc
-.venv/
-venv/
-
-# env / secrets
-.env
-.env.*
-!.env.example
 deploy/k8s/secrets.yaml
-
-# os / editor
-.DS_Store
-*.log
-.vercel/
+dist/
+node_modules/
+venv/

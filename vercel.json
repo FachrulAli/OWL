@@ -1,21 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "_catatan": [
-    "Berkas ini ada di ROOT repositori, bukan di frontend/.",
-    "",
-    "Masalah yang dipecahkannya: projek Vercel membangun dari root repositori,",
-    "sedangkan aplikasi web berada di trinetra/frontend. Akibatnya setiap",
-    "deploy dari GitHub gagal dalam 2 detik dengan",
-    "'Could not read package.json: /vercel/path0/package.json', dan situs",
-    "publik diam di build lama tanpa ada yang menyadarinya — kegagalan yang",
-    "paling berbahaya karena tampak seperti tidak terjadi apa-apa.",
-    "",
-    "Diperbaiki di repositori, bukan lewat setelan dasbor, supaya siapa pun",
-    "yang mengambil repositori ini mendapat perilaku deploy yang sama."
-  ],
   "buildCommand": "cd trinetra/frontend && npm install && npm run build",
   "outputDirectory": "trinetra/frontend/dist",
-  "installCommand": "echo 'dependensi dipasang oleh buildCommand di trinetra/frontend'",
+  "installCommand": "echo skip",
   "framework": null,
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
