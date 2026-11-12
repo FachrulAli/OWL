@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, SigmaCatalog, SigmaRule, IndicatorStatus } from "./lib/api";
-import { CAT_LABEL, STAGE_LABEL, RESPONSE_LABEL, fmtSpan, riskColor } from "./lib/util";
+import { fmtSpan, riskColor, labels } from "./lib/util";
 import { useLang } from "./lib/lang";
 import { DOC } from "./lib/docText";
 import { Ico } from "./components/Ico";
@@ -19,6 +19,7 @@ export default function Deteksi(
   const [lang, setLang] = useLang();
   const t = DOC(lang).det;
   const nav = DOC(lang).nav;
+  const L = labels(lang);
 
   const [cat, setCat] = useState<SigmaCatalog | null>(null);
   const [ioc, setIoc] = useState<IndicatorStatus | null>(null);
@@ -104,7 +105,7 @@ export default function Deteksi(
                         <button className="rule-chip" aria-expanded={open === rid}
                           onClick={() => setOpen(open === rid ? null : rid)}
                           title={r?.title ?? rid}>
-                          {r?.stage ? (STAGE_LABEL[r.stage] ?? r.stage) : rid}
+                          {r?.stage ? (L.stage[r.stage] ?? r.stage) : rid}
                         </button>
                       </span>
                     );
@@ -115,11 +116,11 @@ export default function Deteksi(
                   <span>{t.window} <b>{fmtSpan(c.timespan_s ?? 0)}</b></span>
                   {c.type === "event_count" && <span>{t.atLeast} <b>{c.count_gte}×</b></span>}
                   <span>{t.groupedBy} <b>{(c.group_by ?? []).join(", ")}</b></span>
-                  <span>→ <b>{RESPONSE_LABEL[c.response ?? ""] ?? c.response}</b></span>
+                  <span>→ <b>{L.response[c.response ?? ""] ?? c.response}</b></span>
                 </div>
 
                 <div className="doc-tags">
-                  <span className="cat-chip">{CAT_LABEL[c.category] ?? c.category}</span>
+                  <span className="cat-chip">{L.cat[c.category] ?? c.category}</span>
                   {(c.mitre ?? []).map((m) => <span className="cat-chip" key={m}>{m}</span>)}
                 </div>
 
@@ -152,7 +153,7 @@ export default function Deteksi(
                       <b>{r.title}</b>
                       <div className="doc-id">{r.id}</div>
                     </td>
-                    <td className="muted">{r.stage ? (STAGE_LABEL[r.stage] ?? r.stage) : "—"}</td>
+                    <td className="muted">{r.stage ? (L.stage[r.stage] ?? r.stage) : "—"}</td>
                     <td><b style={{ color: riskColor(r.severity * 1.6) }}>{r.severity}</b></td>
                     <td>{(r.fields ?? []).map((f) => (
                       <span className="field-chip" key={f}>{f}</span>))}</td>

@@ -162,7 +162,7 @@ export const DOC = (l: Lang) => {
       permCols: id ? ["Izin", "Dipakai untuk", "Bila tidak diberikan"]
                    : ["Permission", "Used for", "If not granted"],
       perms: [
-        { n: "Akses Penggunaan", api: "PACKAGE_USAGE_STATS",
+        { n: id ? "Akses Penggunaan" : "Usage Access", api: "PACKAGE_USAGE_STATS",
           u: id ? "Trafik keluar per selang waktu dan aplikasi yang sedang di depan. Keduanya dasar untuk mengenali aktivitas saat perangkat tidak dipakai."
                 : "Outbound traffic per interval and the app currently in the foreground. Both underpin detecting activity while nobody is using the phone.",
           b: id ? "Sinyal eksfiltrasi tidak terbaca sama sekali." : "Exfiltration signals are not visible at all." },

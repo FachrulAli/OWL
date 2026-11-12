@@ -8,8 +8,14 @@ export function getLang(): Lang {
   try { return (localStorage.getItem(KEY) as Lang) || "en"; } catch { return "en"; }
 }
 
+export function applyDocLang(l: Lang) {
+  // Pemenggalan kata otomatis hanya jalan bila peramban tahu bahasanya.
+  try { document.documentElement.lang = l === "id" ? "id" : "en"; } catch { /* SSR */ }
+}
+
 export function setLang(l: Lang) {
   try { localStorage.setItem(KEY, l); } catch { /* storage dimatikan */ }
+  applyDocLang(l);
   // Beranda dan halaman lain hidup di dokumen yang sama, jadi perubahan
   // bahasa disiarkan lewat event agar semuanya ikut berubah tanpa reload.
   window.dispatchEvent(new CustomEvent("trinetra:lang", { detail: l }));
@@ -25,6 +31,7 @@ export function setLang(l: Lang) {
  */
 export function useLang(): [Lang, (l: Lang) => void] {
   const [lang, setL] = useState<Lang>(getLang);
+  useEffect(() => { applyDocLang(lang); }, [lang]);
   useEffect(() => {
     const onLang = (e: Event) => setL((e as CustomEvent).detail as Lang);
     const onStorage = (e: StorageEvent) => {

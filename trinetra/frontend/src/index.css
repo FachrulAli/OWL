@@ -984,3 +984,53 @@ td b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .lang-sw button:hover { color: var(--text); background: rgba(61,155,255,.1); }
 .lang-sw button[aria-pressed="true"] { background: rgba(61,155,255,.2); color: var(--text); }
 .lang-sw button:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+
+/* ════════════════════════════════════════════════════════════════════
+   PERATAAN DUA SISI (justify) pada prosa halaman dokumen
+   ════════════════════════════════════════════════════════════════════
+   Dipasang atas permintaan, dengan tiga pengaman terhadap efek samping
+   yang biasa menyertainya:
+
+   1. `hyphens: auto` dinyalakan. Tanpa pemenggalan kata, perataan dua sisi
+      pada bahasa Indonesia melebarkan jarak antar kata secara tidak rata
+      karena kata-katanya panjang ("penggelaran", "pemantauan"). Pemenggalan
+      membuat sisa ruang tiap baris jauh lebih kecil sehingga jaraknya rata.
+      Ini menuntut atribut lang pada <html>, yang diurus lib/lang.ts.
+
+   2. Hanya untuk kolom yang cukup lebar. Pada kolom sempit, satu baris hanya
+      memuat sedikit kata sehingga sisa ruangnya terbagi ke sedikit sela dan
+      celahnya melebar. Di bawah 720 px dan pada rel kiri yang sempit,
+      teks tetap rata kiri.
+
+   3. Tidak dipasang pada sel tabel, chip, label, dan baris pendek: di sana
+      perataan tidak menambah kerapian dan hanya merusak ritme.
+   ──────────────────────────────────────────────────────────────────── */
+@media (min-width: 721px) {
+  .doc-lede,
+  .doc-note,
+  .doc-desc,
+  .doc-sec-body > .doc-sub,
+  .steps p,
+  .limit-card p,
+  .doc-detail p,
+  .doc-foot,
+  .dl-side,
+  .live-empty,
+  .privacy-col li {
+    text-align: justify;
+    text-justify: inter-word;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    /* Batas konservatif agar kata tidak dipenggal terlalu dini. */
+    hyphenate-limit-chars: 7 4 3;
+  }
+
+  /* Baris terakhir paragraf selalu rata kiri; ini perilaku bawaan dan
+     sengaja tidak diubah menjadi justify-all, karena baris terakhir yang
+     diregangkan adalah ciri khas perataan yang buruk. */
+  .doc-lede:last-child,
+  .steps p { text-align-last: left; }
+}
+
+/* Rel kiri sempit (232 px): tetap rata kiri. */
+.doc-sec-label .doc-sub { text-align: left; hyphens: manual; }
