@@ -793,6 +793,33 @@ td b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .dl-btn .dl-main { font-size: 15px; font-weight: 600; letter-spacing: -.01em; display: block; }
 .dl-btn .dl-meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); margin-top: 3px; display: block; }
 .dl-side { font-size: 11.5px; line-height: 1.7; color: var(--faint); }
+.dl-btn .dl-text { flex: 1 1 auto; min-width: 0; }
+.dl-btn .pf-mark {
+  flex: none; width: 26px; height: 26px; color: var(--brand); opacity: .55;
+  transition: opacity .2s ease, transform .2s ease;
+}
+.dl-btn:hover .pf-mark { opacity: .95; transform: scale(1.06); }
+.dl-btn .pf-mark.apple { width: 23px; height: 23px; }
+
+/* Varian "segera": tampil sebagai janji, bukan sebagai tombol rusak. */
+.dl-btn.soon {
+  background: var(--bg-2); border: 1px dashed var(--border-2);
+  box-shadow: none; cursor: default;
+}
+.dl-btn.soon:hover { background: var(--bg-2); transform: none; }
+.dl-btn.soon .dl-icon {
+  background: rgba(255,255,255,.04); border-color: var(--border-2); color: var(--faint);
+}
+.dl-btn.soon .dl-icon svg { animation: none; }
+.dl-btn.soon .dl-main { color: var(--muted); font-weight: 500; }
+.dl-btn.soon .pf-mark { color: var(--faint); opacity: .5; }
+.dl-btn.soon:hover .pf-mark { opacity: .5; transform: none; }
+.soon-tag {
+  flex: none; font-size: 10px; font-weight: 600; letter-spacing: .09em;
+  text-transform: uppercase; padding: 3px 8px; border-radius: 999px;
+  color: var(--violet); background: rgba(167,121,255,.12);
+  border: 1px solid rgba(167,121,255,.32);
+}
 
 .live-list { display: flex; flex-direction: column; gap: 9px; }
 .live-row {

@@ -3,7 +3,7 @@ import { api, Entity } from "./lib/api";
 import { fmtTime, silence } from "./lib/util";
 import { useLang } from "./lib/lang";
 import { DOC } from "./lib/docText";
-import { Ico } from "./components/Ico";
+import { Ico, PlatformMark } from "./components/Ico";
 
 const APK = "/trinetra-agent.apk";
 
@@ -68,11 +68,21 @@ export default function Agent(
           <div className="dl-card">
             <a className="dl-btn" href={APK} download>
               <span className="dl-icon"><Ico name="download" className="" /></span>
-              <span>
+              <span className="dl-text">
                 <span className="dl-main">{t.dlMain}</span>
                 <span className="dl-meta">{t.dlMeta}</span>
               </span>
+              <PlatformMark name="android" className="pf-mark android" />
             </a>
+            <div className="dl-btn soon" aria-disabled="true">
+              <span className="dl-icon"><Ico name="download" className="" /></span>
+              <span className="dl-text">
+                <span className="dl-main">{t.iosMain}</span>
+                <span className="dl-meta">{t.iosMeta}</span>
+              </span>
+              <span className="soon-tag">{t.iosSoon}</span>
+              <PlatformMark name="apple" className="pf-mark apple" />
+            </div>
             <H className="dl-side" t={t.dlNote} />
           </div>
         </div>

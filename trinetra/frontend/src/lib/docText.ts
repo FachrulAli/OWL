@@ -111,6 +111,9 @@ export const DOC = (l: Lang) => {
         : "The agent makes <b>no</b> detection decisions. That happens on the server, so a device an attacker already controls has no say in the verdict about itself.",
       dlMain: id ? "Unduh APK agent" : "Download agent APK",
       dlMeta: "app-debug.apk · 8,1 MB · Android 10+",
+      iosMain: id ? "Unduh aplikasi iOS" : "Download the iOS app",
+      iosMeta: id ? "iOS 16+ · belum tersedia" : "iOS 16+ · not yet available",
+      iosSoon: id ? "Segera" : "Soon",
       dlNote: id
         ? "Berkas <b>debug</b>, ditandatangani kunci pengembang, untuk uji coba dan bukan untuk disebar ke pasukan. Penggelaran sungguhan memakai APK rilis bertanda tangan resmi dan disebar lewat MDM."
         : "A <b>debug</b> build signed with a developer key, for testing and not for distribution to units. A real deployment uses an officially signed release APK pushed through MDM.",
