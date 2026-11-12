@@ -107,10 +107,30 @@ mengirim metadata perilaku ke `POST /ingest/mobile`, bentuk event identik
 dengan simulator sehingga pipeline tidak bisa membedakannya. Kode lengkap,
 **belum dikompilasi** (perlu Android SDK) dan **belum diuji di perangkat**.
 
-**Hasil uji deteksi** (`selftest_mobile.py`, tanpa Docker/Kafka, 12.400 event):
-**6/6 rantai terdeteksi, 0 false positive korelasi, 23 HP normal nol alarm.**
-Sekitar 0,3% event normal menyalakan satu indikator atomik — dan tidak satu
-pun menjadi kasus. Itu perilaku yang dirancang, bukan kebetulan.
+### Apa yang sudah diuji, dan apa yang belum
+
+Penting dibaca sebelum menilai: yang terbukti di proyek ini adalah **mesin
+deteksinya**, bukan sensornya.
+
+| Komponen | Kode | Data uji |
+|---|---|---|
+| Mesin deteksi (Sigma, korelasi, skoring, OCSF) | berjalan di stack utuh | telemetri **sintetis** dari simulator |
+| Pipeline (Kafka, ClickHouse, Postgres, REST/WS) | container nyata | sumbernya simulator |
+| Indikator STIX2 | nyata | **3.166 indikator asli** (Amnesty, MVT) |
+| Pemindai APK (YARA-X) | nyata | APK **sintetis** buatan skrip uji — bukan malware sungguhan |
+| Sweep forensik iOS | nyata | bundel **sintetis** — bukan sysdiagnose iPhone asli |
+| Agent Android | kode lengkap | **belum pernah dikompilasi, nol eksekusi** |
+| Aplikasi iOS | **tidak ada** | — |
+
+**Hasil uji** (`tests/`, tanpa Docker): 6/6 rantai terdeteksi, 0 false positive
+korelasi. Pada stack utuh: tepat 6 HP merah dari 29, masing-masing dengan
+korelasi yang sesuai skenarionya, dan 4 HP berisik berhenti di bawah ambang
+kasus tanpa membuka kasus.
+
+Catatan atas hasil itu: versi awal uji ini **melewatkan** sebuah cacat nyata —
+aturan atomik yang menyala berulang menumpuk risiko sampai membuka kasus palsu,
+karena uji hanya memeriksa korelasi dan bukan akumulasi. Cacat itu baru terlihat
+saat stack utuh dijalankan, lalu ditambal bersama ujinya (`3dccd0e`).
 
 ---
 

@@ -10,17 +10,48 @@ penyerang tidak bisa memanipulasi hasil deteksi tentang dirinya sendiri.
 
 | Hal | Status |
 |---|---|
-| Kode | **Lengkap dan siap dibangun** (Kotlin, 925 baris) |
-| Kompilasi | **Belum pernah dikompilasi** — perlu Android SDK + Gradle |
-| Uji di perangkat | **Belum** — perangkat uji belum tersedia |
-| Dipakai di demo | Opsional. Demo utama memakai simulator; agent adalah bukti hidup tambahan |
+| Kode | Lengkap (Kotlin, 925 baris) |
+| Kompilasi | **Belum pernah dikompilasi.** Tidak ada APK. |
+| Uji di perangkat / emulator | **Belum, nol eksekusi.** |
+| Gradle wrapper (`gradlew`) | **Belum ada** — lihat di bawah |
+| Dipakai di demo | Opsional. Demo utama memakai simulator. |
 
-Jangan klaim agent ini sudah teruji sampai benar-benar dijalankan di perangkat.
+**Jangan sebut agent ini "sudah jalan" atau "sudah teruji" di hadapan juri
+sebelum benar-benar dijalankan di perangkat.** Yang sudah terbukti di proyek
+ini adalah mesin deteksinya, bukan sensor ini.
+
+Konsekuensi yang paling mungkin ketika pertama kali dikompilasi: ada beberapa
+galat kompilasi yang harus dibereskan (impor, tanda tangan API, varian
+`minSdk`). Itu normal untuk kode yang belum pernah dilewatkan kompilator —
+sediakan waktu, jangan jadwalkan tepat sebelum tampil.
 
 ## Membangun
 
+Proyek ini **belum punya Gradle wrapper**, jadi `./gradlew` belum bisa
+dipakai. Pilih salah satu:
+
+**Cara 1 — Android Studio (paling mudah, disarankan)**
+
+Buka folder `agent/android` di Android Studio. Saat *Gradle sync* pertama,
+Studio membuat `gradlew` dan mengunduh seluruh dependensi sendiri. Setelah itu
+isi tiga parameter build di `gradle.properties`:
+
+```properties
+trinetraBase=http://10.0.2.2:8000
+trinetraDeviceId=hp-kodam-5-01
+trinetraToken=trinetra-demo-token
+```
+
+lalu **Run** ke emulator atau perangkat.
+
+**Cara 2 — baris perintah**
+
+Perlu JDK 17 dan Gradle terpasang lebih dulu (`brew install openjdk@17 gradle`),
+lalu buat wrapper-nya sekali:
+
 ```bash
 cd agent/android
+gradle wrapper --gradle-version 8.9      # sekali saja, membuat ./gradlew
 ./gradlew assembleDebug \
   -PtrinetraBase=http://10.0.2.2:8000 \
   -PtrinetraDeviceId=hp-kodam-5-01 \

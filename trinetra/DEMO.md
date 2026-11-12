@@ -240,9 +240,15 @@ Di HP: buka aplikasi → aktifkan **Akses Penggunaan** dan **Akses Notifikasi**
 Status dinaikkan oleh event nyata, dan `label_scenario` pada event dari agent
 adalah `live_agent` — jadi di dashboard bisa dibedakan dari data simulator.
 
-> **Catatan jujur:** agent ini **belum pernah dikompilasi maupun diuji di
-> perangkat**. Jangan dijanjikan ke juri sebelum benar-benar dijalankan.
-> Demo utama tetap simulator; agent adalah bukti tambahan bila berhasil.
+> **Catatan jujur:** agent ini **belum pernah dikompilasi maupun dijalankan** —
+> tidak ada APK, dan belum ada wrapper Gradle-nya. Kompilasi pertama
+> kemungkinan masih memunculkan beberapa galat yang harus dibereskan, jadi
+> jangan dijadwalkan tepat sebelum tampil dan jangan dijanjikan ke juri sebelum
+> benar-benar berjalan. Demo utama tetap simulator.
+>
+> **Tidak ada aplikasi iOS.** Jalur iOS adalah sweep berkala atas bundel
+> diagnostik yang ditarik manual dari perangkat (`POST /sweep/ios`), bukan
+> aplikasi yang dipasang. Itu batas iOS, bukan pilihan desain.
 
 ## Lampiran C · Mode insider threat (modul lama)
 
