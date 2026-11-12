@@ -41,25 +41,83 @@ async def stats():
     }
 
 
+async def _device_facts() -> dict:
+    """Spesifikasi perangkat dari telemetri TERAKHIR yang benar-benar diterima.
+
+    Sengaja tidak dibaca dari registry: yang didaftarkan bisa usang (HP diganti,
+    OS diperbarui, patch dipasang) sementara yang terbaca adalah keadaan
+    sebenarnya saat ini. Untuk alat keamanan, selisih antara keduanya justru
+    informasi penting.
+
+    `last_seen` dipakai menandai perangkat yang berhenti melapor — pada sistem
+    pemantauan, perangkat yang senyap bukan berarti aman, melainkan titik buta.
+    """
+    try:
+        rows, cols = await ch_query(
+            """
+            SELECT entity_id,
+                   argMax(platform, ts)       AS platform,
+                   argMax(os_version, ts)     AS os_version,
+                   argMax(device_model, ts)   AS device_model,
+                   argMax(patch_age_days, ts) AS patch_age_days,
+                   argMax(net_gen, ts)        AS net_gen,
+                   max(ts)                    AS last_seen,
+                   countIf(label_scenario = 'live_agent') AS live_events
+            FROM trinetra.events
+            WHERE domain = 'mobile' AND ts >= now() - toIntervalDay(7)
+            GROUP BY entity_id
+            """, {})
+    except Exception as e:
+        print(f"[api] gagal membaca fakta perangkat: {e}", flush=True)
+        return {}
+    facts = {}
+    for r in rows:
+        d = dict(zip(cols, r))
+        ls = d.get("last_seen")
+        facts[d["entity_id"]] = {
+            "platform": d.get("platform") or "",
+            "os_version": d.get("os_version") or "",
+            "device_model": d.get("device_model") or "",
+            "patch_age_days": int(d.get("patch_age_days") or 0),
+            "net_gen": d.get("net_gen") or "",
+            "last_seen": ls.isoformat() if hasattr(ls, "isoformat") else None,
+            # Perangkat dengan event berlabel live_agent = telemetri dari agent
+            # MTD sungguhan di HP, bukan dari simulator.
+            "live_agent": int(d.get("live_events") or 0) > 0,
+        }
+    return facts
+
+
 @router.get("/entities")
 async def entities():
     pool = pg()
     async with pool.acquire() as con:
         rows = await con.fetch(
             "SELECT e.entity_id, e.display_name, e.role, e.node_id, n.tier, "
-            "       r.risk_score, r.last_event "
+            "       e.holder_rank, e.holder_name, e.holder_nrp, "
+            "       n.name AS node_name, r.risk_score, r.last_event "
             "FROM entities e JOIN nodes n ON n.node_id=e.node_id "
             "LEFT JOIN entity_risk r ON r.entity_id=e.entity_id "
             "ORDER BY r.risk_score DESC NULLS LAST")
+    facts = await _device_facts()
     out = []
     for r in rows:
         live = entity_risk(r["entity_id"])          # decayed live value
         risk = max(live, float(r["risk_score"] or 0))
+        f = facts.get(r["entity_id"], {})
         out.append({
             "entity_id": r["entity_id"], "display_name": r["display_name"],
             "role": r["role"], "node_id": r["node_id"], "tier": r["tier"],
+            "node_name": r["node_name"],
+            "holder_rank": r["holder_rank"] or "",
+            "holder_name": r["holder_name"] or "",
+            "holder_nrp": r["holder_nrp"] or "",
             "risk_score": round(risk, 1), "severity": severity_from_risk(risk),
             "last_event": r["last_event"].isoformat() if r["last_event"] else None,
+            **{k: f.get(k, "" if k not in ("patch_age_days",) else 0)
+               for k in ("platform", "os_version", "device_model",
+                         "patch_age_days", "net_gen", "last_seen")},
+            "live_agent": bool(f.get("live_agent")),
         })
     out.sort(key=lambda x: x["risk_score"], reverse=True)
     return out
@@ -70,7 +128,8 @@ async def entity_detail(entity_id: str):
     pool = pg()
     async with pool.acquire() as con:
         ent = await con.fetchrow(
-            "SELECT e.entity_id, e.display_name, e.role, e.node_id, n.tier "
+            "SELECT e.entity_id, e.display_name, e.role, e.node_id, n.tier, "
+            "       n.name AS node_name, e.holder_rank, e.holder_name, e.holder_nrp "
             "FROM entities e JOIN nodes n ON n.node_id=e.node_id WHERE e.entity_id=$1",
             entity_id)
     if not ent:
@@ -88,6 +147,7 @@ async def entity_detail(entity_id: str):
         """, {"e": entity_id})
     actual = dict(zip(cols, actual_rows[0])) if actual_rows and actual_rows[0] else {}
 
+    _f = (await _device_facts()).get(entity_id, {})
     baselines = role_baselines(ent["role"])
     baseline_view = []
     for param, cfg in baselines.items():

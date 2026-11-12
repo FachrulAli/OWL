@@ -55,9 +55,28 @@ const JAB: Record<string, string> = {
   prajurit: "Prajurit",
 };
 
+// Pangkat per jabatan, dan nama personel FIKTIF. Sama dengan seed Postgres
+// supaya demo in-browser dan stack penuh menampilkan orang yang sama.
+// Nama sengaja fiktif: menampilkan nama perwira sungguhan pada data ancaman
+// yang disimulasikan akan keliru dan berpotensi merugikan orang nyata.
+const PANGKAT: Record<string, string> = {
+  pati: "Mayjen TNI", pamen_intel: "Kolonel Inf", pamen_ops: "Letkol Inf",
+  pama_siber: "Kapten Ctp", bintara_komlek: "Serka", ajudan: "Lettu Inf",
+  prajurit: "Praka",
+};
+const NAMA = ["Bagas Pratama", "Rizal Nugroho", "Dimas Saputra", "Arif Wibowo",
+  "Yoga Permana", "Teguh Santoso", "Hendra Kusuma", "Fajar Maulana",
+  "Galih Prasetyo", "Bayu Anggara", "Reza Mahendra", "Andi Firmansyah",
+  "Wahyu Setiawan", "Eko Purnomo", "Iqbal Ramadhan", "Satria Hutama",
+  "Gilang Aditya", "Doni Hermawan", "Panji Nugraha", "Krisna Wijaya",
+  "Agus Riyanto", "Beni Saputro", "Candra Dwi", "Dedi Kurnia",
+  "Erlangga Putra", "Faisal Rahman", "Gunawan Adi", "Hadi Susanto",
+  "Irfan Maulidi"];
+
 interface Dev {
   id: string; role: string; node: string; tier: number;
   platform: string; os: string; model: string; patch: number;
+  rank: string; holder: string; nrp: string;
 }
 
 // Roster identik dengan services/simulator/devices.py
@@ -91,12 +110,19 @@ const DEVICES: Dev[] = [
   ["hp-kodam-23-01", "pamen_ops", "kodam-23", 1, "android", "14", "Pixel 7", 15],
   ["hp-kodam-24-01", "pamen_intel", "kodam-24", 1, "ios", "17.2", "iPhone 14", 69],
   ["hp-kodam-24-02", "prajurit", "kodam-24", 1, "android", "13", "Itel P55", 143],
-].map((d: any) => ({
+].map((d: any, i: number) => ({
   id: d[0], role: d[1], node: d[2], tier: d[3], platform: d[4], os: d[5],
   model: d[6], patch: d[7],
+  rank: PANGKAT[d[1]], holder: NAMA[i % NAMA.length],
+  nrp: `11${String((930000 + i * 1373) % 1000000).padStart(6, "0")}`,
 }));
 
-const devName = (d: Dev) => `${JAB[d.role]} · ${d.model}`;
+// Nama yang ditampilkan adalah ORANGNYA, bukan perangkatnya: saat sebuah HP
+// merah, pertanyaan pertama operator adalah "siapa yang harus dihubungi".
+const devName = (d: Dev) => `${d.rank} ${d.holder}`;
+
+const NODE_NAME: Record<string, string> = Object.fromEntries(
+  [["pusat", "Mabes TNI AD / Pussiberad"], ...KODAM]);
 
 // Definisi rantai — tahap, aturan yang menyala, dan narasinya. Sama dengan
 // mobile_scenarios.py + mobile_correlation.yml di backend.
@@ -441,6 +467,11 @@ class Engine {
         entity_id: d.id, display_name: devName(d), role: d.role,
         node_id: d.node, tier: d.tier, risk_score: r, severity: sev(r),
         last_event: new Date().toISOString(),
+        holder_rank: d.rank, holder_name: d.holder, holder_nrp: d.nrp,
+        node_name: NODE_NAME[d.node] ?? d.node,
+        platform: d.platform, os_version: d.os, device_model: d.model,
+        patch_age_days: d.patch, net_gen: d.platform === "ios" ? "5G" : "4G",
+        last_seen: new Date().toISOString(), live_agent: false,
       };
     }).sort((a, b) => b.risk_score - a.risk_score);
   }
@@ -507,6 +538,9 @@ class Engine {
         entity_id: d.id, display_name: devName(d), role: d.role,
         node_id: d.node, tier: d.tier, platform: d.platform,
         os_version: d.os, device_model: d.model, patch_age_days: d.patch,
+        holder_rank: d.rank, holder_name: d.holder, holder_nrp: d.nrp,
+        node_name: NODE_NAME[d.node] ?? d.node,
+        last_seen: new Date().toISOString(), live_agent: false,
       },
       risk_score: r, severity: sev(r), baselines, actual_24h: {},
       chains: s.chains,

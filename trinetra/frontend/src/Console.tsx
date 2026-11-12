@@ -86,13 +86,18 @@ export default function Console({ onExit }: { onExit: () => void }) {
         <div className="tagline">
           Satsiber TNI AD / Pussiberad — deteksi zero-click pada HP dinas, korelasi kill-chain, triase, dan eskalasi
         </div>
-        <button
-          className="base-link"
-          style={{ marginLeft: "auto", marginRight: 4 }}
-          onClick={() => { window.location.hash = "/deteksi"; }}
-          title="Lihat seluruh aturan deteksi yang dipakai">
-          Aturan deteksi →
-        </button>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 14, alignItems: "center" }}>
+          <button className="base-link"
+            onClick={() => { window.location.hash = "/deteksi"; }}
+            title="Lihat seluruh aturan deteksi yang dipakai — bobot, field yang dibaca, dan false positive yang diakui">
+            Aturan deteksi →
+          </button>
+          <button className="base-link"
+            onClick={() => { window.location.hash = "/agent"; }}
+            title="Unduh agent MTD dan panduan pemasangannya di HP dinas">
+            Pasang agent →
+          </button>
+        </div>
       </div>
 
       {/* ───────── command-center cockpit ───────── */}

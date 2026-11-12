@@ -746,3 +746,79 @@ td b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
   .dac-head h1 { font-size: 23px; }
   .dac-grid { grid-template-columns: 1fr; }
 }
+
+/* ───────── Tabel perangkat: dua baris per sel ─────────
+   Satu baris tabel harus menjawab "siapa" dan "perangkat apa" sekaligus,
+   tanpa menambah kolom. Baris kedua memakai ukuran dan warna yang lebih
+   redup supaya mata membaca nama dan model lebih dulu. */
+.dev-table td { vertical-align: top; }
+.dev-holder { font-weight: 600; font-size: 13px; line-height: 1.3; }
+.dev-model { font-size: 13px; line-height: 1.3; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.dev-sub {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font-size: 10.5px; color: var(--faint); margin-top: 3px;
+}
+.dev-silent {
+  font-size: 10.5px; color: #e8732c; margin-top: 2px;
+  font-family: var(--font-mono);
+}
+.dev-tag.live {
+  color: #4ade80; border-color: rgba(74, 222, 128, .4);
+  background: rgba(74, 222, 128, .1);
+}
+.dev-foot {
+  font-size: 10.5px; line-height: 1.5; margin-top: 10px;
+  padding-top: 9px; border-top: 1px solid var(--line);
+}
+.dev-rank {
+  display: inline-block; margin-right: 6px; font-weight: 600;
+  font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase;
+  color: #c4b5fd; vertical-align: 1px;
+}
+
+/* ───────── Halaman pemasangan agent ───────── */
+.ag-dl { display: flex; flex-direction: column; gap: 9px; margin-top: 18px; }
+.ag-btn {
+  display: inline-flex; flex-direction: column; gap: 3px; align-self: flex-start;
+  padding: 14px 26px; border-radius: 8px; cursor: pointer; text-decoration: none;
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff;
+  font-size: 16px; font-weight: 600; border: none;
+  box-shadow: 0 2px 14px rgba(139, 92, 246, .3);
+  transition: transform .12s, box-shadow .12s;
+}
+.ag-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(139, 92, 246, .42); }
+.ag-btn-sub { font-size: 11px; font-weight: 400; opacity: .82; font-family: var(--font-mono); }
+.ag-dl-note { font-size: 11.5px; line-height: 1.55; max-width: 62ch; }
+
+.ag-live { display: flex; flex-direction: column; gap: 8px; }
+.ag-live-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  border: 1px solid var(--line); border-radius: 6px; padding: 11px 13px;
+  background: rgba(74, 222, 128, .04);
+}
+.ag-live-status { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+
+.ag-steps { counter-reset: s; list-style: none; padding: 0; margin: 0; }
+.ag-steps li { position: relative; padding: 0 0 18px 44px; }
+.ag-steps li::before {
+  counter-increment: s; content: counter(s);
+  position: absolute; left: 0; top: 0; width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: rgba(139, 92, 246, .16);
+  border: 1px solid rgba(139, 92, 246, .4); color: #c4b5fd;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+}
+.ag-steps li b { font-size: 14px; }
+.ag-steps li p { font-size: 12.5px; line-height: 1.6; color: var(--muted); margin: 4px 0 0; max-width: 78ch; }
+
+.ag-bad { color: #fca5a5; font-size: 12px; line-height: 1.5; }
+.ag-privacy { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.ag-privacy h3 { font-size: 13px; margin: 0 0 8px; }
+.ag-privacy ul { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.75; color: var(--muted); }
+.ag-yes { color: #86efac; }
+.ag-no { color: #fca5a5; }
+.ag-limits { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.ag-limit { border: 1px solid var(--line); border-radius: 7px; padding: 13px 14px; }
+.ag-limit h3 { font-size: 13.5px; margin: 0 0 6px; }
+.ag-limit p { font-size: 12px; line-height: 1.6; color: var(--muted); margin: 0; }
+@media (max-width: 640px) { .ag-privacy { grid-template-columns: 1fr; } }

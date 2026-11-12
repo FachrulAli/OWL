@@ -23,7 +23,8 @@ async def refresh_caches():
         nodes = await con.fetch("SELECT node_id, name, tier, parent_id FROM nodes")
         roles = await con.fetch("SELECT role, label, risk_level, base_weight FROM roles")
         ents = await con.fetch(
-            "SELECT e.entity_id, e.display_name, e.role, e.node_id, n.tier "
+            "SELECT e.entity_id, e.display_name, e.role, e.node_id, n.tier, "
+            "       e.holder_rank, e.holder_name, e.holder_nrp "
             "FROM entities e JOIN nodes n ON n.node_id = e.node_id")
         bl = await con.fetch(
             "SELECT role, parameter, normal_low, normal_high, static_crit, rel_mult, weight "
@@ -43,7 +44,18 @@ async def refresh_caches():
 def enrich(ev: dict) -> dict:
     ent = _entities.get(ev["entity_id"])
     if ent:
-        ev["display_name"] = ent["display_name"]
+        # Nama yang ditampilkan adalah ORANGNYA, bukan perangkatnya.
+        # Saat sebuah HP merah, pertanyaan pertama operator adalah "siapa yang
+        # harus dihubungi" — pangkat dan nama menjawabnya seketika, sementara
+        # "iPhone 15 Pro" tidak. Spesifikasi perangkat tetap tersedia, tetapi
+        # sebagai field tersendiri, bukan ditumpuk ke dalam satu teks nama.
+        rank = (ent.get("holder_rank") or "").strip()
+        name = (ent.get("holder_name") or "").strip()
+        ev["display_name"] = (f"{rank} {name}".strip() if name
+                              else ent["display_name"])
+        ev["holder_rank"] = rank
+        ev["holder_name"] = name
+        ev["holder_nrp"] = ent.get("holder_nrp") or ""
         ev["node_id"] = ent["node_id"]
         ev["tier"] = ent["tier"]
         ev["role"] = ent["role"]

@@ -37,12 +37,22 @@ export function EntityDrawer({ entityId, onClose }: { entityId: string; onClose:
           {!d ? <h2>Memuat…</h2> : (
             <>
               <h2 style={{ color: "var(--text)", fontSize: 18, letterSpacing: 0 }}>
-                {d.entity.display_name}
+                {d.entity.holder_rank && (
+                  <span className="dev-rank" style={{ fontSize: 11 }}>
+                    {d.entity.holder_rank}
+                  </span>
+                )}
+                {d.entity.holder_name || d.entity.display_name}
               </h2>
+              {d.entity.holder_nrp && (
+                <div className="muted mono" style={{ fontSize: 11, marginTop: 1 }}>
+                  NRP {d.entity.holder_nrp}
+                </div>
+              )}
               <div className="muted" style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
                 <span>{ROLE_LABEL[d.entity.role] ?? d.entity.role}</span>
                 <span>·</span>
-                <span>{d.entity.node_id}</span>
+                <span>{d.entity.node_name ?? d.entity.node_id}</span>
                 {d.entity.platform && (
                   <span className={`dev-tag ${d.entity.platform === "ios" ? "ios" : "and"}`}>
                     {platformIcon(d.entity.platform)} {d.entity.os_version ?? ""}

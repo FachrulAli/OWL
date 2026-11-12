@@ -37,6 +37,14 @@ async function route<T>(path: string, demoFn: (e: Eng) => T): Promise<T> {
 export interface Entity {
   entity_id: string; display_name: string; role: string; node_id: string;
   tier: number; risk_score: number; severity: string; last_event: string | null;
+  // identitas PEMEGANG (dari registry) — menjawab "siapa yang harus dihubungi"
+  holder_rank?: string; holder_name?: string; holder_nrp?: string;
+  node_name?: string;
+  // fakta PERANGKAT (dari telemetri terakhir yang benar-benar diterima,
+  // bukan dari yang didaftarkan) — menjawab "perangkat apa yang ditangani"
+  platform?: string; os_version?: string; device_model?: string;
+  patch_age_days?: number; net_gen?: string; last_seen?: string | null;
+  live_agent?: boolean;
 }
 export interface Case {
   case_id: number; entity_id: string; role: string; node_id: string; tier: number;

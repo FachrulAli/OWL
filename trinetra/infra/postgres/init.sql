@@ -278,3 +278,57 @@ INSERT INTO entities (entity_id, display_name, role, node_id) VALUES
 ON CONFLICT (entity_id) DO NOTHING;
 INSERT INTO entity_risk (entity_id, risk_score) VALUES ('hp-uji-01', 0)
 ON CONFLICT (entity_id) DO NOTHING;
+
+-- ====================================================================
+-- Identitas PEMEGANG perangkat, dipisah dari identitas perangkat.
+--
+-- Alasan pemisahan: `display_name` sebelumnya mencampur orang dan HP dalam
+-- satu teks ("Pangdam · iPhone 15 Pro"), sehingga operator tidak bisa
+-- menjawab dua pertanyaan berbeda yang sama pentingnya: SIAPA yang harus
+-- dihubungi, dan PERANGKAT APA yang harus ditangani.
+--
+-- Spesifikasi perangkat (model, OS, umur patch) sengaja TIDAK disimpan di
+-- sini: itu diambil dari telemetri terakhir yang benar-benar diterima. Yang
+-- didaftarkan bisa usang atau salah; yang terbaca adalah kenyataan.
+--
+-- SELURUH NAMA DI BAWAH INI FIKTIF dan ditandai demikian di antarmuka.
+-- ====================================================================
+ALTER TABLE entities ADD COLUMN IF NOT EXISTS holder_rank TEXT;
+ALTER TABLE entities ADD COLUMN IF NOT EXISTS holder_name TEXT;
+ALTER TABLE entities ADD COLUMN IF NOT EXISTS holder_nrp  TEXT;
+
+UPDATE entities e SET
+    holder_rank = v.rank, holder_name = v.nama, holder_nrp = v.nrp
+FROM (VALUES
+    ('hp-pusat-pangti', 'Mayjen TNI', 'Bagas Pratama', '11930000'),
+    ('hp-pusat-intel', 'Kolonel Inf', 'Rizal Nugroho', '11931373'),
+    ('hp-pusat-siber', 'Kapten Ctp', 'Dimas Saputra', '11932746'),
+    ('hp-pusat-ajudan', 'Lettu Inf', 'Arif Wibowo', '11934119'),
+    ('hp-kodam-jaya-01', 'Mayjen TNI', 'Yoga Permana', '11935492'),
+    ('hp-kodam-jaya-02', 'Kolonel Inf', 'Teguh Santoso', '11936865'),
+    ('hp-kodam-im-01', 'Letkol Inf', 'Hendra Kusuma', '11938238'),
+    ('hp-kodam-1-01', 'Kolonel Inf', 'Fajar Maulana', '11939611'),
+    ('hp-kodam-2-01', 'Serka', 'Galih Prasetyo', '11940984'),
+    ('hp-kodam-3-01', 'Mayjen TNI', 'Bayu Anggara', '11942357'),
+    ('hp-kodam-4-01', 'Praka', 'Reza Mahendra', '11943730'),
+    ('hp-kodam-5-01', 'Kolonel Inf', 'Andi Firmansyah', '11945103'),
+    ('hp-kodam-5-02', 'Praka', 'Wahyu Setiawan', '11946476'),
+    ('hp-kodam-6-01', 'Letkol Inf', 'Eko Purnomo', '11947849'),
+    ('hp-kodam-9-01', 'Serka', 'Iqbal Ramadhan', '11949222'),
+    ('hp-kodam-12-01', 'Praka', 'Satria Hutama', '11950595'),
+    ('hp-kodam-13-01', 'Letkol Inf', 'Gilang Aditya', '11951968'),
+    ('hp-kodam-14-01', 'Kolonel Inf', 'Doni Hermawan', '11953341'),
+    ('hp-kodam-16-01', 'Praka', 'Panji Nugraha', '11954714'),
+    ('hp-kodam-17-01', 'Kolonel Inf', 'Krisna Wijaya', '11956087'),
+    ('hp-kodam-17-02', 'Serka', 'Agus Riyanto', '11957460'),
+    ('hp-kodam-18-01', 'Praka', 'Beni Saputro', '11958833'),
+    ('hp-kodam-19-01', 'Letkol Inf', 'Candra Dwi', '11960206'),
+    ('hp-kodam-20-01', 'Praka', 'Dedi Kurnia', '11961579'),
+    ('hp-kodam-21-01', 'Serka', 'Erlangga Putra', '11962952'),
+    ('hp-kodam-22-01', 'Praka', 'Faisal Rahman', '11964325'),
+    ('hp-kodam-23-01', 'Letkol Inf', 'Gunawan Adi', '11965698'),
+    ('hp-kodam-24-01', 'Kolonel Inf', 'Hadi Susanto', '11967071'),
+    ('hp-kodam-24-02', 'Praka', 'Irfan Maulidi', '11968444'),
+    ('hp-uji-01', 'Kapten Ctp', 'Perangkat Uji Lapangan', '11000001')
+) AS v(entity_id, rank, nama, nrp)
+WHERE e.entity_id = v.entity_id;

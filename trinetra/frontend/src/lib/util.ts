@@ -125,3 +125,38 @@ export function patchRisk(days: number) {
   if (days >= 45) return { label: "perlu update", color: "#d7a21a" };
   return { label: "mutakhir", color: "#3f8f5b" };
 }
+
+
+/**
+ * Sudah berapa lama perangkat tidak melapor.
+ *
+ * Pada sistem pemantauan, perangkat yang senyap BUKAN berarti aman — itu
+ * titik buta. Karena itu keheningan ditampilkan, bukan disembunyikan.
+ * Ambang 10 menit dipilih dari interval sampel agent (30 detik) dengan
+ * kelonggaran besar untuk jaringan seluler yang putus-nyambung.
+ */
+export function silence(lastSeen?: string | null) {
+  if (!lastSeen) return { stale: true, label: "belum pernah melapor", mins: Infinity };
+  const mins = (Date.now() - new Date(lastSeen).getTime()) / 60000;
+  if (mins < 10) return { stale: false, label: "", mins };
+  if (mins < 60) return { stale: true, label: `senyap ${Math.round(mins)} mnt`, mins };
+  if (mins < 1440) return { stale: true, label: `senyap ${Math.round(mins / 60)} jam`, mins };
+  return { stale: true, label: `senyap ${Math.round(mins / 1440)} hari`, mins };
+}
+
+/** Nama perangkat ringkas untuk kolom sempit. */
+export function deviceLabel(e: { device_model?: string; platform?: string; os_version?: string }) {
+  const m = e.device_model || "perangkat tidak dikenal";
+  const os = e.platform ? `${platformIcon(e.platform)} ${e.os_version ?? ""}`.trim() : "";
+  return { model: m, os };
+}
+
+/** Nama pemegang perangkat; jatuh kembali ke display_name bila belum terdaftar. */
+export function holderLabel(e: {
+  holder_rank?: string; holder_name?: string; display_name?: string;
+}) {
+  const r = (e.holder_rank || "").trim();
+  const n = (e.holder_name || "").trim();
+  if (n) return { rank: r, name: n };
+  return { rank: "", name: e.display_name || "—" };
+}

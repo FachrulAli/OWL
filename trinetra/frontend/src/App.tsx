@@ -3,16 +3,18 @@ import Landing from "./Landing";
 import Console from "./Console";
 import Structure from "./Structure";
 import Deteksi from "./Deteksi";
+import Agent from "./Agent";
 import { Preloader } from "./Preloader";
 
 // Minimal hash router: #/console → command console, #/struktur → TNI AD
 // organisation reference, #/deteksi → katalog aturan deteksi (transparansi),
 // everything else → the product landing page.
-function routeFromHash(): "console" | "struktur" | "deteksi" | "landing" {
+function routeFromHash(): "console" | "struktur" | "deteksi" | "agent" | "landing" {
   const h = window.location.hash.replace(/^#\/?/, "");
   if (h === "console") return "console";
   if (h === "struktur") return "struktur";
   if (h === "deteksi") return "deteksi";
+  if (h === "agent") return "agent";
   return "landing";
 }
 
@@ -44,6 +46,7 @@ export default function App() {
   if (route === "console") page = <Console onExit={() => go("")} />;
   else if (route === "struktur") page = <Structure onExit={() => go("")} onConsole={() => go("/console")} />;
   else if (route === "deteksi") page = <Deteksi onExit={() => go("")} onConsole={() => go("/console")} />;
+  else if (route === "agent") page = <Agent onExit={() => go("")} onConsole={() => go("/console")} />;
   else page = <Landing onEnter={() => go("/console")} onStructure={() => go("/struktur")}
     onRules={() => go("/deteksi")} />;
 

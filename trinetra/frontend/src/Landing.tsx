@@ -121,6 +121,7 @@ export default function Landing({ onEnter, onStructure, onRules }:
           // keterbukaan logika deteksi adalah bagian dari argumen produk,
           // bukan lampiran teknis yang disembunyikan.
           { id: "deteksi", ix: "↗", label: lang === "en" ? "Detection rules" : "Aturan deteksi", route: "/deteksi" },
+          { id: "agent", ix: "↓", label: lang === "en" ? "Install agent" : "Pasang agent", route: "/agent" },
           { id: "struktur", ix: "↗", label: lang === "en" ? "Army structure" : "Struktur TNI AD", route: "/struktur" },
         ].map((it) => (
           <a key={it.id} href={it.route ? `#${it.route}` : `#${it.id}`}
@@ -128,8 +129,8 @@ export default function Landing({ onEnter, onStructure, onRules }:
             onClick={it.route
               ? (e) => {
                   e.preventDefault();
-                  if (it.id === "deteksi") {
-                    if (onRules) onRules(); else window.location.hash = "/deteksi";
+                  if (it.id === "deteksi" || it.id === "agent") {
+                    window.location.hash = it.route;
                   } else onStructure();
                 }
               : () => setActive(it.id)}>
