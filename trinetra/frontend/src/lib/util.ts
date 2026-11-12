@@ -23,6 +23,15 @@ export function fmtTime(iso: string | null) {
 }
 
 export const ROLE_LABEL: Record<string, string> = {
+  // pangkat/jabatan pemegang HP dinas (domain MTD)
+  pati: "Perwira Tinggi",
+  pamen_intel: "Pamen Intelijen",
+  pamen_ops: "Pamen Operasi",
+  pama_siber: "Pama Satsiber",
+  bintara_komlek: "Bintara Komlek",
+  ajudan: "Ajudan",
+  prajurit: "Prajurit",
+  // peran domain endpoint (modul insider threat)
   admin_satsiber: "Admin Satsiber",
   csirt_analyst: "CSIRT Analyst",
   team_lead: "Team Lead",
@@ -33,6 +42,19 @@ export const ROLE_LABEL: Record<string, string> = {
 };
 
 export const CAT_LABEL: Record<string, string> = {
+  // kategori ancaman HP (MTD)
+  zero_click_delivery: "Pengiriman Senyap",
+  zero_click_exploit: "Eksploitasi Zero-Click",
+  spyware_implant: "Implan Spyware",
+  covert_surveillance: "Penyadapan Tersembunyi",
+  covert_exfiltration: "Eksfiltrasi Tersembunyi",
+  c2_beacon: "Denyut Kendali (C2)",
+  malicious_app: "Aplikasi Jahat",
+  device_tampering: "Perangkat Dimanipulasi",
+  mitm: "Penyadapan TLS",
+  radio_attack: "Serangan Radio / IMSI",
+  vulnerable_posture: "Postur Rentan",
+  // kategori domain endpoint (insider threat)
   data_exfiltration: "Eksfiltrasi Data",
   privilege_abuse: "Privilege Abuse",
   lateral_movement: "Lateral Movement",
@@ -42,3 +64,64 @@ export const CAT_LABEL: Record<string, string> = {
   usb_exfiltration: "USB Exfiltration",
   config_tampering: "Config Tampering",
 };
+
+
+// Tahap kill-chain zero-click, dalam urutan terjadinya.
+export const STAGE_LABEL: Record<string, string> = {
+  posture: "Postur Rentan",
+  delivery: "Pengiriman",
+  exploit: "Eksploitasi",
+  install: "Pemasangan",
+  privilege: "Eskalasi Izin",
+  persistence: "Persistensi",
+  implant: "Implan Aktif",
+  tampering: "Manipulasi",
+  mitm: "Penyadapan TLS",
+  c2: "Kendali Jarak Jauh",
+  collection: "Pengumpulan Data",
+  radio: "Serangan Radio",
+};
+
+export const STAGE_ORDER = ["posture", "delivery", "exploit", "install",
+  "privilege", "persistence", "implant", "tampering", "mitm", "c2",
+  "collection", "radio"];
+
+// Tindakan yang disarankan engine untuk sebuah rantai terbukti.
+export const RESPONSE_LABEL: Record<string, string> = {
+  isolate: "Isolasi perangkat",
+  quarantine: "Karantina aplikasi",
+  investigate: "Periksa manual",
+  patch: "Prioritaskan patch",
+};
+
+export const RESPONSE_HINT: Record<string, string> = {
+  isolate: "Putuskan dari jaringan dinas, amankan perangkat untuk forensik, "
+    + "ganti kredensial yang pernah dipakai di HP ini.",
+  quarantine: "Nonaktifkan paket lewat MDM, tarik berkas APK untuk analisis.",
+  investigate: "Verifikasi dengan pemegang perangkat sebelum tindakan teknis.",
+  patch: "Dorong pembaruan OS/keamanan lewat MDM, naikkan prioritas perangkat.",
+};
+
+export function platformIcon(platform: string) {
+  const p = (platform || "").toLowerCase();
+  if (p.includes("ios")) return "iOS";
+  if (p.includes("android")) return "AND";
+  return "—";
+}
+
+// Jendela waktu rantai dalam bahasa manusia.
+export function fmtSpan(seconds: number) {
+  const s = Math.max(0, Math.round(seconds));
+  if (s < 60) return `${s} detik`;
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return r ? `${m} menit ${r} detik` : `${m} menit`;
+}
+
+// Umur patch -> tingkat kerentanan postur.
+export function patchRisk(days: number) {
+  if (days >= 180) return { label: "kedaluwarsa", color: "#e2424a" };
+  if (days >= 90) return { label: "tertinggal", color: "#e8732c" };
+  if (days >= 45) return { label: "perlu update", color: "#d7a21a" };
+  return { label: "mutakhir", color: "#3f8f5b" };
+}

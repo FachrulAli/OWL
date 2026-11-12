@@ -1,16 +1,28 @@
 import { useEffect, useState } from "react";
-import { api } from "../lib/api";
+import { api, ChainHit } from "../lib/api";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
   LineChart, Line, CartesianGrid,
 } from "recharts";
-import { riskColor, ROLE_LABEL, sevClass, CAT_LABEL, fmtTime } from "../lib/util";
+import {
+  riskColor, ROLE_LABEL, sevClass, CAT_LABEL, fmtTime, STAGE_LABEL,
+  platformIcon, patchRisk,
+} from "../lib/util";
+import { KillChainTimeline } from "./KillChain";
 
 export function EntityDrawer({ entityId, onClose }: { entityId: string; onClose: () => void }) {
   const [d, setD] = useState<any>(null);
+  const [chains, setChains] = useState<ChainHit[]>([]);
   useEffect(() => {
     let alive = true;
-    const load = () => api.entity(entityId).then((x) => alive && setD(x)).catch(() => {});
+    const load = () => {
+      api.entity(entityId).then((x) => alive && setD(x)).catch(() => {});
+      // Rantai per-perangkat: di mode demo ikut di payload entity, di mode
+      // backend diambil dari /chains?entity_id=...
+      api.entityChains(entityId)
+        .then((x) => alive && setChains(Array.isArray(x) ? x : []))
+        .catch(() => {});
+    };
     load();
     const t = setInterval(load, 3000);
     return () => { alive = false; clearInterval(t); };
@@ -27,8 +39,23 @@ export function EntityDrawer({ entityId, onClose }: { entityId: string; onClose:
               <h2 style={{ color: "var(--text)", fontSize: 18, letterSpacing: 0 }}>
                 {d.entity.display_name}
               </h2>
-              <div className="muted">
-                {ROLE_LABEL[d.entity.role] ?? d.entity.role} · {d.entity.node_id} · {d.entity.entity_id}
+              <div className="muted" style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
+                <span>{ROLE_LABEL[d.entity.role] ?? d.entity.role}</span>
+                <span>·</span>
+                <span>{d.entity.node_id}</span>
+                {d.entity.platform && (
+                  <span className={`dev-tag ${d.entity.platform === "ios" ? "ios" : "and"}`}>
+                    {platformIcon(d.entity.platform)} {d.entity.os_version ?? ""}
+                  </span>
+                )}
+                {d.entity.device_model && <span className="dev-tag">{d.entity.device_model}</span>}
+                {typeof d.entity.patch_age_days === "number" && (
+                  <span className="dev-tag"
+                    style={{ color: patchRisk(d.entity.patch_age_days).color }}
+                    title="Umur patch keamanan perangkat">
+                    patch {d.entity.patch_age_days}h · {patchRisk(d.entity.patch_age_days).label}
+                  </span>
+                )}
               </div>
               <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10 }}>
                 <span className={sevClass(d.severity)}>{d.severity}</span>
@@ -40,6 +67,7 @@ export function EntityDrawer({ entityId, onClose }: { entityId: string; onClose:
         </div>
         {d && (
           <div className="drawer-body">
+            <DeviceChains chains={chains.length ? chains : (d.chains ?? [])} />
             <BaselineChart baselines={d.baselines} />
             <RiskTimeline timeline={d.timeline} />
             <RecentEvents events={d.events} />
@@ -128,6 +156,44 @@ function RecentEvents({ events }: { events: any[] }) {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+
+/**
+ * Rantai kill-chain yang pernah terbukti pada perangkat ini.
+ *
+ * Ditempatkan paling atas di drawer dengan sengaja: ketika sebuah HP merah,
+ * pertanyaan pertama analis bukan "berapa skornya" tapi "apa yang terjadi,
+ * dalam urutan apa". Grafik baseline menjawab pertanyaan kedua.
+ */
+function DeviceChains({ chains }: { chains: ChainHit[] }) {
+  if (!chains || chains.length === 0) {
+    return (
+      <div className="panel" style={{ marginBottom: 12 }}>
+        <h2>Rantai Kill-Chain</h2>
+        <div className="muted" style={{ fontSize: 12, lineHeight: 1.5 }}>
+          Tidak ada rantai terbukti pada perangkat ini. Indikator tunggal yang
+          mungkin pernah menyala tidak cukup untuk menyimpulkan kompromi, dan
+          sengaja tidak ditampilkan sebagai temuan.
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="panel" style={{ marginBottom: 12 }}>
+      <h2>
+        Rantai Kill-Chain
+        <span className="muted" style={{ fontSize: 11, fontWeight: 400, marginLeft: 8 }}>
+          {chains.length} rantai terbukti pada perangkat ini
+        </span>
+      </h2>
+      {chains.slice(0, 3).map((h, i) => (
+        <div key={`${h.ts}-${i}`} style={{ marginBottom: i < 2 ? 14 : 0 }}>
+          <KillChainTimeline hit={h} />
+        </div>
+      ))}
     </div>
   );
 }

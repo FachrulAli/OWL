@@ -53,7 +53,8 @@ const RAIL = [
   { id: "standar", ix: "04", k: "standards" as const },
 ];
 
-export default function Landing({ onEnter, onStructure }: { onEnter: () => void; onStructure: () => void }) {
+export default function Landing({ onEnter, onStructure, onRules }:
+  { onEnter: () => void; onStructure: () => void; onRules?: () => void }) {
   const [lang, setLang] = useState<Lang>(getInitialLang);
   const [fading, setFading] = useState(false);
   const t = C[lang];
@@ -115,12 +116,23 @@ export default function Landing({ onEnter, onStructure }: { onEnter: () => void;
       {/* ── bottom-right section navigator (moved from the top bar) ── */}
       <nav className="lp-rail" aria-label="Sections">
         {[
-          ...RAIL.map((r) => ({ id: r.id, ix: r.ix, label: t.nav[r.k], route: false })),
-          { id: "struktur", ix: "↗", label: lang === "en" ? "Army structure" : "Struktur TNI AD", route: true },
+          ...RAIL.map((r) => ({ id: r.id, ix: r.ix, label: t.nav[r.k], route: "" })),
+          // Katalog aturan deteksi: ditaruh di navigasi utama dengan sengaja —
+          // keterbukaan logika deteksi adalah bagian dari argumen produk,
+          // bukan lampiran teknis yang disembunyikan.
+          { id: "deteksi", ix: "↗", label: lang === "en" ? "Detection rules" : "Aturan deteksi", route: "/deteksi" },
+          { id: "struktur", ix: "↗", label: lang === "en" ? "Army structure" : "Struktur TNI AD", route: "/struktur" },
         ].map((it) => (
-          <a key={it.id} href={it.route ? "#struktur" : `#${it.id}`}
+          <a key={it.id} href={it.route ? `#${it.route}` : `#${it.id}`}
             className={`${it.route ? "rt " : ""}${active === it.id ? "on" : ""}`.trim()}
-            onClick={it.route ? (e) => { e.preventDefault(); onStructure(); } : () => setActive(it.id)}>
+            onClick={it.route
+              ? (e) => {
+                  e.preventDefault();
+                  if (it.id === "deteksi") {
+                    if (onRules) onRules(); else window.location.hash = "/deteksi";
+                  } else onStructure();
+                }
+              : () => setActive(it.id)}>
             <span className="lbl">{it.label}</span>
             <span className="ix">{it.ix}</span>
             <span className="tick" />

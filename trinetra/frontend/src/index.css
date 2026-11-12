@@ -578,3 +578,171 @@ td b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
   .pl-bar > i { animation: plBar 1s linear forwards; }
   .route-wipe { display: none; }
 }
+
+/* ───────────── Timeline kill-chain (domain MTD) ─────────────
+   Komponen pembawa bukti utama: urutan tahap serangan pada satu perangkat.
+   Dirancang supaya bisa dibaca dalam 3 detik saat demo di proyektor. */
+.kc { display: flex; flex-direction: column; gap: 8px; }
+.kc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.kc-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; line-height: 1.35; }
+.kc-badge {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .08em;
+  padding: 2px 6px; border-radius: 3px; white-space: nowrap;
+  background: rgba(139, 92, 246, .16); color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, .35);
+}
+.kc-badge[data-type="event_count"] { background: rgba(226, 66, 74, .14); color: #fca5a5; border-color: rgba(226, 66, 74, .34); }
+.kc-badge[data-type="temporal"] { background: rgba(20, 184, 166, .14); color: #5eead4; border-color: rgba(20, 184, 166, .34); }
+.kc-sev { font-family: var(--font-mono); font-size: 20px; font-weight: 700; line-height: 1; }
+.kc-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 11px; color: var(--faint); }
+
+.kc-steps { list-style: none; margin: 4px 0 0; padding: 0 0 0 4px; }
+.kc-steps li { position: relative; padding: 0 0 12px 18px; }
+.kc-steps li::before {
+  content: ""; position: absolute; left: 4px; top: 12px; bottom: -2px;
+  width: 1px; background: linear-gradient(to bottom, var(--c), transparent);
+}
+.kc-steps li:last-child { padding-bottom: 2px; }
+.kc-steps li:last-child::before { display: none; }
+.kc-dot {
+  position: absolute; left: 0; top: 4px; width: 9px; height: 9px;
+  border-radius: 50%; background: var(--c);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent);
+}
+.kc-step-body { display: flex; flex-direction: column; gap: 1px; }
+.kc-step-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.kc-stage { font-size: 11.5px; font-weight: 700; letter-spacing: .01em; }
+.kc-time { font-size: 10.5px; color: var(--faint); }
+.kc-rule { font-size: 10.5px; color: var(--muted); }
+.kc-gap { font-size: 10px; color: var(--faint); font-style: italic; }
+
+.kc-idle {
+  font-size: 11.5px; line-height: 1.5; color: var(--muted);
+  background: rgba(226, 66, 74, .07); border-left: 2px solid var(--critical);
+  padding: 7px 9px; border-radius: 0 4px 4px 0;
+}
+.kc-resp { background: rgba(255, 255, 255, .03); border-radius: 4px; padding: 7px 9px; }
+.kc-resp-h { font-size: 12px; }
+.kc-resp-b { font-size: 11px; color: var(--faint); margin-top: 2px; line-height: 1.45; }
+.kc-mitre { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.kc-card {
+  border: 1px solid var(--line); border-radius: 6px; padding: 10px 11px;
+  margin-bottom: 8px; background: rgba(255, 255, 255, .015);
+  transition: border-color .15s, background .15s;
+}
+.kc-card:hover { border-color: rgba(226, 66, 74, .4); background: rgba(226, 66, 74, .04); }
+.kc-card-foot { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+
+/* kartu perangkat (device-centric) */
+.dev-tag {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .06em;
+  padding: 1px 4px; border-radius: 2px; border: 1px solid var(--line);
+  color: var(--faint); white-space: nowrap;
+}
+.dev-tag.ios { color: #93c5fd; border-color: rgba(147, 197, 253, .35); }
+.dev-tag.and { color: #86efac; border-color: rgba(134, 239, 172, .35); }
+
+/* ───────────── Halaman "Deteksi sebagai Kode" ─────────────
+   Dibuat supaya aturan deteksi bisa diaudit tanpa membaca kode. Tata letaknya
+   sengaja seperti dokumen, bukan dasbor: yang dibaca di sini adalah argumen,
+   bukan angka yang berubah tiap detik. */
+.dac { max-width: 1180px; margin: 0 auto; padding: 18px 22px 60px; }
+.dac-top { display: flex; justify-content: space-between; padding: 6px 0 20px; }
+.dac-head { border-bottom: 1px solid var(--line); padding-bottom: 22px; margin-bottom: 26px; }
+.dac-kicker {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--faint); margin-bottom: 10px;
+}
+.dac-head h1 { font-size: 30px; line-height: 1.15; margin: 0 0 12px; letter-spacing: -.01em; }
+.dac-lede { font-size: 14.5px; line-height: 1.65; color: var(--muted); max-width: 72ch; margin: 0 0 16px; }
+.dac-note {
+  font-size: 13px; line-height: 1.65; color: var(--muted); max-width: 80ch;
+  background: rgba(176, 108, 255, .07); border-left: 2px solid #b06cff;
+  padding: 11px 13px; border-radius: 0 5px 5px 0;
+}
+.dac-note b { color: var(--text); }
+
+.dac-sec { margin-bottom: 40px; }
+.dac-sec h2 {
+  font-size: 17px; margin: 0 0 6px; display: flex; align-items: center; gap: 9px;
+}
+.dac-count {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 400;
+  padding: 2px 7px; border-radius: 10px; background: rgba(255, 255, 255, .06);
+  color: var(--muted);
+}
+.dac-sub { font-size: 13px; line-height: 1.6; color: var(--faint); max-width: 76ch; margin: 0 0 18px; }
+.dac-sub code {
+  font-family: var(--font-mono); font-size: 11.5px; padding: 1px 4px;
+  border-radius: 3px; background: rgba(255, 255, 255, .07); color: #c4b5fd;
+}
+
+.dac-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px; }
+.dac-card {
+  border: 1px solid var(--line); border-radius: 7px; padding: 14px 15px;
+  background: rgba(255, 255, 255, .015);
+}
+.dac-card-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+.dac-sev { font-family: var(--font-mono); font-size: 19px; font-weight: 700; }
+.dac-card h3 { font-size: 14px; line-height: 1.4; margin: 0 0 3px; }
+.dac-id { font-size: 10.5px; color: var(--faint); margin-bottom: 8px; }
+.dac-desc { font-size: 12.5px; line-height: 1.6; color: var(--muted); margin: 0 0 11px; }
+
+.dac-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; margin-bottom: 10px; }
+.dac-link-wrap { display: inline-flex; align-items: center; gap: 3px; }
+.dac-arrow { color: var(--faint); font-size: 12px; }
+.dac-rule-chip {
+  font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer;
+  background: rgba(139, 92, 246, .12); border: 1px solid rgba(139, 92, 246, .3);
+  color: #c4b5fd; font-family: inherit; transition: background .15s;
+}
+.dac-rule-chip:hover { background: rgba(139, 92, 246, .24); }
+
+.dac-facts { display: flex; flex-wrap: wrap; gap: 10px; font-size: 11px; color: var(--faint); margin-bottom: 9px; }
+.dac-facts b { color: var(--muted); }
+.dac-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.dac-detail {
+  margin-top: 11px; padding: 11px 12px; border-radius: 5px;
+  background: rgba(255, 255, 255, .035); border: 1px solid var(--line);
+}
+.dac-detail-h { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; margin-bottom: 5px; }
+.dac-detail-h .mono { font-size: 10.5px; color: var(--faint); }
+.dac-detail p { font-size: 12px; line-height: 1.6; color: var(--muted); margin: 0 0 8px; }
+.dac-cond {
+  font-size: 11px; padding: 6px 8px; border-radius: 4px; margin-bottom: 8px;
+  background: rgba(0, 0, 0, .3); color: #93c5fd; overflow-x: auto;
+}
+.dac-fp-box { font-size: 11.5px; line-height: 1.55; color: var(--faint); margin-top: 6px; }
+.dac-fp-box b { color: var(--muted); }
+
+.dac-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 7px; }
+.dac-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.dac-table th {
+  text-align: left; padding: 9px 11px; font-size: 10.5px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--faint); font-weight: 600;
+  border-bottom: 1px solid var(--line); background: rgba(255, 255, 255, .02);
+  white-space: nowrap;
+}
+.dac-table td { padding: 10px 11px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.dac-table tr:last-child td { border-bottom: none; }
+.dac-field {
+  display: inline-block; font-size: 10.5px; padding: 1px 5px; margin: 1px 2px 1px 0;
+  border-radius: 3px; background: rgba(255, 255, 255, .06); color: var(--muted);
+}
+.dac-fp { max-width: 34ch; font-size: 11.5px; line-height: 1.5; }
+
+.dac-ioc { display: flex; flex-wrap: wrap; gap: 4px; }
+.dac-sources { margin-top: 12px; font-size: 12px; line-height: 1.7; color: var(--muted); }
+.dac-foot {
+  border-top: 1px solid var(--line); padding-top: 18px; font-size: 12px;
+  line-height: 1.65; color: var(--muted);
+}
+.dac-foot .mono { font-size: 11px; }
+
+@media (max-width: 640px) {
+  .dac { padding: 14px 16px 44px; }
+  .dac-head h1 { font-size: 23px; }
+  .dac-grid { grid-template-columns: 1fr; }
+}

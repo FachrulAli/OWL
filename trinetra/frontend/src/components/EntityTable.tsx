@@ -5,16 +5,20 @@ export function EntityTable({ entities, onSelect }: { entities: Entity[]; onSele
   const top = entities.slice(0, 12);
   return (
     <div className="panel">
-      <h2>Entity Berisiko Tertinggi</h2>
+      <h2>HP Dinas Berisiko Tertinggi
+        <span className="muted" style={{ fontSize: 11, fontWeight: 400, marginLeft: 8 }}>
+          skor terakumulasi, meluruh seiring waktu
+        </span>
+      </h2>
       <table>
         <thead>
           <tr>
-            <th>Entity</th>
-            <th>Role</th>
-            <th>Node</th>
-            <th>Risk</th>
-            <th>Severity</th>
-            <th>Last Seen</th>
+            <th>Perangkat</th>
+            <th>Pemegang</th>
+            <th>Komando</th>
+            <th>Risiko</th>
+            <th>Tingkat</th>
+            <th>Terakhir</th>
           </tr>
         </thead>
         <tbody>
@@ -36,7 +40,7 @@ export function EntityTable({ entities, onSelect }: { entities: Entity[]; onSele
             </tr>
           ))}
           {top.length === 0 && (
-            <tr><td colSpan={6} className="muted">Menunggu telemetri… (warm-up baseline)</td></tr>
+            <tr><td colSpan={6} className="muted">Menunggu telemetri HP… (warm-up baseline)</td></tr>
           )}
         </tbody>
       </table>

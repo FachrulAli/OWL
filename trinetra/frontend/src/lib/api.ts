@@ -54,6 +54,46 @@ export interface Correlation {
 }
 export interface Stats {
   events: number; alerts: number; signals: number; uptime_sec: number; eps: number;
+  chains?: number;
+  ingest?: { batches: number; events: number; rejected: number; devices: string[] };
+  indicators?: { indicators: number; campaigns: string[] };
+  yara?: { loaded: boolean; rules: number; engine: string | null };
+}
+
+// Satu anggota rantai: aturan atomik yang menyala pada tahap tertentu.
+export interface ChainMember {
+  rule: string; ts: string; event_id: string; stage: string;
+}
+
+// Satu rantai kill-chain yang TERBUKTI (correlation rule Sigma terpenuhi).
+// Ini temuan inti TRINETRA: bukan indikator lepas, tapi urutan yang utuh.
+export interface ChainHit {
+  ts: string; entity_id: string; display_name?: string; node_id: string;
+  tier: number; corr_id: string; corr_type: string; title: string;
+  category: string; severity: number; level: string; response: string;
+  span_s: number; timespan_s: number; kill_chain: string[]; mitre: string[];
+  members: ChainMember[];
+}
+
+export interface SigmaRule {
+  id: string; sigma_id: string; title: string; description: string;
+  domain?: string; service?: string; level: string; category: string;
+  severity: number; stage?: string; mitre: string[]; condition?: string;
+  fields?: string[]; falsepositives?: string[];
+  // khusus correlation rule
+  type?: string; rules?: string[]; timespan_s?: number; group_by?: string[];
+  count_gte?: number; kill_chain?: string[]; response?: string;
+}
+
+export interface SigmaCatalog {
+  atomic: SigmaRule[]; correlation: SigmaRule[]; format: string; note: string;
+}
+
+export interface IndicatorStatus {
+  indicators: number; files: number; campaigns: string[];
+  tables: Record<string, number>;
+  sources: { name: string; license: string; campaigns: string[] }[];
+  catatan: string;
 }
 export interface HeatCell { node_id: string; role: string; risk: number; }
 
@@ -67,6 +107,14 @@ export const api = {
   heatmap: () => route<HeatCell[]>("/heatmap", (e) => e.heatmap()),
   categoryTimeline: () => route<any[]>("/categories/timeline?hours=6", (e) => e.categoryTimeline()),
   rules: () => route<any[]>("/rules", () => []),
+  // ——— domain MTD (HP prajurit) ———
+  chains: (limit = 50) =>
+    route<ChainHit[]>(`/chains?limit=${limit}`, (e) => e.chains(limit)),
+  entityChains: (id: string) =>
+    route<ChainHit[]>(`/chains?entity_id=${encodeURIComponent(id)}`,
+      (e) => e.chains(50, id)),
+  sigma: () => route<SigmaCatalog>("/sigma/rules", (e) => e.sigma()),
+  indicators: () => route<IndicatorStatus>("/indicators", (e) => e.indicators()),
   verdict: async (caseId: number, verdict: string) => {
     const { MODE, engine } = await import("./demo");
     if (MODE.demo) return engine.setVerdict(caseId, verdict);
