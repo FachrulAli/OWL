@@ -73,6 +73,13 @@ def score_event(ev: dict, signals: list[dict], ml: dict) -> dict:
     # critical — real insider risk builds from REPEATED deviation (so ~3+
     # anomalous events to reach critical), which also absorbs transient FPs.
     PER_EVENT_CAP = 35.0
+    # PENGECUALIAN: korelasi kill-chain. Batas di atas ada untuk mencegah satu
+    # indikator berisik melambungkan risiko. Sebuah rantai temporal_ordered
+    # justru kebalikannya — beberapa indikator berbeda, berurutan, pada satu
+    # perangkat, dalam jendela sempit. Menahan ini di 35 berarti sengaja
+    # meredam temuan yang paling meyakinkan yang dimiliki sistem.
+    if any(s.get("source") == "sigma_correlation" for s in signals):
+        PER_EVENT_CAP = 95.0
     if event_score >= MIN_ACCRUE:
         contribution = min(event_score, PER_EVENT_CAP)
         new_risk = min(100.0, decayed + contribution * (1 - decayed / 100.0))

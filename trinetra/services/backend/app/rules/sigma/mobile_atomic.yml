@@ -1,0 +1,442 @@
+# TRINETRA — aturan deteksi MOBILE (MTD), format Sigma.
+# Ditulis mengikuti Sigma specification v2 (public domain). Dievaluasi oleh
+# engine TRINETRA sendiri (lihat rules/sigma_loader.py) agar tidak bergantung
+# pada backend SIEM eksternal.
+#
+# Prinsip: SATU aturan di sini hampir selalu TIDAK cukup untuk menuduh. Nilai
+# severity per aturan sengaja rendah. Tuduhan zero-click hanya lahir dari
+# correlation rule (mobile_correlation.yml) yang menuntut beberapa aturan
+# menyala BERURUTAN dalam jendela waktu pendek.
+---
+title: Pesan masuk senyap dari pengirim tak dikenal
+name: mob_silent_inbound
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1001
+status: experimental
+description: >
+  Pesan/lampiran masuk dari pengirim yang tidak dikenal, tidak memunculkan
+  notifikasi, dan tiba saat perangkat idle (layar mati, tanpa sentuhan).
+  Ini pola PENGIRIMAN eksploitasi zero-click. Sendirian bukan bukti.
+author: TRINETRA / Pussiberad Kartika Hackathon 2026
+logsource:
+  product: mobile
+  service: messaging
+detection:
+  selection:
+    domain: mobile
+    silent_inbound: 1
+  condition: selection
+falsepositives:
+  - Aplikasi pesan yang notifikasinya dibisukan pengguna
+level: low
+tags:
+  - attack.initial-access
+  - attack.t1660          # Phishing (Mobile)
+trinetra:
+  category: zero_click_delivery
+  severity: 12
+  stage: delivery
+---
+title: Crash proses parser OS saat perangkat idle
+name: mob_parser_crash_idle
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1002
+status: experimental
+description: >
+  Proses sistem yang memproses masukan dari luar tanpa interaksi pengguna
+  (mis. IMTransferAgent, BlastDoor, mediaserver, media.codec) berhenti tidak
+  wajar saat perangkat idle. Pada rantai zero-click inilah tahap EKSPLOITASI
+  memori terlihat dari permukaan.
+logsource:
+  product: mobile
+  service: process
+detection:
+  selection:
+    domain: mobile
+    parser_crash: 1
+  condition: selection
+falsepositives:
+  - Bug OS / aplikasi pesan setelah pembaruan besar
+level: medium
+tags:
+  - attack.execution
+  - attack.t1203          # Exploitation for Client Execution
+trinetra:
+  category: zero_click_exploit
+  severity: 30
+  stage: exploit
+---
+title: Perangkat panas dan baterai terkuras saat idle
+name: mob_thermal_idle
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1003
+status: experimental
+description: >
+  Status termal tinggi disertai penurunan baterai signifikan padahal perangkat
+  idle dan tidak sedang dicas. Proksi untuk beban komputasi tersembunyi
+  (implan yang baru aktif, enkripsi/kompresi data sebelum eksfiltrasi).
+logsource:
+  product: mobile
+  service: power
+detection:
+  selection:
+    domain: mobile
+    idle_thermal: 1
+    battery_drop_pct|gte: 4.0
+  condition: selection
+falsepositives:
+  - Sinkronisasi/backup besar di latar belakang
+  - Sinyal seluler lemah membuat radio bekerja keras
+level: medium
+tags:
+  - attack.defense-evasion
+trinetra:
+  category: spyware_implant
+  severity: 22
+  stage: implant
+---
+title: Trafik keluar tersembunyi saat perangkat idle
+name: mob_covert_egress_idle
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1004
+status: experimental
+description: >
+  Unggahan data bervolume nyata ke tujuan luar saat perangkat idle, ke ASN yang
+  bukan penyedia awan/CDN arus utama. Filter mengecualikan backup resmi
+  (Apple/Google/Microsoft) yang memang berjalan saat HP tidak dipakai.
+logsource:
+  product: mobile
+  service: network
+detection:
+  selection:
+    domain: mobile
+    idle: 1
+    egress_mb|gte: 8.0
+  filter_cloud:
+    dest_asn|contains:
+      - 'AS714 Apple'
+      - 'AS15169 Google'
+      - 'AS8075 Microsoft'
+      - 'AS32934 Meta'
+      - 'AS13335 Cloudflare'
+  condition: selection and not filter_cloud
+falsepositives:
+  - Backup pihak ketiga yang dijadwalkan tengah malam
+level: medium
+tags:
+  - attack.exfiltration
+  - attack.t1639          # Exfiltration Over Alternative Protocol (Mobile)
+trinetra:
+  category: covert_exfiltration
+  severity: 28
+  stage: c2
+---
+title: Mikrofon atau kamera aktif tanpa aplikasi di depan
+name: mob_covert_sensor
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1005
+status: experimental
+description: >
+  Sensor mikrofon/kamera menyala sementara layar mati, tanpa interaksi
+  pengguna, dan tanpa aplikasi apa pun di foreground. Hampir tidak ada alasan
+  sah untuk kondisi ini pada HP dinas.
+logsource:
+  product: mobile
+  service: media
+detection:
+  selection:
+    domain: mobile
+    covert_sensor: 1
+  condition: selection
+falsepositives:
+  - Asisten suara selalu-siaga (harus di-allowlist per perangkat)
+  - Perekam panggilan yang dipasang resmi
+level: high
+tags:
+  - attack.collection
+  - attack.t1429          # Audio Capture (Mobile)
+  - attack.t1512          # Video Capture (Mobile)
+trinetra:
+  category: covert_surveillance
+  severity: 35
+  stage: collection
+---
+title: Aplikasi dipasang dari luar toko resmi (sideload)
+name: mob_sideload_install
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1006
+status: experimental
+description: >
+  Paket aplikasi terpasang dengan installer di luar Play Store/App Store.
+  Vektor utama RAT Android (kelas SpyNote/CraxsRAT) pada perangkat dinas.
+  Berkas APK-nya dipindai terpisah dengan YARA-X di sisi server.
+logsource:
+  product: mobile
+  service: package
+detection:
+  selection:
+    domain: mobile
+    sideloaded: 1
+  condition: selection
+falsepositives:
+  - Aplikasi internal TNI AD yang didistribusikan manual (harus di-allowlist)
+level: medium
+tags:
+  - attack.initial-access
+  - attack.t1476          # Deliver Malicious App via Other Means
+trinetra:
+  category: malicious_app
+  severity: 25
+  stage: install
+---
+title: Izin Accessibility atau Device Admin diberikan saat idle
+name: mob_accessibility_abuse
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1007
+status: experimental
+description: >
+  Izin Accessibility / Device Admin aktif tanpa interaksi pengguna. Dua izin
+  ini memberi kendali penuh atas layar dan masukan; RAT Android selalu
+  memintanya. Pemberian tanpa interaksi berarti dilakukan secara otomatis.
+logsource:
+  product: mobile
+  service: integrity
+detection:
+  selection:
+    domain: mobile
+    idle: 1
+  selection_perm:
+    accessibility_granted: 1
+    device_admin_granted: 1
+  condition: selection and selection_perm
+level: high
+tags:
+  - attack.privilege-escalation
+  - attack.t1626          # Abuse Elevation Control Mechanism (Mobile)
+trinetra:
+  category: malicious_app
+  severity: 30
+  stage: privilege
+---
+title: Aplikasi tersembunyi persisten dengan izin sensitif
+name: mob_hidden_persistent_app
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1008
+status: experimental
+description: >
+  Paket tanpa ikon launcher namun berjalan terus dan memegang izin sensitif
+  (mikrofon/kamera/lokasi/SMS). Pola khas stalkerware.
+logsource:
+  product: mobile
+  service: package
+detection:
+  selection:
+    domain: mobile
+    pkg_hidden: 1
+    perm_sensitive: 1
+  condition: selection
+level: high
+tags:
+  - attack.persistence
+  - attack.t1625          # Hijack Execution Flow (Mobile)
+trinetra:
+  category: spyware_implant
+  severity: 30
+  stage: implant
+---
+title: Koneksi ke infrastruktur spyware yang sudah dikenal
+name: mob_ioc_domain
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1009
+status: stable
+description: >
+  Domain/IP tujuan cocok dengan indikator spyware yang dipublikasikan
+  (berkas STIX2 `mvt-indicators`, lisensi MIT — kelas Pegasus, Predator,
+  KingsPawn). Kecocokan IOC bersifat historis dan bisa salah, karena itu
+  tetap dikorelasikan dengan perilaku, tidak dipakai sebagai satu-satunya bukti.
+logsource:
+  product: mobile
+  service: network
+detection:
+  selection:
+    domain: mobile
+    ioc_match|re: '.+'
+  condition: selection
+falsepositives:
+  - Domain yang pernah disalahgunakan lalu kembali dipakai sah
+  - Kunjungan lampau yang tidak lagi aktif
+level: high
+tags:
+  - attack.command-and-control
+  - attack.t1437          # Application Layer Protocol (Mobile)
+trinetra:
+  category: c2_beacon
+  severity: 45
+  stage: c2
+---
+title: Beacon berpola teratur saat perangkat idle
+name: mob_beacon_regular
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1010
+status: experimental
+description: >
+  Koneksi keluar kecil dengan interval tetap saat perangkat idle — pola
+  denyut kendali (C2) bukan pola pemakaian manusia.
+logsource:
+  product: mobile
+  service: network
+detection:
+  selection:
+    domain: mobile
+    idle: 1
+    beacon_interval_s|gte: 30
+  condition: selection
+falsepositives:
+  - Push notification keep-alive aplikasi sah
+level: medium
+tags:
+  - attack.command-and-control
+trinetra:
+  category: c2_beacon
+  severity: 24
+  stage: c2
+---
+title: Profil manajemen perangkat tidak terpercaya terpasang
+name: mob_rogue_profile
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1011
+status: experimental
+description: >
+  Profil MDM/konfigurasi terpasang tanpa status terpercaya. Jalur klasik
+  pengambilalihan perangkat lewat rekayasa sosial.
+logsource:
+  product: mobile
+  service: integrity
+detection:
+  selection:
+    domain: mobile
+    profile_added: 1
+    profile_trusted: 0
+  condition: selection
+level: high
+tags:
+  - attack.persistence
+trinetra:
+  category: device_tampering
+  severity: 30
+  stage: tampering
+---
+title: Sertifikat CA atau konfigurasi jaringan diubah diam-diam
+name: mob_ca_cert_added
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1012
+status: experimental
+description: >
+  Penambahan sertifikat CA, penimpaan DNS, atau penetapan proxy. Membuka
+  jalan penyadapan TLS terhadap seluruh lalu lintas perangkat.
+logsource:
+  product: mobile
+  service: integrity
+detection:
+  selection:
+    domain: mobile
+    tamper_detail:
+      - ca_cert_added
+      - dns_override
+      - proxy_set
+  condition: selection
+level: high
+tags:
+  - attack.credential-access
+  - attack.t1557          # Adversary-in-the-Middle
+trinetra:
+  category: device_tampering
+  severity: 32
+  stage: tampering
+---
+title: Indikasi penyadapan TLS pada lalu lintas perangkat
+name: mob_tls_mitm
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1013
+status: experimental
+description: Rantai sertifikat tidak cocok dengan yang disematkan (pinning gagal).
+logsource:
+  product: mobile
+  service: network
+detection:
+  selection:
+    domain: mobile
+    tls_mitm: 1
+  condition: selection
+level: high
+tags:
+  - attack.credential-access
+  - attack.t1557
+trinetra:
+  category: mitm
+  severity: 30
+  stage: mitm
+---
+title: Penurunan paksa ke 2G tanpa enkripsi pada sel tak dikenal
+name: mob_radio_downgrade
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1014
+status: experimental
+description: >
+  Perangkat dipaksa turun ke 2G, enkripsi radio mati, dan menempel pada
+  cell ID yang belum pernah terlihat di wilayah itu. Pola IMSI catcher /
+  BTS palsu — relevan untuk pengamanan kegiatan pimpinan di lapangan.
+logsource:
+  product: mobile
+  service: radio
+detection:
+  selection:
+    domain: mobile
+    net_gen: 2G
+    cell_unknown: 1
+    cell_encryption: 0
+  condition: selection
+falsepositives:
+  - Daerah blankspot yang memang hanya terlayani 2G
+level: high
+tags:
+  - attack.collection
+  - attack.t1430          # Location Tracking
+trinetra:
+  category: radio_attack
+  severity: 28
+  stage: radio
+---
+title: Integritas perangkat gagal (root/jailbreak/bootloader terbuka)
+name: mob_integrity_fail
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1015
+status: experimental
+description: >
+  Pemeriksaan integritas gagal. Pada HP dinas ini pelanggaran kebijakan
+  sekaligus prasyarat banyak implan.
+logsource:
+  product: mobile
+  service: integrity
+detection:
+  selection:
+    domain: mobile
+    integrity_fail: 1
+  condition: selection
+level: medium
+tags:
+  - attack.defense-evasion
+  - attack.t1631          # Process Injection (Mobile)
+trinetra:
+  category: device_tampering
+  severity: 25
+  stage: tampering
+---
+title: Patch keamanan perangkat kedaluwarsa
+name: mob_patch_stale
+id: 7b1f0c42-5a11-4c0e-9c21-0a0d1e3f1016
+status: stable
+description: >
+  Tingkat patch lebih tua dari 180 hari. Bukan serangan, melainkan POSTUR:
+  perangkat ini rentan terhadap rantai eksploitasi yang sudah ditambal.
+  Dipakai sebagai pengali risiko, bukan alarm.
+logsource:
+  product: mobile
+  service: integrity
+detection:
+  selection:
+    domain: mobile
+    patch_age_days|gte: 180
+  condition: selection
+level: informational
+tags:
+  - attack.initial-access
+trinetra:
+  category: vulnerable_posture
+  severity: 8
+  stage: posture

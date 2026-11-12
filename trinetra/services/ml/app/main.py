@@ -11,12 +11,14 @@ class ScoreReq(BaseModel):
     entity_id: str
     role: str
     features: dict
+    domain: str = "endpoint"      # endpoint (insider) | mobile (MTD)
 
 
 class FeedbackReq(BaseModel):
     entity_id: str | None = None
     role: str | None = None
     verdict: str
+    domain: str = "endpoint"
 
 
 @app.get("/health")
@@ -26,12 +28,12 @@ def health():
 
 @app.post("/score")
 def score(req: ScoreReq):
-    return registry.score(req.role, req.features)
+    return registry.score(req.role, req.features, req.domain)
 
 
 @app.post("/feedback")
 def feedback(req: FeedbackReq):
-    registry.feedback(req.role, req.verdict)
+    registry.feedback(req.role, req.verdict, req.domain)
     return {"ok": True}
 
 

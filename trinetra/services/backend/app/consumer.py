@@ -20,7 +20,7 @@ from .config import settings
 from .db import ch_insert
 from .ocsf import normalize
 from .enrichment import enrich
-from .rules.engine import evaluate
+from .rules.engine import evaluate, evaluate_correlated
 from . import ml_client
 from .scoring import score_event
 from .cases import upsert_case, update_entity_risk
@@ -33,6 +33,33 @@ _EVENT_COLS = [
     "config_change", "login_hour", "src_ip", "src_geo", "command",
     "process_name", "raw", "label_scenario",
 ]
+# Kolom khusus domain MOBILE (MTD). Ditulis hanya untuk event mobile; event
+# endpoint memakai nilai default ClickHouse.
+_MOBILE_COLS = [
+    "domain", "platform", "os_version", "device_model",
+    "screen_on", "user_interaction", "idle", "foreground_app",
+    "ingress_mb", "dest_asn", "dest_ip", "dns_domain",
+    "beacon_interval_s", "tls_mitm",
+    "ioc_match", "thermal_state", "battery_drop_pct", "cpu_pct", "charging",
+    "inbound_msg", "sender_known", "notified", "msg_app",
+    "msg_has_attachment", "msg_binary", "mic_active", "cam_active",
+    "crash_proc", "crash_count", "crash_reason", "pkg_added", "pkg_name",
+    "pkg_sha256", "pkg_hidden", "installer_source", "perm_sensitive",
+    "accessibility_granted", "device_admin_granted", "integrity_fail",
+    "profile_added", "profile_trusted", "tamper_detail", "patch_age_days",
+    "net_gen", "cell_unknown", "cell_encryption", "radio_anomaly",
+    "silent_inbound", "parser_crash", "covert_sensor", "idle_thermal",
+    "sideloaded", "idle_egress_mb",
+    "chain_id", "chain_stage", "chain_step", "chain_len",
+]
+_EVENT_COLS_MOBILE = _EVENT_COLS + _MOBILE_COLS
+
+# Korelasi kill-chain yang terbukti (satu baris = satu rantai utuh).
+_CHAIN_COLS = [
+    "hit_id", "ts", "entity_id", "node_id", "tier", "corr_id", "corr_type",
+    "title", "category", "severity", "level", "response", "span_s",
+    "timespan_s", "kill_chain", "mitre", "members",
+]
 _SCORE_COLS = [
     "score_id", "ts", "entity_id", "role", "tier", "node_id", "risk_score",
     "event_score", "rule_signals", "ml_anomaly", "categories", "contributors",
@@ -40,9 +67,12 @@ _SCORE_COLS = [
 ]
 
 # live counters for the /stats endpoint
-STATS = {"events": 0, "alerts": 0, "signals": 0, "started": time.time()}
+STATS = {"events": 0, "alerts": 0, "signals": 0, "chains": 0,
+         "started": time.time()}
 
 _event_buf: list[list] = []
+_event_buf_mobile: list[list] = []
+_chain_buf: list[list] = []
 _score_buf: list[list] = []
 _last_flush = time.time()
 _stop = False
@@ -61,18 +91,65 @@ def _event_row(ev: dict) -> list:
     ]
 
 
+_MOBILE_DEFAULTS = {
+    "domain": "mobile", "platform": "", "os_version": "", "device_model": "",
+    "foreground_app": "", "dest_asn": "", "dest_ip": "", "dns_domain": "",
+    "ioc_match": "",
+    "msg_app": "", "crash_proc": "", "crash_reason": "", "pkg_name": "",
+    "pkg_sha256": "", "installer_source": "", "tamper_detail": "",
+    "net_gen": "", "chain_id": "", "chain_stage": "",
+}
+_MOBILE_FLOAT = {"ingress_mb", "battery_drop_pct", "cpu_pct", "idle_egress_mb"}
+
+
+def _mobile_row(ev: dict) -> list:
+    """Nilai kolom mobile, dipaksa ke tipe ClickHouse yang benar."""
+    row = []
+    for c in _MOBILE_COLS:
+        if c in _MOBILE_DEFAULTS:
+            row.append(str(ev.get(c, _MOBILE_DEFAULTS[c]) or _MOBILE_DEFAULTS[c]))
+        elif c in _MOBILE_FLOAT:
+            try:
+                row.append(float(ev.get(c, 0) or 0))
+            except (TypeError, ValueError):
+                row.append(0.0)
+        else:
+            try:
+                row.append(int(ev.get(c, 0) or 0))
+            except (TypeError, ValueError):
+                row.append(0)
+    return row
+
+
+def _buffer_event(ev: dict):
+    """Simpan event ke buffer sesuai domainnya (kolom berbeda)."""
+    if ev.get("domain") == "mobile":
+        _event_buf_mobile.append(_event_row(ev) + _mobile_row(ev))
+    else:
+        _event_buf.append(_event_row(ev))
+
+
 async def _flush(force=False):
-    global _event_buf, _score_buf, _last_flush
+    global _event_buf, _event_buf_mobile, _chain_buf, _score_buf, _last_flush
     now = time.time()
-    if not force and len(_event_buf) < settings.CH_FLUSH_EVENTS and \
+    pending = len(_event_buf) + len(_event_buf_mobile)
+    if not force and pending < settings.CH_FLUSH_EVENTS and \
             (now - _last_flush) < settings.CH_FLUSH_SECONDS:
         return
     ev_rows, _event_buf = _event_buf, []
+    mob_rows, _event_buf_mobile = _event_buf_mobile, []
+    ch_rows, _chain_buf = _chain_buf, []
     sc_rows, _score_buf = _score_buf, []
     _last_flush = now
     try:
-        await ch_insert("trinetra.events", ev_rows, _EVENT_COLS)
-        await ch_insert("trinetra.risk_scores", sc_rows, _SCORE_COLS)
+        if ev_rows:
+            await ch_insert("trinetra.events", ev_rows, _EVENT_COLS)
+        if mob_rows:
+            await ch_insert("trinetra.events", mob_rows, _EVENT_COLS_MOBILE)
+        if ch_rows:
+            await ch_insert("trinetra.chain_hits", ch_rows, _CHAIN_COLS)
+        if sc_rows:
+            await ch_insert("trinetra.risk_scores", sc_rows, _SCORE_COLS)
     except Exception as e:
         print(f"[consumer] clickhouse flush error: {e}", flush=True)
 
@@ -95,18 +172,32 @@ async def _handle(raw: dict):
 
     # During warm-up, feed baselines but do not score/alert.
     if STATS["events"] <= WARMUP_CONSUME:
-        _event_buf.append(_event_row(ev))
+        _buffer_event(ev)
         if STATS["events"] == WARMUP_CONSUME:
             print(f"[consumer] warm-up complete ({WARMUP_CONSUME} events); "
                   f"baseline trained, scoring enabled", flush=True)
         return
 
-    # parallel detection: rules (sync, cheap) + ML anomaly (already fetched)
-    signals = evaluate(ev)
+    # Deteksi paralel: aturan (sinkron, murah) + anomali ML (sudah diambil).
+    # Untuk domain mobile, aturan atomik langsung dilanjutkan ke engine
+    # korelasi — di situlah tuduhan zero-click sebenarnya lahir.
+    signals, chains = evaluate_correlated(ev)
+    if chains:
+        signals = signals + chains
+        STATS["chains"] = STATS.get("chains", 0) + len(chains)
     score = score_event(ev, signals, ml)
     STATS["signals"] += len(signals)
 
-    _event_buf.append(_event_row(ev))
+    _buffer_event(ev)
+    for c in chains:
+        _chain_buf.append([
+            uuid.uuid4(), ev["ts"], ev["entity_id"], ev["node_id"], ev["tier"],
+            c["rule_id"], c.get("corr_type", ""), c["title"], c["category"],
+            float(c["severity"]), c.get("level", ""), c.get("response", ""),
+            float(c.get("span_s", 0)), int(c.get("timespan_s", 0)),
+            list(c.get("kill_chain") or []), list(c.get("mitre") or []),
+            orjson.dumps(c.get("members") or []).decode(),
+        ])
     _score_buf.append([
         uuid.uuid4(), ev["ts"], ev["entity_id"], ev["role"], ev["tier"], ev["node_id"],
         score["entity_risk"], score["event_score"], score["rule_signals"],
@@ -124,6 +215,19 @@ async def _handle(raw: dict):
             "category": ev["category"], "activity": ev.get("activity"),
             "event_score": score["event_score"], "entity_risk": score["entity_risk"],
             "categories": score["categories"], "ml_anomaly": score["ml_anomaly"],
+            "ts": ev["ts"].isoformat(),
+        })
+
+    for c in chains:
+        await hub.broadcast("chain", {
+            "entity_id": ev["entity_id"], "display_name": ev.get("display_name"),
+            "node_id": ev["node_id"], "tier": ev["tier"], "role": ev["role"],
+            "corr_id": c["rule_id"], "corr_type": c.get("corr_type"),
+            "title": c["title"], "category": c["category"],
+            "severity": c["severity"], "level": c.get("level"),
+            "response": c.get("response"), "kill_chain": c.get("kill_chain"),
+            "mitre": c.get("mitre"), "span_s": c.get("span_s"),
+            "members": c.get("members"), "entity_risk": score["entity_risk"],
             "ts": ev["ts"].isoformat(),
         })
 

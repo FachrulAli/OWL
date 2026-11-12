@@ -25,6 +25,9 @@ KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP", "localhost:9092")
 TOPIC = os.getenv("TOPIC", "trinetra.telemetry.raw")
 EPS = float(os.getenv("EVENTS_PER_SECOND", "40"))
 WARMUP_EVENTS = int(os.getenv("WARMUP_EVENTS", "4000"))
+# "mobile" = fleet HP prajurit (MTD / zero-click) — mode utama TRINETRA.
+# "endpoint" = roster insider-threat lama (komputer). "both" = dua-duanya.
+SIM_MODE = os.getenv("SIM_MODE", "mobile").lower()
 
 # Insider threat = a FEW bad actors among many normal users. We concentrate
 # anomalous behavior on a small designated set of "insiders" (each with a
@@ -137,10 +140,47 @@ def main():
         time.sleep(interval)
 
 
+def main_mobile():
+    """Mode MTD: telemetri fleet HP prajurit + rantai zero-click."""
+    import mobile_sim
+
+    producer = Producer({
+        "bootstrap.servers": KAFKA_BOOTSTRAP,
+        "linger.ms": 50,
+        "compression.type": "lz4",
+    })
+    print(f"[simulator] MODE=mobile -> {KAFKA_BOOTSTRAP} topic={TOPIC} eps={EPS} "
+          f"devices={len(mobile_sim.DEVICES)} "
+          f"compromised={list(mobile_sim.COMPROMISED)}", flush=True)
+
+    print(f"[simulator] warm-up: {WARMUP_EVENTS} event HP normal...", flush=True)
+    for i in range(WARMUP_EVENTS):
+        ev = mobile_sim.warmup_event()
+        producer.produce(TOPIC, key=ev["entity_id"], value=json.dumps(ev),
+                         callback=delivery_cb)
+        if i % 500 == 0:
+            producer.poll(0)
+    producer.flush()
+    print("[simulator] warm-up selesai; baseline HP terbentuk, mulai live.", flush=True)
+
+    interval = 1.0 / EPS if EPS > 0 else 0.025
+    n = 0
+    while True:
+        for ev in mobile_sim.make_batch():
+            producer.produce(TOPIC, key=ev["entity_id"], value=json.dumps(ev),
+                             callback=delivery_cb)
+            n += 1
+        if n % 100 < 6:
+            producer.poll(0)
+            print(f"[simulator] {n} event HP terkirim", flush=True)
+        time.sleep(interval)
+
+
 if __name__ == "__main__":
+    _entry = {"mobile": main_mobile, "endpoint": main}.get(SIM_MODE, main_mobile)
     while True:
         try:
-            main()
+            _entry()
         except Exception as e:  # keep the simulator resilient during demos
             print(f"[simulator] error: {e}; retrying in 5s", flush=True)
             time.sleep(5)

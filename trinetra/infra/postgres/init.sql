@@ -173,3 +173,98 @@ ON CONFLICT DO NOTHING;
 
 INSERT INTO entity_risk (entity_id, risk_score)
     SELECT entity_id, 0 FROM entities ON CONFLICT DO NOTHING;
+
+-- ====================================================================
+-- Domain MOBILE (MTD): pangkat/jabatan, roster HP dinas, baseline HP.
+-- Satu 'entity' = satu HP dinas yang dipegang satu personel.
+-- ====================================================================
+INSERT INTO roles (role, label, risk_level, base_weight) VALUES
+    ('pati', 'Perwira Tinggi / Pangdam', 'very_high', 1.6),
+    ('pamen_intel', 'Pamen Intelijen', 'very_high', 1.5),
+    ('ajudan', 'Ajudan Pimpinan', 'high', 1.4),
+    ('pamen_ops', 'Pamen Operasi', 'high', 1.2),
+    ('pama_siber', 'Pama Satuan Siber', 'medium', 1.0),
+    ('bintara_komlek', 'Bintara Komlek', 'medium', 1.0),
+    ('prajurit', 'Prajurit', 'low', 0.8)
+ON CONFLICT (role) DO NOTHING;
+
+INSERT INTO entities (entity_id, display_name, role, node_id) VALUES
+    ('hp-pusat-pangti', 'Pangdam · iPhone 15 Pro (IOS 17.5.1)', 'pati', 'pusat'),
+    ('hp-pusat-intel', 'Pamen Intel · Samsung S24 (ANDROID 14)', 'pamen_intel', 'pusat'),
+    ('hp-pusat-siber', 'Pama Siber · Pixel 8 (ANDROID 15)', 'pama_siber', 'pusat'),
+    ('hp-pusat-ajudan', 'Ajudan · iPhone 13 (IOS 16.7.8)', 'ajudan', 'pusat'),
+    ('hp-kodam-jaya-01', 'Pangdam · iPhone 15 (IOS 17.4)', 'pati', 'kodam-jaya'),
+    ('hp-kodam-jaya-02', 'Pamen Intel · Samsung S23 (ANDROID 14)', 'pamen_intel', 'kodam-jaya'),
+    ('hp-kodam-im-01', 'Pamen Ops · Oppo Reno 10 (ANDROID 13)', 'pamen_ops', 'kodam-im'),
+    ('hp-kodam-1-01', 'Pamen Intel · Samsung A54 (ANDROID 14)', 'pamen_intel', 'kodam-1'),
+    ('hp-kodam-2-01', 'Ba Komlek · Xiaomi Redmi 12 (ANDROID 12)', 'bintara_komlek', 'kodam-2'),
+    ('hp-kodam-3-01', 'Pangdam · iPhone 14 Pro (IOS 17.5)', 'pati', 'kodam-3'),
+    ('hp-kodam-4-01', 'Prajurit · Vivo Y27 (ANDROID 13)', 'prajurit', 'kodam-4'),
+    ('hp-kodam-5-01', 'Pamen Intel · iPhone 13 Pro (IOS 16.6)', 'pamen_intel', 'kodam-5'),
+    ('hp-kodam-5-02', 'Prajurit · Samsung A34 (ANDROID 14)', 'prajurit', 'kodam-5'),
+    ('hp-kodam-6-01', 'Pamen Ops · Pixel 7a (ANDROID 14)', 'pamen_ops', 'kodam-6'),
+    ('hp-kodam-9-01', 'Ba Komlek · Samsung A24 (ANDROID 13)', 'bintara_komlek', 'kodam-9'),
+    ('hp-kodam-12-01', 'Prajurit · Realme C55 (ANDROID 12)', 'prajurit', 'kodam-12'),
+    ('hp-kodam-13-01', 'Pamen Ops · Samsung S22 (ANDROID 14)', 'pamen_ops', 'kodam-13'),
+    ('hp-kodam-14-01', 'Pamen Intel · Pixel 8 Pro (ANDROID 15)', 'pamen_intel', 'kodam-14'),
+    ('hp-kodam-16-01', 'Prajurit · Infinix Note 30 (ANDROID 13)', 'prajurit', 'kodam-16'),
+    ('hp-kodam-17-01', 'Pamen Intel · Samsung S23 FE (ANDROID 14)', 'pamen_intel', 'kodam-17'),
+    ('hp-kodam-17-02', 'Ba Komlek · Xiaomi Poco M5 (ANDROID 12)', 'bintara_komlek', 'kodam-17'),
+    ('hp-kodam-18-01', 'Prajurit · Oppo A78 (ANDROID 13)', 'prajurit', 'kodam-18'),
+    ('hp-kodam-19-01', 'Pamen Ops · Samsung A55 (ANDROID 14)', 'pamen_ops', 'kodam-19'),
+    ('hp-kodam-20-01', 'Prajurit · Vivo Y36 (ANDROID 13)', 'prajurit', 'kodam-20'),
+    ('hp-kodam-21-01', 'Ba Komlek · Redmi Note 12 (ANDROID 12)', 'bintara_komlek', 'kodam-21'),
+    ('hp-kodam-22-01', 'Prajurit · Samsung A15 (ANDROID 14)', 'prajurit', 'kodam-22'),
+    ('hp-kodam-23-01', 'Pamen Ops · Pixel 7 (ANDROID 14)', 'pamen_ops', 'kodam-23'),
+    ('hp-kodam-24-01', 'Pamen Intel · iPhone 14 (IOS 17.2)', 'pamen_intel', 'kodam-24'),
+    ('hp-kodam-24-02', 'Prajurit · Itel P55 (ANDROID 13)', 'prajurit', 'kodam-24')
+ON CONFLICT (entity_id) DO NOTHING;
+
+-- Ambang baseline per pangkat untuk parameter MOBILE.
+INSERT INTO role_baselines (role, parameter, normal_low, normal_high, static_crit, rel_mult, weight) VALUES
+    ('pati', 'egress_mb', 0, 4.6, 10.2, 5, 1.2),
+    ('pati', 'idle_egress_mb', 0, 1.8, 8, 4, 1.4),
+    ('pati', 'thermal_state', 0, 2, 3, 2, 1.0),
+    ('pati', 'battery_drop_pct', 0, 2.1, 4, 3, 1.1),
+    ('pati', 'cpu_pct', 0, 32, 70, 3, 0.9),
+    ('pati', 'crash_count', 0, 1, 2, 2, 1.3),
+    ('pamen_intel', 'egress_mb', 0, 8.4, 18.8, 5, 1.2),
+    ('pamen_intel', 'idle_egress_mb', 0, 3.2, 8, 4, 1.4),
+    ('pamen_intel', 'thermal_state', 0, 2, 3, 2, 1.0),
+    ('pamen_intel', 'battery_drop_pct', 0, 2.6, 4, 3, 1.1),
+    ('pamen_intel', 'cpu_pct', 0, 38, 70, 3, 0.9),
+    ('pamen_intel', 'crash_count', 0, 1, 2, 2, 1.3),
+    ('pamen_ops', 'egress_mb', 0, 3.6, 8.0, 5, 1.2),
+    ('pamen_ops', 'idle_egress_mb', 0, 1.4, 8, 4, 1.4),
+    ('pamen_ops', 'thermal_state', 0, 2, 3, 2, 1.0),
+    ('pamen_ops', 'battery_drop_pct', 0, 2.2, 4, 3, 1.1),
+    ('pamen_ops', 'cpu_pct', 0, 31, 70, 3, 0.9),
+    ('pamen_ops', 'crash_count', 0, 1, 2, 2, 1.3),
+    ('pama_siber', 'egress_mb', 0, 13.5, 29.5, 5, 1.2),
+    ('pama_siber', 'idle_egress_mb', 0, 5.5, 8, 4, 1.4),
+    ('pama_siber', 'thermal_state', 0, 2, 3, 2, 1.0),
+    ('pama_siber', 'battery_drop_pct', 0, 3.8, 4, 3, 1.1),
+    ('pama_siber', 'cpu_pct', 0, 56, 70, 3, 0.9),
+    ('pama_siber', 'crash_count', 0, 1, 2, 2, 1.3),
+    ('bintara_komlek', 'egress_mb', 0, 2.6, 8.0, 5, 1.2),
+    ('bintara_komlek', 'idle_egress_mb', 0, 1.0, 8, 4, 1.4),
+    ('bintara_komlek', 'thermal_state', 0, 2, 3, 2, 1.0),
+    ('bintara_komlek', 'battery_drop_pct', 0, 1.9, 4, 3, 1.1),
+    ('bintara_komlek', 'cpu_pct', 0, 26, 70, 3, 0.9),
+    ('bintara_komlek', 'crash_count', 0, 1, 2, 2, 1.3),
+    ('ajudan', 'egress_mb', 0, 3.0, 8.0, 5, 1.2),
+    ('ajudan', 'idle_egress_mb', 0, 1.2, 8, 4, 1.4),
+    ('ajudan', 'thermal_state', 0, 2, 3, 2, 1.0),
+    ('ajudan', 'battery_drop_pct', 0, 2.3, 4, 3, 1.1),
+    ('ajudan', 'cpu_pct', 0, 29, 70, 3, 0.9),
+    ('ajudan', 'crash_count', 0, 1, 2, 2, 1.3),
+    ('prajurit', 'egress_mb', 0, 1.9, 8.0, 5, 1.2),
+    ('prajurit', 'idle_egress_mb', 0, 0.7, 8, 4, 1.4),
+    ('prajurit', 'thermal_state', 0, 2, 3, 2, 1.0),
+    ('prajurit', 'battery_drop_pct', 0, 2.9, 4, 3, 1.1),
+    ('prajurit', 'cpu_pct', 0, 34, 70, 3, 0.9),
+    ('prajurit', 'crash_count', 0, 1, 2, 2, 1.3)
+ON CONFLICT (role, parameter) DO NOTHING;
+
+INSERT INTO entity_risk (entity_id, risk_score)
+SELECT entity_id, 0 FROM entities ON CONFLICT (entity_id) DO NOTHING;

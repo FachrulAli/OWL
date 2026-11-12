@@ -18,15 +18,29 @@ from collections import defaultdict, deque
 import numpy as np
 from sklearn.ensemble import IsolationForest
 
-FEATURES = ["egress_mb", "files_accessed", "endpoints_touched", "usb_event",
-            "privilege_change", "config_change", "off_hours"]
+# Fitur UEBA dipisah per domain. Perilaku "normal" sebuah komputer kantor dan
+# sebuah HP prajurit tidak punya satu pun sumbu yang sama, jadi memaksakan satu
+# vektor fitur akan membuat kedua baseline saling merusak.
+FEATURES_ENDPOINT = ["egress_mb", "files_accessed", "endpoints_touched",
+                     "usb_event", "privilege_change", "config_change",
+                     "off_hours"]
+# Fitur MOBILE dipilih khusus supaya implan zero-click menonjol: hampir semua
+# sumbu di sini diukur SAAT PERANGKAT IDLE, kondisi di mana pemakaian sah
+# seharusnya mendekati nol.
+FEATURES_MOBILE = ["idle_egress_mb", "ingress_mb", "thermal_state",
+                   "battery_drop_pct", "cpu_pct", "crash_count",
+                   "idle", "inbound_msg"]
+FEATURES = {"endpoint": FEATURES_ENDPOINT, "mobile": FEATURES_MOBILE}
 
 MIN_TRAIN = 400          # samples before a role model is fit (enough for stable std)
 BUFFER = 5000            # rolling training window per role
 REFIT_EVERY = 300        # refit after this many new samples
 
 
-def _vec(features: dict) -> np.ndarray:
+def _vec(features: dict, domain: str = "endpoint") -> np.ndarray:
+    if domain == "mobile":
+        return np.array([float(features.get(f, 0) or 0)
+                         for f in FEATURES_MOBILE], dtype=float)
     lh = float(features.get("login_hour", 12))
     off_hours = 1.0 if (lh < 5 or lh >= 23) else 0.0
     return np.array([
@@ -41,12 +55,14 @@ def _vec(features: dict) -> np.ndarray:
 
 
 class RoleModel:
-    def __init__(self, role: str):
+    def __init__(self, role: str, domain: str = "endpoint"):
         self.role = role
+        self.domain = domain
+        dim = len(FEATURES.get(domain, FEATURES_ENDPOINT))
         self.buf: deque = deque(maxlen=BUFFER)
         self.model: IsolationForest | None = None
-        self.mean = np.zeros(len(FEATURES))
-        self.std = np.ones(len(FEATURES))
+        self.mean = np.zeros(dim)
+        self.std = np.ones(dim)
         self.since_fit = 0
         self.threshold_adj = 0.0       # feedback-driven threshold nudge
         self._lock = threading.Lock()
@@ -128,17 +144,20 @@ class BaselineRegistry:
         self.models: dict[str, RoleModel] = defaultdict(lambda: None)
         self._lock = threading.Lock()
 
-    def _get(self, role: str) -> RoleModel:
+    def _get(self, role: str, domain: str = "endpoint") -> RoleModel:
+        # Model dikunci per (domain, pangkat) supaya baseline HP dan baseline
+        # komputer tidak pernah tercampur.
+        key = f"{domain}:{role}"
         with self._lock:
-            m = self.models.get(role)
+            m = self.models.get(key)
             if m is None:
-                m = RoleModel(role)
-                self.models[role] = m
+                m = RoleModel(role, domain)
+                self.models[key] = m
             return m
 
-    def score(self, role: str, features: dict) -> dict:
-        m = self._get(role)
-        v = _vec(features)
+    def score(self, role: str, features: dict, domain: str = "endpoint") -> dict:
+        m = self._get(role, domain)
+        v = _vec(features, domain)
         res = m.score(v)
         # Learn only from normal-looking events so a detected insider's anomalous
         # behavior does not poison the shared per-role baseline (which would make
@@ -146,12 +165,13 @@ class BaselineRegistry:
         # while the model is still unfitted so it can bootstrap.
         if m.model is None or res["anomaly"] < 0.5:
             m.observe(v)
-        res["model"] = f"ueba:{role}"
+        res["model"] = f"ueba:{domain}:{role}"
         return res
 
-    def feedback(self, role: str | None, verdict: str):
+    def feedback(self, role: str | None, verdict: str,
+                 domain: str = "endpoint"):
         if role:
-            self._get(role).feedback(verdict)
+            self._get(role, domain).feedback(verdict)
         else:
             for m in self.models.values():
                 if m:

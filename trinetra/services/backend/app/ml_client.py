@@ -24,11 +24,28 @@ async def score(ev: dict) -> dict:
     """Return {'anomaly': 0..1, 'peer_deviation': float, 'model': str}."""
     if _client is None:
         return {"anomaly": 0.0, "peer_deviation": 0.0, "model": "none"}
+    domain = ev.get("domain", "endpoint")
+    if domain == "mobile":
+        feats = {
+            # semua diukur dengan konteks idle: implan bekerja justru ketika
+            # pemilik HP tidak memakainya.
+            "idle_egress_mb": ev.get("idle_egress_mb", 0),
+            "ingress_mb": ev.get("ingress_mb", 0),
+            "thermal_state": ev.get("thermal_state", 0),
+            "battery_drop_pct": ev.get("battery_drop_pct", 0),
+            "cpu_pct": ev.get("cpu_pct", 0),
+            "crash_count": ev.get("crash_count", 0),
+            "idle": ev.get("idle", 0),
+            "inbound_msg": ev.get("inbound_msg", 0),
+        }
+    else:
+        feats = None
     try:
         r = await _client.post("/score", json={
             "entity_id": ev["entity_id"],
             "role": ev["role"],
-            "features": {
+            "domain": domain,
+            "features": feats if feats is not None else {
                 "egress_mb": ev.get("egress_mb", 0),
                 "files_accessed": ev.get("files_accessed", 0),
                 "endpoints_touched": ev.get("endpoints_touched", 0),

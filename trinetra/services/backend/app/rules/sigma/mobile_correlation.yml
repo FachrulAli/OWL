@@ -1,0 +1,285 @@
+# TRINETRA — correlation rules, format Sigma correlation (spec v2).
+#
+# INI INTI DETEKSI ZERO-CLICK. Satu indikator perilaku di HP selalu ambigu:
+# HP panas bisa karena main game, upload besar bisa karena backup, pesan dari
+# nomor tak dikenal bisa karena ojol. Yang TIDAK ambigu adalah beberapa
+# indikator menyala BERURUTAN, pada satu perangkat, dalam jendela waktu
+# pendek, sementara pemiliknya tidak menyentuh HP sama sekali.
+#
+# `temporal_ordered` = kelompok aturan yang harus terjadi DALAM URUTAN
+# tertentu di dalam satu rentang waktu (Sigma specification v2).
+---
+title: Rantai zero-click lengkap — pengiriman, eksploitasi, eksfiltrasi
+name: corr_zeroclick_fullchain
+id: 9c2e5a10-33b7-4a8d-9f10-0a0d1e3f2001
+status: experimental
+description: >
+  Pesan senyap dari pengirim tak dikenal, diikuti crash proses parser OS,
+  diikuti unggahan data keluar — ketiganya pada satu perangkat dalam 10 menit
+  sementara perangkat idle. Ini bentuk permukaan dari rantai eksploitasi
+  zero-click dan praktis tidak punya padanan sah.
+author: TRINETRA / Pussiberad Kartika Hackathon 2026
+correlation:
+  type: temporal_ordered
+  rules:
+    - mob_silent_inbound
+    - mob_parser_crash_idle
+    - mob_covert_egress_idle
+  group-by:
+    - entity_id
+  timespan: 10m
+level: critical
+tags:
+  - attack.initial-access
+  - attack.execution
+  - attack.exfiltration
+  - attack.t1203
+trinetra:
+  category: zero_click_exploit
+  severity: 85
+  kill_chain: [delivery, exploit, c2]
+  response: isolate
+---
+title: Rantai zero-click dengan penyadapan sensor
+name: corr_zeroclick_surveillance
+id: 9c2e5a10-33b7-4a8d-9f10-0a0d1e3f2002
+status: experimental
+description: >
+  Crash proses parser OS diikuti mikrofon/kamera aktif tanpa aplikasi di
+  depan. Menandakan implan sudah berjalan dan mulai menyadap — tahap paling
+  berbahaya bagi keamanan informasi pimpinan.
+correlation:
+  type: temporal_ordered
+  rules:
+    - mob_parser_crash_idle
+    - mob_covert_sensor
+  group-by:
+    - entity_id
+  timespan: 15m
+level: critical
+tags:
+  - attack.execution
+  - attack.collection
+  - attack.t1429
+trinetra:
+  category: covert_surveillance
+  severity: 78
+  kill_chain: [exploit, collection]
+  response: isolate
+---
+title: Implan aktif — beban tersembunyi diikuti eksfiltrasi
+name: corr_implant_active
+id: 9c2e5a10-33b7-4a8d-9f10-0a0d1e3f2003
+status: experimental
+description: >
+  Perangkat panas dan baterai terkuras saat idle, lalu disusul unggahan data
+  keluar ke ASN non-arus-utama. Pola implan yang mengumpulkan lalu mengirim.
+correlation:
+  type: temporal_ordered
+  rules:
+    - mob_thermal_idle
+    - mob_covert_egress_idle
+  group-by:
+    - entity_id
+  timespan: 20m
+level: high
+tags:
+  - attack.defense-evasion
+  - attack.exfiltration
+trinetra:
+  category: spyware_implant
+  severity: 60
+  kill_chain: [implant, c2]
+  response: investigate
+---
+title: APK sideload menjadi penyadapan penuh
+name: corr_sideload_to_surveillance
+id: 9c2e5a10-33b7-4a8d-9f10-0a0d1e3f2004
+status: experimental
+description: >
+  Aplikasi dipasang dari luar toko resmi, lalu izin Accessibility/Device Admin
+  aktif tanpa interaksi, lalu sensor atau trafik keluar menyala. Rantai khas
+  RAT Android pada perangkat dinas.
+correlation:
+  type: temporal_ordered
+  rules:
+    - mob_sideload_install
+    - mob_accessibility_abuse
+    - mob_covert_sensor
+  group-by:
+    - entity_id
+  timespan: 30m
+level: critical
+tags:
+  - attack.initial-access
+  - attack.privilege-escalation
+  - attack.collection
+  - attack.t1476
+trinetra:
+  category: malicious_app
+  severity: 75
+  kill_chain: [install, privilege, collection]
+  response: quarantine
+---
+title: Penyadapan TLS melalui profil dan sertifikat jahat
+name: corr_mitm_chain
+id: 9c2e5a10-33b7-4a8d-9f10-0a0d1e3f2005
+status: experimental
+description: >
+  Profil tidak terpercaya terpasang, lalu sertifikat CA/DNS diubah, lalu
+  terdeteksi indikasi penyadapan TLS. Seluruh komunikasi perangkat terbuka.
+correlation:
+  type: temporal_ordered
+  rules:
+    - mob_rogue_profile
+    - mob_ca_cert_added
+    - mob_tls_mitm
+  group-by:
+    - entity_id
+  timespan: 30m
+level: critical
+tags:
+  - attack.credential-access
+  - attack.t1557
+trinetra:
+  category: mitm
+  severity: 70
+  kill_chain: [install, tampering, mitm]
+  response: isolate
+---
+title: Denyut kendali berulang ke luar
+name: corr_beacon_persistent
+id: 9c2e5a10-33b7-4a8d-9f10-0a0d1e3f2006
+status: experimental
+description: >
+  Beacon berinterval tetap muncul berulang dalam jendela pendek. Satu beacon
+  bisa keep-alive aplikasi sah; tiga dengan interval seragam saat idle tidak.
+correlation:
+  type: event_count
+  rules:
+    - mob_beacon_regular
+  group-by:
+    - entity_id
+  timespan: 15m
+  condition:
+    gte: 3
+level: high
+tags:
+  - attack.command-and-control
+  - attack.t1437
+trinetra:
+  category: c2_beacon
+  severity: 55
+  kill_chain: [c2]
+  response: investigate
+---
+title: Indikasi IMSI catcher berulang
+name: corr_imsi_catcher
+id: 9c2e5a10-33b7-4a8d-9f10-0a0d1e3f2007
+status: experimental
+description: >
+  Penurunan paksa ke 2G tanpa enkripsi pada sel tak dikenal terjadi lebih dari
+  sekali dalam 10 menit — menandakan perangkat ditarik ke BTS palsu, bukan
+  sekadar berada di area blankspot.
+correlation:
+  type: event_count
+  rules:
+    - mob_radio_downgrade
+  group-by:
+    - entity_id
+  timespan: 10m
+  condition:
+    gte: 2
+level: high
+tags:
+  - attack.collection
+  - attack.t1430
+trinetra:
+  category: radio_attack
+  severity: 52
+  kill_chain: [radio]
+  response: investigate
+---
+title: Gelombang pengiriman senyap ke satu perangkat
+name: corr_silent_delivery_burst
+id: 9c2e5a10-33b7-4a8d-9f10-0a0d1e3f2008
+status: experimental
+description: >
+  Beberapa pesan senyap dari pengirim tak dikenal masuk dalam 5 menit.
+  Penyerang sering mencoba beberapa kali ketika upaya pertama gagal.
+correlation:
+  type: event_count
+  rules:
+    - mob_silent_inbound
+  group-by:
+    - entity_id
+  timespan: 5m
+  condition:
+    gte: 3
+level: medium
+tags:
+  - attack.initial-access
+  - attack.t1660
+trinetra:
+  category: zero_click_delivery
+  severity: 40
+  kill_chain: [delivery]
+  response: investigate
+---
+title: Perangkat rentan menjadi sasaran pengiriman senyap
+name: corr_vulnerable_targeted
+id: 9c2e5a10-33b7-4a8d-9f10-0a0d1e3f2009
+status: experimental
+description: >
+  Perangkat dengan patch kedaluwarsa menerima pengiriman senyap. Bukan bukti
+  kompromi, tapi memprioritaskan perangkat mana yang harus ditambal lebih dulu.
+correlation:
+  type: temporal
+  rules:
+    - mob_patch_stale
+    - mob_silent_inbound
+  group-by:
+    - entity_id
+  timespan: 60m
+level: medium
+tags:
+  - attack.initial-access
+trinetra:
+  category: vulnerable_posture
+  severity: 30
+  kill_chain: [posture, delivery]
+  response: patch
+---
+title: Rantai zero-click via SMS biner — pengiriman, eksploitasi, denyut kendali
+name: corr_zeroclick_beacon_chain
+id: 9c2e5a10-33b7-4a8d-9f10-0a0d1e3f2010
+status: experimental
+description: >
+  Varian rantai zero-click yang TIDAK mengunggah data besar. Setelah pesan
+  senyap dan crash proses parser, implan hanya mengirim denyut kendali kecil
+  dan menunggu perintah. Aturan corr_zeroclick_fullchain melewatkan pola ini
+  karena menuntut volume unggahan; celah itu ditutup di sini. Operator
+  spyware yang sabar justru berperilaku seperti ini — volume kecil supaya
+  tidak terlihat pada tagihan data maupun pemantauan trafik.
+author: TRINETRA / Pussiberad Kartika Hackathon 2026
+correlation:
+  type: temporal_ordered
+  rules:
+    - mob_silent_inbound
+    - mob_parser_crash_idle
+    - mob_beacon_regular
+  group-by:
+    - entity_id
+  timespan: 15m
+level: critical
+tags:
+  - attack.initial-access
+  - attack.execution
+  - attack.command-and-control
+  - attack.t1203
+  - attack.t1437
+trinetra:
+  category: zero_click_exploit
+  severity: 82
+  kill_chain: [delivery, exploit, c2]
+  response: isolate
