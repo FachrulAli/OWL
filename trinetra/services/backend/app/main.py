@@ -15,6 +15,7 @@ from .rules.engine import load_catalog
 from .scoring import seed_entity_risk
 from . import ml_client
 from .consumer import run_consumer, stop as stop_consumer
+from . import ingest, indicators, apkscan
 from .orchestration import correlate_recent
 from .ws import hub
 from .api.routes import router
@@ -48,7 +49,11 @@ async def lifespan(app: FastAPI):
     await init_ch()
     await refresh_caches()
     load_catalog()
+    indicators.load()
+    apkscan.load()
     ml_client.init()
+    # jalur masuk telemetri agent MTD nyata (HP prajurit)
+    await ingest.start()
 
     # seed in-memory risk from persisted entity_risk
     async with pg().acquire() as con:
@@ -64,6 +69,7 @@ async def lifespan(app: FastAPI):
     stop_consumer()
     for t in _tasks:
         t.cancel()
+    await ingest.stop()
     await ml_client.close()
 
 

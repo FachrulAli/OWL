@@ -5,6 +5,7 @@ caches (the AD/LDAP enrichment path). Refreshed periodically so policy changes
 pushed from Tier 0 take effect without a restart.
 """
 from .db import pg
+from . import indicators
 
 # entity_id -> {display_name, role, node_id, tier}
 _entities: dict[str, dict] = {}
@@ -51,6 +52,10 @@ def enrich(ev: dict) -> dict:
     role = _roles.get(ev["role"], {})
     ev["role_weight"] = float(role.get("base_weight", 1.0))
     ev["role_risk_level"] = role.get("risk_level", "medium")
+    # Lapisan intel: cocokkan dengan indikator spyware publik (STIX2).
+    # Hanya untuk domain mobile — daftar indikatornya memang khusus spyware HP.
+    if ev.get("domain") == "mobile":
+        indicators.enrich(ev)
     return ev
 
 

@@ -1,9 +1,12 @@
 """REST API for the command-center dashboard."""
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import (APIRouter, File, Header, HTTPException, UploadFile,
+                     WebSocket, WebSocketDisconnect)
 
 from ..db import pg, ch_query
-from ..enrichment import role_baselines, all_nodes
-from ..rules.engine import catalog
+from ..enrichment import role_baselines, all_nodes, all_entities
+from ..rules.engine import catalog, sigma_rules, correlation_rules
+from ..rules import correlation as corr_engine
+from .. import ingest, indicators, apkscan, ios_sweep
 from ..scoring import entity_risk, severity_from_risk
 from .. import ml_client
 from ..consumer import STATS
@@ -26,6 +29,11 @@ async def stats():
         "events": STATS["events"],
         "alerts": STATS["alerts"],
         "signals": STATS["signals"],
+        "chains": STATS.get("chains", 0),
+        "ingest": ingest.stats(),
+        "indicators": indicators.stats(),
+        "yara": apkscan.stats(),
+        "correlation": corr_engine.stats(),
         "uptime_sec": round(uptime, 1),
         "eps": round(STATS["events"] / uptime, 1) if uptime > 0 else 0,
     }
@@ -248,6 +256,228 @@ async def category_timeline(hours: int = 6):
         GROUP BY bucket, category ORDER BY bucket
         """, {"h": hours})
     return [{"bucket": r[0].isoformat(), "category": r[1], "count": int(r[2])} for r in rows]
+
+
+@router.get("/sigma/rules")
+async def sigma_catalog():
+    """Katalog deteksi sebagai kode: aturan atomik + correlation rule.
+
+    Dipakai halaman "Detection-as-Code" di dashboard supaya aturan yang
+    dipakai bisa diaudit langsung dari UI, bukan hanya ada di dalam kode.
+    """
+    atomic = [{
+        "id": r["id"], "sigma_id": r["sigma_id"], "title": r["title"],
+        "description": r["description"], "domain": r["domain"],
+        "service": r["service"], "level": r["level"], "category": r["category"],
+        "severity": r["severity"], "stage": r["stage"], "mitre": r["mitre"],
+        "condition": r["condition_str"],
+        "fields": sorted({k.split("|")[0] for blk in r["blocks"].values()
+                          for k in (blk if isinstance(blk, dict) else {})}),
+        "falsepositives": r["falsepositives"],
+    } for r in sigma_rules()]
+    corrs = [{
+        "id": c["id"], "sigma_id": c["sigma_id"], "title": c["title"],
+        "description": c["description"], "type": c["type"], "rules": c["rules"],
+        "timespan_s": c["timespan"], "group_by": c["group_by"],
+        "count_gte": c["count_gte"], "level": c["level"],
+        "category": c["category"], "severity": c["severity"],
+        "kill_chain": c["kill_chain"], "response": c["response"],
+        "mitre": c["mitre"],
+    } for c in correlation_rules()]
+    return {"atomic": atomic, "correlation": corrs,
+            "format": "Sigma specification v2 (public domain)",
+            "note": "Aturan dievaluasi oleh engine streaming TRINETRA sendiri, "
+                    "bukan diterjemahkan ke backend SIEM eksternal."}
+
+
+@router.get("/indicators")
+async def indicator_status():
+    """Status lapisan intel: indikator spyware publik yang sedang dimuat."""
+    s = indicators.stats()
+    return {
+        **s,
+        "sources": [
+            {"name": "AmnestyTech/investigations", "license": "CC-BY 2.0",
+             "campaigns": ["Pegasus"]},
+            {"name": "mvt-project/mvt-indicators", "license": "MIT",
+             "campaigns": [c for c in s.get("campaigns", []) if c != "Pegasus"]},
+        ],
+        "catatan": "Indikator bersifat historis dan bisa menghasilkan false "
+                   "positive, karena itu tidak pernah dipakai sebagai bukti "
+                   "tunggal — selalu dikorelasikan dengan perilaku perangkat.",
+    }
+
+
+@router.post("/scan/apk")
+async def scan_apk(file: UploadFile = File(...),
+                   device_id: str | None = None,
+                   x_trinetra_token: str = Header(default="")):
+    """Pindai satu berkas APK dengan YARA-X + daftar sidik indikator.
+
+    Dipakai untuk APK sideload yang terdeteksi di perangkat (atau diunggah
+    analis). Bila `device_id` diberikan dan perangkat terdaftar, hasilnya
+    disuntikkan sebagai event ke pipeline supaya ikut penilaian risiko dan
+    korelasi — bukan hanya ditampilkan sebagai hasil pindai lepas.
+    """
+    if x_trinetra_token != ingest.INGEST_TOKEN:
+        raise HTTPException(status_code=401, detail="token tidak valid")
+    if not apkscan.ready():
+        raise HTTPException(
+            status_code=503,
+            detail=apkscan.stats().get("error") or "pemindai YARA belum siap")
+
+    MAX = 200 * 1024 * 1024
+    data = await file.read(MAX + 1)
+    if len(data) > MAX:
+        raise HTTPException(status_code=413, detail="berkas melebihi 200 MB")
+    if not data:
+        raise HTTPException(status_code=400, detail="berkas kosong")
+
+    result = apkscan.scan_apk(data, file.filename or "unggahan.apk")
+
+    if device_id:
+        ent = all_entities().get(device_id)
+        if ent is None:
+            result["ingested"] = False
+            result["ingest_note"] = f"perangkat '{device_id}' tidak terdaftar"
+        elif not ingest.ready():
+            result["ingested"] = False
+            result["ingest_note"] = "jalur ingest belum siap"
+        else:
+            await ingest.publish([{
+                "category": "pkg",
+                "activity": "apk_scan_verdict",
+                "pkg_added": 1,
+                "pkg_name": result["filename"],
+                "pkg_sha256": result["sha256"],
+                "installer_source": "unknown",
+                "perm_sensitive": 1 if result["score"] >= 35 else 0,
+                "screen_on": 0,
+                "user_interaction": 0,
+            }], {
+                "entity_id": device_id, "endpoint_id": device_id,
+                "role": ent["role"], "node_id": ent["node_id"],
+                "tier": ent["tier"],
+                "unit_id": ent["node_id"] if ent["tier"] >= 1 else "",
+            })
+            result["ingested"] = True
+
+    return result
+
+
+@router.post("/sweep/ios")
+async def sweep_ios(file: UploadFile = File(...),
+                    device_id: str | None = None,
+                    x_trinetra_token: str = Header(default="")):
+    """Analisis bundel diagnostik iOS (sysdiagnose / .tar.gz / .zip).
+
+    Jalur iOS bersifat PERIODIK dan RETROSPEKTIF, bukan real-time: iOS tidak
+    menyediakan API bagi aplikasi pihak ketiga untuk melihat proses sistem
+    atau crash-nya. Pemegang perangkat menarik bundel diagnostik sendiri
+    (Setelan → Privasi & Keamanan → Analisis), lalu dianalisis di sini.
+    Inilah cara kerja forensik mobile sebenarnya — MVT (Amnesty) dan
+    iShutdown (Kaspersky) bekerja dengan pola yang sama.
+
+    Bila `device_id` diberikan, temuan disuntikkan ke pipeline sebagai event
+    sehingga aturan Sigma dan korelasi yang sama tetap berlaku.
+    """
+    if x_trinetra_token != ingest.INGEST_TOKEN:
+        raise HTTPException(status_code=401, detail="token tidak valid")
+
+    MAX = 600 * 1024 * 1024
+    data = await file.read(MAX + 1)
+    if len(data) > MAX:
+        raise HTTPException(status_code=413, detail="bundel melebihi 600 MB")
+    if not data:
+        raise HTTPException(status_code=400, detail="berkas kosong")
+
+    result = ios_sweep.sweep(data, file.filename or "sysdiagnose")
+    events = result.pop("events", [])
+    result["events_generated"] = len(events)
+
+    if device_id and events:
+        ent = all_entities().get(device_id)
+        if ent is None:
+            result["ingested"] = False
+            result["ingest_note"] = f"perangkat '{device_id}' tidak terdaftar"
+        elif not ingest.ready():
+            result["ingested"] = False
+            result["ingest_note"] = "jalur ingest belum siap"
+        else:
+            await ingest.publish(events, {
+                "entity_id": device_id, "endpoint_id": device_id,
+                "role": ent["role"], "node_id": ent["node_id"],
+                "tier": ent["tier"],
+                "unit_id": ent["node_id"] if ent["tier"] >= 1 else "",
+            })
+            result["ingested"] = True
+    return result
+
+
+@router.get("/chains")
+async def chain_hits(limit: int = 50, entity_id: str | None = None):
+    """Rantai kill-chain yang terbukti — inti temuan zero-click."""
+    where = "WHERE 1=1"
+    params = {"limit": limit}
+    if entity_id:
+        where += " AND entity_id = {entity_id:String}"
+        params["entity_id"] = entity_id
+    rows = await ch_query(
+        f"SELECT ts, entity_id, node_id, tier, corr_id, corr_type, title, "
+        f"category, severity, level, response, span_s, timespan_s, "
+        f"kill_chain, mitre, members FROM trinetra.chain_hits {where} "
+        f"ORDER BY ts DESC LIMIT {{limit:UInt32}}", params)
+    ents = all_entities()
+    out = []
+    for r in rows:
+        d = dict(r)
+        d["display_name"] = (ents.get(d["entity_id"]) or {}).get(
+            "display_name", d["entity_id"])
+        try:
+            d["members"] = __import__("json").loads(d.get("members") or "[]")
+        except ValueError:
+            d["members"] = []
+        out.append(d)
+    return out
+
+
+@router.post("/ingest/mobile")
+async def ingest_mobile(payload: dict,
+                        x_trinetra_token: str = Header(default="")):
+    """Terima batch telemetri dari agent MTD di HP prajurit.
+
+    Body: {"device_id": "...", "events": [ {...}, ... ]}
+    Header: X-Trinetra-Token
+
+    Perangkat harus sudah terdaftar di registry. Identitas (pangkat, satuan,
+    tier) diambil dari registry, TIDAK dari apa yang dikirim HP — supaya HP
+    yang sudah dikuasai penyerang tidak bisa mengaku sebagai HP pejabat lain.
+    """
+    if x_trinetra_token != ingest.INGEST_TOKEN:
+        raise HTTPException(status_code=401, detail="token tidak valid")
+    device_id = str(payload.get("device_id") or "").strip()
+    events = payload.get("events") or []
+    if not device_id or not isinstance(events, list):
+        raise HTTPException(status_code=400,
+                            detail="butuh device_id dan events[]")
+    ent = all_entities().get(device_id)
+    if ent is None:
+        raise HTTPException(
+            status_code=403,
+            detail=f"perangkat '{device_id}' belum terdaftar di registry")
+    if not ingest.ready():
+        raise HTTPException(status_code=503, detail="jalur ingest belum siap")
+
+    identity = {
+        "entity_id": device_id,
+        "endpoint_id": device_id,
+        "role": ent["role"],
+        "node_id": ent["node_id"],
+        "tier": ent["tier"],
+        "unit_id": ent["node_id"] if ent["tier"] >= 1 else "",
+    }
+    res = await ingest.publish(events, identity)
+    return {"ok": True, "device_id": device_id, **res}
 
 
 @router.websocket("/ws")
