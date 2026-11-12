@@ -11,6 +11,11 @@ from datetime import datetime, timezone
 
 from .config import settings
 
+# Plafon risiko untuk perangkat mobile yang HANYA menyalakan aturan atomik,
+# tanpa korelasi kill-chain. Dipasang di bawah ALERT_THRESHOLD (50) supaya
+# indikator tunggal tidak pernah membuka kasus dengan sendirinya.
+MOBILE_ATOMIC_CEILING = 45.0
+
 # in-memory entity risk state: entity_id -> (risk, last_ts)
 _entity_risk: dict[str, tuple[float, datetime]] = {}
 
@@ -78,13 +83,35 @@ def score_event(ev: dict, signals: list[dict], ml: dict) -> dict:
     # justru kebalikannya — beberapa indikator berbeda, berurutan, pada satu
     # perangkat, dalam jendela sempit. Menahan ini di 35 berarti sengaja
     # meredam temuan yang paling meyakinkan yang dimiliki sistem.
-    if any(s.get("source") == "sigma_correlation" for s in signals):
+    has_correlation = any(s.get("source") == "sigma_correlation" for s in signals)
+    if has_correlation:
         PER_EVENT_CAP = 95.0
     if event_score >= MIN_ACCRUE:
         contribution = min(event_score, PER_EVENT_CAP)
         new_risk = min(100.0, decayed + contribution * (1 - decayed / 100.0))
     else:
         new_risk = decayed            # just let prior risk decay
+
+    # ---- PLAFON UNTUK INDIKATOR TUNGGAL (domain mobile) ----
+    # Seluruh tesis TRINETRA adalah: satu indikator perilaku di HP tidak cukup
+    # untuk menuduh. Tanpa plafon ini, tesis itu dilanggar oleh mekanika
+    # penilaiannya sendiri — sebuah aturan atomik yang menyala berulang
+    # (mis. unggahan >8 MB saat idle ke ASN non-arus-utama, yang sah terjadi
+    # pada pemakaian normal) menumpuk risiko sampai melewati ambang kasus.
+    #
+    # Ditemukan saat menjalankan stack utuh pertama kali: 4 HP normal naik ke
+    # 58-77 dan membuka kasus, padahal tidak satu pun memicu korelasi. Uji
+    # offline tidak menangkapnya karena hanya memeriksa korelasi, bukan
+    # akumulasi.
+    #
+    # Karena itu: tanpa korelasi, risiko pada perangkat mobile tidak boleh
+    # DINAIKKAN melewati plafon. Perangkat tetap bisa tampak "sedang" supaya
+    # analis melihat ada sesuatu, tetapi kasus hanya dibuka oleh rantai yang
+    # terbukti. `max(decayed, ...)` menjaga agar perangkat yang sudah merah
+    # karena korelasi tidak ikut ditarik turun oleh event atomik berikutnya.
+    if ev.get("domain") == "mobile" and not has_correlation:
+        new_risk = min(new_risk, max(decayed, MOBILE_ATOMIC_CEILING))
+
     _entity_risk[ev["entity_id"]] = (new_risk, now)
 
     return {

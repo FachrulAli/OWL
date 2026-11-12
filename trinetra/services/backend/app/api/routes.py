@@ -1,4 +1,6 @@
 """REST API for the command-center dashboard."""
+import json
+
 from fastapi import (APIRouter, File, Header, HTTPException, UploadFile,
                      WebSocket, WebSocketDisconnect)
 
@@ -422,7 +424,9 @@ async def chain_hits(limit: int = 50, entity_id: str | None = None):
     if entity_id:
         where += " AND entity_id = {entity_id:String}"
         params["entity_id"] = entity_id
-    rows = await ch_query(
+    # ch_query mengembalikan (rows, cols) dengan baris berupa list biasa,
+    # bukan mapping — jadi kolom harus dipasangkan sendiri.
+    rows, cols = await ch_query(
         f"SELECT ts, entity_id, node_id, tier, corr_id, corr_type, title, "
         f"category, severity, level, response, span_s, timespan_s, "
         f"kill_chain, mitre, members FROM trinetra.chain_hits {where} "
@@ -430,12 +434,13 @@ async def chain_hits(limit: int = 50, entity_id: str | None = None):
     ents = all_entities()
     out = []
     for r in rows:
-        d = dict(r)
+        d = dict(zip(cols, r))
+        d["ts"] = d["ts"].isoformat() if hasattr(d["ts"], "isoformat") else d["ts"]
         d["display_name"] = (ents.get(d["entity_id"]) or {}).get(
             "display_name", d["entity_id"])
         try:
-            d["members"] = __import__("json").loads(d.get("members") or "[]")
-        except ValueError:
+            d["members"] = json.loads(d.get("members") or "[]")
+        except (ValueError, TypeError):
             d["members"] = []
         out.append(d)
     return out

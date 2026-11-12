@@ -21,6 +21,7 @@ from collections import Counter, defaultdict
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.join(REPO, "services")
 sys.path.insert(0, os.path.join(ROOT, "simulator"))
+sys.path.insert(0, os.path.join(ROOT, "backend"))
 
 
 def mod(name, path):
@@ -35,15 +36,20 @@ ocsf = mod("ocsf", os.path.join(ROOT, "backend/app/ocsf.py"))
 sigma = mod("sigma_loader", os.path.join(ROOT, "backend/app/rules/sigma_loader.py"))
 corr = mod("correlation", os.path.join(ROOT, "backend/app/rules/correlation.py"))
 ioc = mod("indicators", os.path.join(ROOT, "backend/app/indicators.py"))
+# scoring.py dimuat sebagai bagian paket (ia memakai impor relatif .config)
+from app import scoring            # noqa: E402
+from app.config import settings    # noqa: E402
 ioc.load(os.path.join(REPO, "infra", "indicators", "stix2"))
 import mobile_sim  # noqa: E402
 
 random.seed(20261112)
+scoring._entity_risk.clear()
 atomic, corr_rules = sigma.load(os.path.join(ROOT, "backend", "app", "rules", "sigma"))
 print(f"\n  aturan atomik={len(atomic)}  korelasi={len(corr_rules)}\n")
 
 ROUNDS = int(os.getenv("ROUNDS", "12000"))
 fired = defaultdict(Counter)        # device -> Counter(correlation_id)
+peak_risk = defaultdict(float)      # device -> risiko tertinggi yang pernah dicapai
 atomic_hits = defaultdict(Counter)  # device -> Counter(rule_id)
 labels = defaultdict(Counter)
 events = 0
@@ -60,8 +66,19 @@ for _ in range(ROUNDS):
         for s in sigs:
             atomic_hits[ev["entity_id"]][s["rule_id"]] += 1
         corr.observe(ev, sigs, corr_rules)
-        for c in corr.evaluate(ev, corr_rules):
+        chains = corr.evaluate(ev, corr_rules)
+        for c in chains:
             fired[ev["entity_id"]][c["rule_id"]] += 1
+
+        # Jalankan penilaian risiko yang sebenarnya. Versi awal uji ini hanya
+        # memeriksa korelasi, dan karena itu MELEWATKAN cacat nyata: sebuah
+        # aturan atomik yang menyala berulang menumpuk risiko sampai membuka
+        # kasus, walau tidak satu pun korelasi terpenuhi. Cacat itu baru
+        # terlihat saat stack utuh dijalankan. Sekarang diuji di sini.
+        ev.setdefault("role_weight", 1.0)
+        sc = scoring.score_event(ev, sigs + chains, {"anomaly": 0.0})
+        peak_risk[ev["entity_id"]] = max(peak_risk[ev["entity_id"]],
+                                         sc["entity_risk"])
 
 print(f"  event diproses: {events}\n")
 
@@ -97,6 +114,34 @@ for dev, _r, _n, _t, _p, _o, _m in mobile_sim.DEVICES:
     else:
         clean += 1
 print(f"  {clean} HP normal, nol korelasi menyala.")
+
+print("\n  === AKUMULASI RISIKO (indikator tunggal tidak boleh membuka kasus) ===")
+print(f"  ambang kasus = {settings.ALERT_THRESHOLD:.0f} · "
+      f"plafon tanpa korelasi = {scoring.MOBILE_ATOMIC_CEILING:.0f}")
+for dev, want in EXPECT.items():
+    r = peak_risk.get(dev, 0.0)
+    ok = r >= settings.ALERT_THRESHOLD
+    print(f"  [{'OK ' if ok else 'GAGAL'}] {dev:18s} puncak risiko {r:5.1f} "
+          f"(harus >= {settings.ALERT_THRESHOLD:.0f})")
+    if not ok:
+        fails.append(f"{dev} terkompromi tapi risikonya hanya {r:.1f}")
+noisy = []
+for dev, _r, _n, _t, _p, _o, _m in mobile_sim.DEVICES:
+    if dev in mobile_sim.COMPROMISED:
+        continue
+    r = peak_risk.get(dev, 0.0)
+    if r >= settings.ALERT_THRESHOLD:
+        fails.append(f"KASUS PALSU: {dev} mencapai risiko {r:.1f} "
+                     f"tanpa korelasi apa pun")
+        print(f"  [GAGAL] {dev:18s} puncak risiko {r:5.1f} — membuka kasus "
+              f"padahal tidak ada rantai")
+    elif r > 0:
+        noisy.append((dev, r))
+noisy.sort(key=lambda x: -x[1])
+for dev, r in noisy[:5]:
+    print(f"  [OK ] {dev:18s} puncak risiko {r:5.1f} — terlihat, tidak menuduh")
+print(f"  {len(noisy)} HP normal menunjukkan risiko tapi tidak satu pun "
+      f"membuka kasus.")
 
 print("\n  === kecocokan indikator STIX2 (lapisan intel) ===")
 ioc_hits = Counter()
