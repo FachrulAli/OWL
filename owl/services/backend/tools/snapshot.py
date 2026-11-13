@@ -35,7 +35,9 @@ def main() -> None:
                         "score": a.score, "level": a.level,
                         "assessed_at": a.assessed_at.isoformat(),
                         "findings": row["findings"],
-                        "attestation_ok": a.attestation_ok})
+                        "attestation_ok": a.attestation_ok,
+                        "availability": row["availability"],
+                        "skipped_rules": row["skipped_rules"]})
         decisions[a.device_id] = {
             r: json.loads(pdp.decide(a, r).model_dump_json())
             for r in ("standard", "classified")
@@ -52,14 +54,15 @@ def main() -> None:
                     "payload": cef.line(a, dec, d["label"], d["unit"])})
 
     c = rules.catalog()
+    from app import policy
     from app.config import settings
     catalog = {
         "version": c.get("version"), "updated": str(c.get("updated", "")),
         "parameters": c.get("parameters", {}), "allowlists": c.get("allowlists", {}),
-        "rules": c["rules"], "weights": settings.WEIGHTS, "severity": settings.SEVERITY,
+        "rules": c["rules"], "weights": policy.weights(), "severity": settings.SEVERITY,
         "saturation": settings.CATEGORY_SATURATION,
-        "thresholds": {"medium": settings.T_MEDIUM, "high": settings.T_HIGH,
-                       "critical": settings.T_CRITICAL},
+        "thresholds": policy.thresholds(),
+        "enforcement": "rekomendasi",
     }
 
     OUT.parent.mkdir(parents=True, exist_ok=True)

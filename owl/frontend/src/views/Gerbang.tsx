@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Contributors } from '../components/Contributors'
 import { Ring } from '../components/Ring'
-import { api, DECISION_LABEL } from '../lib/api'
+import { api, DECISION_EN, DECISION_LABEL } from '../lib/api'
 import type { Decision, DeviceRow, Sensitivity } from '../lib/types'
 
 /**
@@ -65,6 +65,11 @@ export function Gerbang({ devices, onRefresh }: { devices: DeviceRow[]; onRefres
               berbeda menurut kepekaan sumber daya: 70 untuk sistem terklasifikasi, 90
               untuk jaringan biasa.
             </p>
+            <p className="muted" style={{ marginTop: 6 }}>
+              Keluarannya adalah <strong>rekomendasi keputusan akses</strong>. Pemblokiran
+              yang sungguh-sungguh menuntut integrasi dengan gateway, IAM, atau MDM satuan,
+              dan itu belum terpasang pada purwarupa ini.
+            </p>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button className={resource === 'classified' ? 'btn' : 'btn ghost'}
@@ -92,8 +97,19 @@ export function Gerbang({ devices, onRefresh }: { devices: DeviceRow[]; onRefres
                   <div className="name">{d.label || d.device_id}</div>
                   <div className="sub">{d.device_id} · {d.unit || '—'}</div>
                   <div className="sub">{d.model} · {d.os_version}</div>
+                  <div className="sub">
+                    diperiksa{' '}
+                    {d.assessed_at
+                      ? new Date(d.assessed_at).toLocaleString('id-ID')
+                      : 'belum pernah'}
+                  </div>
                   {d.attestation_ok === false && (
                     <div className="flag" style={{ marginTop: 6 }}>attestation agent tidak sah</div>
+                  )}
+                  {d.skipped_rules?.length > 0 && (
+                    <div className="flag" style={{ marginTop: 4 }}>
+                      {d.skipped_rules.length} indikator tidak dapat diperiksa
+                    </div>
                   )}
                 </div>
               </div>
@@ -102,6 +118,11 @@ export function Gerbang({ devices, onRefresh }: { devices: DeviceRow[]; onRefres
                 <div className={`verdict ${res ? lane : 'pending'}`}>
                   {res ? DECISION_LABEL[res.decision] : 'BELUM DINILAI'}
                 </div>
+                {res && (
+                  <div className="sub" style={{ fontFamily: 'var(--mono)', fontSize: 11, marginTop: 2 }}>
+                    rekomendasi: {DECISION_EN[res.decision]}
+                  </div>
+                )}
                 <p className="muted" style={{ marginTop: 6 }}>
                   {res ? res.reason : 'Tekan "Jalankan gerbang" untuk meminta keputusan dari Policy Decision Point.'}
                 </p>

@@ -4,9 +4,11 @@ from __future__ import annotations
 import json
 from datetime import datetime
 
-from fastapi import APIRouter, Header, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import (APIRouter, Depends, Header, HTTPException, Query, Request,
+                     WebSocket, WebSocketDisconnect)
+from pydantic import BaseModel, Field
 
-from . import db, demo, pdp, rules, scoring, soc
+from . import db, demo, pdp, policy, rules, scoring, soc
 from . import cef as cef_mod
 from . import stix as stix_mod
 from .config import settings
@@ -21,15 +23,38 @@ def _check_token(token: str | None) -> None:
         raise HTTPException(status_code=401, detail="token penggelaran tidak sah")
 
 
+async def require_read(x_owl_api_key: str | None = Header(default=None)) -> None:
+    """Autentikasi baca untuk dashboard dan API (NFR 5.1).
+
+    Dibiarkan kosong, API terbuka. Itu HANYA sah untuk purwarupa di jaringan
+    terisolasi, dan keadaannya dinyatakan di /health supaya tidak terlewat
+    saat penggelaran. Isi OWL_API_KEY sebelum menaruh OWL di jaringan yang
+    dipakai bersama.
+    """
+    if not settings.API_KEY:
+        return
+    if x_owl_api_key != settings.API_KEY:
+        raise HTTPException(status_code=401, detail="kunci API tidak sah")
+
+
+async def require_admin(x_owl_admin: str | None = Header(default=None)) -> str:
+    """Otorisasi administrasi kebijakan (FR-12 dan NFR 5.1)."""
+    if not settings.ADMIN_TOKEN or x_owl_admin != settings.ADMIN_TOKEN:
+        raise HTTPException(status_code=403, detail="token administrasi tidak sah")
+    return "admin"
+
+
 # ——————————————————————————— dasar ———————————————————————————
 
 @router.get("/health")
 async def health():
     return {"service": settings.SERVICE, "version": settings.VERSION,
-            "air_gapped": settings.AIR_GAPPED}
+            "air_gapped": settings.AIR_GAPPED,
+            "api_auth": "aktif" if settings.API_KEY else "terbuka",
+            "enforcement": "rekomendasi"}
 
 
-@router.get("/api/catalog")
+@router.get("/api/catalog", dependencies=[Depends(require_read)])
 async def catalog():
     c = rules.catalog()
     return {
@@ -38,11 +63,11 @@ async def catalog():
         "parameters": c.get("parameters", {}),
         "allowlists": c.get("allowlists", {}),
         "rules": c["rules"],
-        "weights": settings.WEIGHTS,
+        "weights": policy.weights(),
         "severity": settings.SEVERITY,
         "saturation": settings.CATEGORY_SATURATION,
-        "thresholds": {"medium": settings.T_MEDIUM, "high": settings.T_HIGH,
-                       "critical": settings.T_CRITICAL},
+        "thresholds": policy.thresholds(),
+        "enforcement": "rekomendasi",
     }
 
 
@@ -55,12 +80,12 @@ async def enroll(d: Device):
     return {"ok": True, "device_id": d.device_id}
 
 
-@router.get("/api/devices")
+@router.get("/api/devices", dependencies=[Depends(require_read)])
 async def devices():
     return await db.list_devices()
 
 
-@router.get("/api/devices/{device_id}")
+@router.get("/api/devices/{device_id}", dependencies=[Depends(require_read)])
 async def device_detail(device_id: str):
     d = await db.get_device(device_id)
     if not d:
@@ -93,10 +118,26 @@ async def _assess(t: Telemetry) -> tuple[RiskAssessment, AccessDecision, dict]:
 
 
 @router.post("/api/telemetry")
-async def telemetry(t: Telemetry, x_owl_token: str | None = Header(default=None)):
-    _check_token(x_owl_token)
-    a, d, out = await _assess(t)
+async def telemetry(t: Telemetry, request: Request,
+                    x_owl_token: str | None = Header(default=None)):
+    ip = request.client.host if request.client else ""
+    try:
+        _check_token(x_owl_token)
+    except HTTPException:
+        await db.save_reject("", "token tidak sah", "", ip)
+        raise
+    try:
+        a, d, out = await _assess(t)
+    except HTTPException as e:
+        await db.save_reject(t.device_id, "ditolak saat penilaian", str(e.detail), ip)
+        raise
     return {"assessment": a, "decision": d, "soc": out}
+
+
+@router.get("/api/rejects", dependencies=[Depends(require_read)])
+async def rejects(limit: int = 50):
+    """FR-04: telemetri yang ditolak, beserta alasannya."""
+    return await db.recent_rejects(limit)
 
 
 # ——————————————————————————— gerbang ———————————————————————————
@@ -110,7 +151,8 @@ async def gate(device_id: str, resource: Sensitivity = Query("classified")):
         raise HTTPException(404, "belum ada penilaian untuk perangkat ini")
     a = RiskAssessment(**{k: row[k] for k in
                           ("device_id", "assessed_at", "score", "level", "findings",
-                           "categories", "attestation_ok")})
+                           "categories", "attestation_ok", "availability",
+                           "skipped_rules")})
     d = pdp.decide(a, resource=resource)
     await db.save_decision(d.model_dump())
     await hub.broadcast("gate", d.model_dump())
@@ -127,7 +169,8 @@ async def export_stix(device_id: str, resource: Sensitivity = Query("classified"
     dev = await db.get_device(device_id) or {}
     a = RiskAssessment(**{k: row[k] for k in
                           ("device_id", "assessed_at", "score", "level", "findings",
-                           "categories", "attestation_ok")})
+                           "categories", "attestation_ok", "availability",
+                           "skipped_rules")})
     d = pdp.decide(a, resource=resource)
     return stix_mod.bundle(a, d, device_label=dev.get("label", ""), unit=dev.get("unit", ""))
 
@@ -140,19 +183,62 @@ async def export_cef(device_id: str, resource: Sensitivity = Query("classified")
     dev = await db.get_device(device_id) or {}
     a = RiskAssessment(**{k: row[k] for k in
                           ("device_id", "assessed_at", "score", "level", "findings",
-                           "categories", "attestation_ok")})
+                           "categories", "attestation_ok", "availability",
+                           "skipped_rules")})
     d = pdp.decide(a, resource=resource)
     return {"cef": cef_mod.line(a, d, device_label=dev.get("label", ""), unit=dev.get("unit", ""))}
 
 
-@router.get("/api/soc/events")
+@router.get("/api/soc/events", dependencies=[Depends(require_read)])
 async def soc_events(limit: int = 20):
     return await db.recent_soc_events(limit)
 
 
-@router.get("/api/decisions")
+@router.get("/api/decisions", dependencies=[Depends(require_read)])
 async def decisions(limit: int = 50):
     return await db.recent_decisions(limit)
+
+
+# ——————————————————————————— kebijakan (FR-12) ———————————————————————————
+
+class WeightChange(BaseModel):
+    category: str
+    value: float = Field(ge=0, le=100)
+
+
+class ThresholdChange(BaseModel):
+    name: str
+    value: float = Field(ge=0, le=100)
+
+
+@router.get("/api/policy", dependencies=[Depends(require_read)])
+async def get_policy():
+    return {"weights": policy.weights(), "thresholds": policy.thresholds(),
+            "audit": await db.policy_audit(20)}
+
+
+@router.put("/api/policy/weight")
+async def put_weight(c: WeightChange, actor: str = Depends(require_admin)):
+    try:
+        old, new = policy.set_weight(c.category, c.value)
+    except (KeyError, ValueError) as e:
+        raise HTTPException(400, str(e))
+    await db.save_policy_change(actor, f"weight.{c.category}", str(old), str(new))
+    await hub.broadcast("policy", {"field": f"weight.{c.category}", "value": new})
+    return {"ok": True, "field": f"weight.{c.category}", "old": old, "new": new,
+            "catatan": "berlaku pada penilaian berikutnya; riwayat tidak dihitung ulang"}
+
+
+@router.put("/api/policy/threshold")
+async def put_threshold(c: ThresholdChange, actor: str = Depends(require_admin)):
+    try:
+        old, new = policy.set_threshold(c.name, c.value)
+    except (KeyError, ValueError) as e:
+        raise HTTPException(400, str(e))
+    await db.save_policy_change(actor, f"threshold.{c.name}", str(old), str(new))
+    await hub.broadcast("policy", {"field": f"threshold.{c.name}", "value": new})
+    return {"ok": True, "field": f"threshold.{c.name}", "old": old, "new": new,
+            "catatan": "berlaku pada penilaian berikutnya; riwayat tidak dihitung ulang"}
 
 
 # ——————————————————————————— demo ———————————————————————————

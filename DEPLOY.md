@@ -25,6 +25,8 @@ Variabel lingkungan yang diisi saat penggelaran satuan:
 | Variabel | Arti | Bawaan |
 |---|---|---|
 | `OWL_INGEST_TOKEN` | token penggelaran agent | `owl-demo-token` |
+| `OWL_API_KEY` | kunci baca dashboard dan API; kosong berarti terbuka | kosong |
+| `OWL_ADMIN_TOKEN` | token untuk mengubah bobot dan ambang | `owl-demo-admin` |
 | `OWL_SOC_WEBHOOK` | alamat webhook Kartika CSIRT | kosong |
 | `OWL_SOC_SECRET` | kunci HMAC-SHA256 untuk tanda tangan payload | `owl-demo-secret` |
 | `OWL_SYSLOG_HOST` | kolektor Syslog SIEM | kosong |
@@ -33,8 +35,10 @@ Variabel lingkungan yang diisi saat penggelaran satuan:
 
 Dibiarkan kosong, kedua tujuan SOC tidak dihubungi dan event tetap dicatat
 di basis data lokal dengan status belum terkirim, untuk diambil petugas.
-**Ganti `OWL_INGEST_TOKEN` dan `OWL_SOC_SECRET` sebelum perangkat pertama
-didaftarkan.** Keduanya sengaja diberi nilai bawaan yang jelas-jelas nilai
+**Ganti `OWL_INGEST_TOKEN`, `OWL_ADMIN_TOKEN`, dan `OWL_SOC_SECRET`, serta isi
+`OWL_API_KEY`, sebelum perangkat pertama didaftarkan.** Selama `OWL_API_KEY`
+kosong, API baca terbuka, dan `/health` menyatakannya sebagai
+`api_auth: terbuka`. Keduanya sengaja diberi nilai bawaan yang jelas-jelas nilai
 demo, supaya kelalaian mengisinya terlihat, bukan tersembunyi.
 
 ## Mengapa `vercel.json` ada di root repositori

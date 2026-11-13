@@ -29,6 +29,41 @@ _LOCATION = {"android.permission.ACCESS_FINE_LOCATION",
 # Aplikasi sistem yang memang memegang izin perekaman secara sah.
 _SYSTEM_PREFIX = ("com.android.", "com.google.android.", "android")
 
+# Indikator yang harus terbaca agar sebuah aturan boleh dievaluasi (FR-03).
+#
+# Aturan yang indikatornya tidak terbaca TIDAK dijalankan, dan tidak pula
+# dianggap lulus. Perbedaan itu penting: aturan yang dilewati muncul di
+# dashboard sebagai indikator yang tidak dapat diperiksa, sedangkan aturan
+# yang dijalankan dan tidak menyala muncul sebagai bersih. Menyamakan
+# keduanya akan membuat perangkat yang tidak dapat diperiksa terlihat aman.
+_NEEDS: dict[str, str] = {
+    "OWL-R01": "accessibility",
+    "OWL-R02": "accessibility",
+    "OWL-A01": "install_source",
+    "OWL-A02": "permissions",
+    "OWL-C01": "certificates",
+    "OWL-C02": "vpn",
+    "OWL-D01": "integrity",
+    "OWL-D02": "integrity",
+    "OWL-N01": "network_volume",
+    "OWL-N02": "network_destinations",
+    "OWL-N03": "network_destinations",
+    "OWL-X01": "attestation",
+}
+
+
+def indicator_ok(t: Telemetry, key: str) -> bool:
+    """Apakah indikator ini terbaca pada pemeriksaan ini.
+
+    Agent yang tidak melaporkan status sama sekali dianggap melaporkan ok,
+    supaya agent versi lama tetap berfungsi. Status `partial` dianggap cukup:
+    sebagian data memang terbaca, dan aturannya menilai yang terbaca itu.
+    """
+    st = t.availability.get(key)
+    if st is None:
+        return True
+    return st.status in ("ok", "partial")
+
 
 def load(path: Path | None = None) -> dict:
     global _CATALOG, _RULES
@@ -255,7 +290,13 @@ def evaluate(t: Telemetry) -> list[Finding]:
     """
     if not _RULES:
         load()
-    findings = [f for rid, fn in _CHECKS.items() if (f := fn(t)) is not None]
+    findings = []
+    for rid, fn in _CHECKS.items():
+        if not indicator_ok(t, _NEEDS.get(rid, "")):
+            continue
+        f = fn(t)
+        if f is not None:
+            findings.append(f)
 
     if len(findings) == 1:
         f = findings[0]
@@ -268,3 +309,9 @@ def evaluate(t: Telemetry) -> list[Finding]:
     order = {c: i for i, c in enumerate(["runtime", "app", "config", "device", "identity"])}
     findings.sort(key=lambda f: (order[f.category], -_ORDER.index(f.severity)))
     return findings
+
+
+def skipped(t: Telemetry) -> list[str]:
+    """Id aturan yang tidak dapat dievaluasi karena indikatornya tidak terbaca."""
+    return sorted(rid for rid in _CHECKS
+                  if not indicator_ok(t, _NEEDS.get(rid, "")))

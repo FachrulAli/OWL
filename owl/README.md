@@ -43,6 +43,27 @@ tingkat keyakinan tiap metode, ada di
 [`services/backend/rules/rules.yaml`](services/backend/rules/rules.yaml) dan
 tampil apa adanya di tab **Aturan & bobot** pada dashboard.
 
+## Status indikator: yang tidak terbaca tidak dianggap lulus
+
+Setiap laporan membawa status tiap indikator, bukan hanya nilainya. Daftar
+kosong karena "sudah diperiksa dan memang bersih" tidak boleh terlihat sama
+dengan daftar kosong karena "tidak dapat dibaca sama sekali".
+
+| Status | Artinya | Akibatnya pada penilaian |
+|---|---|---|
+| `ok` | terbaca penuh | aturannya dijalankan |
+| `partial` | sebagian terbaca | aturannya dijalankan atas bagian yang terbaca |
+| `unavailable` | gagal dibaca saat itu | aturannya **dilewati**, dicatat di `skipped_rules` |
+| `not_supported` | memang di luar jangkauan API | aturannya **dilewati**, dicatat di `skipped_rules` |
+
+Aturan yang dilewati tidak dihitung lulus. Dashboard menampilkannya sebagai
+indikator yang tidak dapat diperiksa, karena perangkat yang tidak dapat
+diperiksa bukan perangkat yang aman.
+
+Contoh nyata dari agent di emulator: `network_destinations` dilaporkan
+`not_supported`, sebab tujuan jaringan per aplikasi memang tidak dapat dibaca
+aplikasi biasa. OWL-N02 dan OWL-N03 karena itu tidak dijalankan.
+
 ## Skor yang dapat ditelusuri
 
 Tiga sifat dijaga mesin skor, dan ketiganya dikunci oleh uji:
@@ -61,6 +82,11 @@ satu-satunya yang menyala.
 
 ## Keputusan akses
 
+Keluarannya adalah **rekomendasi keputusan akses**. Pemblokiran yang
+sungguh-sungguh menuntut integrasi dengan gateway, IAM, atau MDM satuan, dan
+itu belum terpasang pada purwarupa ini. Dashboard menyebutnya demikian di
+layar, bukan hanya di dokumen.
+
 | Skor | Jaringan biasa | Sistem terklasifikasi |
 |---|---|---|
 | 0 sampai 29 | lolos | lolos |
@@ -71,6 +97,9 @@ satu-satunya yang menyala.
 Ambang deny berbeda menurut kepekaan sumber daya, dan itulah yang dimaksud
 Zero Trust: tidak ada satu ambang tunggal untuk seluruh sistem. Lihat catatan
 di kepala [`app/pdp.py`](services/backend/app/pdp.py).
+
+Nama resmi keputusannya, mengikuti Requirements §3.3: **Allow**, **Step-up**,
+**Restrict**, **Deny / Quarantine**.
 
 Attestation agent yang gagal mendahului seluruh perhitungan. Laporan
 "perangkat bersih" dari agent yang tidak dapat membuktikan dirinya build asli
@@ -118,6 +147,83 @@ make test
 
 ---
 
+## Arsitektur
+
+```
+    Perangkat                  OWL Core (on-prem)                Integrasi
+ ┌──────────────┐         ┌───────────────────────────┐      ┌──────────────┐
+ │ Agent Kotlin │  HTTPS  │  API  ──►  Mesin aturan   │      │ Kartika      │
+ │  6 sinyal    │ ──────► │   │        12 aturan      │ ───► │ CSIRT        │
+ │  attestation │  token  │   │            │          │ STIX │              │
+ └──────────────┘         │   │        Skor risiko    │ CEF  └──────────────┘
+                          │   │         0 - 100       │      ┌──────────────┐
+                          │   │            │          │ ───► │ SIEM satuan  │
+                          │   ▼            ▼          │      └──────────────┘
+                          │ SQLite  ◄─ Zero Trust PDP │      ┌──────────────┐
+                          │ perangkat    rekomendasi  │ ───► │ TRINETRA     │
+                          │ penilaian    akses        │ skor │ insider      │
+                          │ keputusan        │        │      └──────────────┘
+                          │ penolakan        ▼        │
+                          │ audit        Dashboard    │
+                          └───────────────────────────┘
+```
+
+Diagram yang lebih rinci, termasuk komponen yang belum dibangun, ada di
+[`docs/OWL-deepdive.md`](../docs/OWL-deepdive.md) §8.1.
+
+## API
+
+Dokumentasi OpenAPI otomatis tersedia di `/docs` saat backend berjalan.
+Ringkasnya:
+
+| Metode | Jalur | Guna | Autentikasi |
+|---|---|---|---|
+| GET | `/health` | status layanan, mode air-gapped, keadaan autentikasi | terbuka |
+| POST | `/api/devices` | registrasi perangkat | terbuka |
+| POST | `/api/telemetry` | kirim laporan postur | `X-OWL-Token` |
+| GET | `/api/devices` | daftar perangkat dengan skor terakhir | `X-OWL-Api-Key` |
+| GET | `/api/devices/{id}` | detail, riwayat, status indikator | `X-OWL-Api-Key` |
+| POST | `/api/gate/{id}?resource=` | minta rekomendasi keputusan akses | terbuka |
+| GET | `/api/devices/{id}/stix` | bundle STIX 2.1 | terbuka |
+| GET | `/api/devices/{id}/cef` | baris CEF | terbuka |
+| GET | `/api/rejects` | telemetri yang ditolak beserta alasannya | `X-OWL-Api-Key` |
+| GET | `/api/policy` | bobot, ambang, dan riwayat perubahannya | `X-OWL-Api-Key` |
+| PUT | `/api/policy/weight` | ubah bobot kategori | `X-OWL-Admin` |
+| PUT | `/api/policy/threshold` | ubah ambang keputusan | `X-OWL-Admin` |
+| GET | `/api/catalog` | katalog aturan dan bobot | `X-OWL-Api-Key` |
+| WS | `/ws` | siaran perubahan ke dashboard | terbuka |
+
+`X-OWL-Api-Key` hanya ditegakkan jika `OWL_API_KEY` diisi. Dibiarkan kosong,
+API baca terbuka, dan `/health` menyatakannya sebagai `api_auth: terbuka`.
+Itu hanya sah untuk purwarupa di jaringan terisolasi.
+
+## Dukungan Android
+
+| Hal | Nilai |
+|---|---|
+| minSdk | 29 (Android 10) |
+| compileSdk dan targetSdk | 35 (Android 15) |
+| Diuji pada | Emulator Android 15, API 35, arm64-v8a |
+| Belum diuji | perangkat fisik, StrongBox sungguhan, verdict Play Integrity yang sah |
+
+Izin yang diminta dan alasan tiap izin ada di `agent/android/app/src/main/AndroidManifest.xml`,
+dan batas yang tidak dapat dilampaui aplikasi biasa ada di [`agent/README.md`](agent/README.md).
+
+## Hasil pengujian
+
+```
+38 uji lulus     (cd owl && make test)
+```
+
+| Berkas | Cakupan |
+|---|---|
+| `tests/test_scoring.py` | angka demo 18 dan 87, kejenuhan kategori, peluruhan, korelasi multi-sinyal, attestation |
+| `tests/test_export.py` | bentuk bundle STIX 2.1, pelolosan karakter CEF, stabilitas tanda tangan HMAC |
+| `tests/test_api.py` | registrasi, validasi dan pencatatan penolakan, empat tingkat risiko, reproduksibilitas skor, autentikasi, perubahan kebijakan |
+
+Pemetaan lengkap tiap kebutuhan ke kode dan buktinya ada di
+[`docs/PEMENUHAN-REQUIREMENTS.md`](../docs/PEMENUHAN-REQUIREMENTS.md).
+
 ## Struktur
 
 ```
@@ -125,6 +231,7 @@ owl/
   services/backend/      OWL Core: FastAPI, SQLite
     app/rules.py         mesin aturan, satu fungsi per id aturan
     app/scoring.py       skor 0-100, kejenuhan kategori, peluruhan
+    app/policy.py        bobot dan ambang yang dapat diubah saat berjalan
     app/pdp.py           Policy Decision Point
     app/stix.py app/cef.py app/soc.py   ekspor ke CSIRT dan SIEM
     rules/rules.yaml     katalog aturan, parameter, daftar izin

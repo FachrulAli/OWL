@@ -26,6 +26,8 @@ Registrasi → Telemetri → Korelasi multi-sinyal → Skor 0-100 → Keputusan 
 | [`docs/OWL-PROPOSAL-FINAL.md`](docs/OWL-PROPOSAL-FINAL.md) | proposal submission |
 | [`docs/OWL-deepdive.md`](docs/OWL-deepdive.md) | analisis mendalam: threat model, arsitektur, scope jujur |
 | [`docs/OWL-deck.html`](docs/OWL-deck.html) | deck presentasi, buka langsung di peramban |
+| [`docs/OWL_Requirements_Hackathon.md`](docs/OWL_Requirements_Hackathon.md) | kebutuhan dari penyelenggara |
+| [`docs/PEMENUHAN-REQUIREMENTS.md`](docs/PEMENUHAN-REQUIREMENTS.md) | pemetaan tiap FR dan NFR ke kode dan buktinya |
 | [`DEPLOY.md`](DEPLOY.md) | penggelaran on-prem dan tautan publik |
 
 Tautan publik: **<https://owl-id.vercel.app>** (dashboard saja, mode luring).

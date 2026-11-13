@@ -12,6 +12,11 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 Severity = Literal["low", "medium", "high", "critical"]
+# FR-03: indikator yang tidak dapat diakses API Android ditandai apa adanya,
+# bukan dikarang nilainya. Daftar kosong dari indikator yang TIDAK TERBACA
+# tidak sama artinya dengan daftar kosong dari indikator yang sudah diperiksa
+# dan memang bersih, dan keduanya tidak boleh tampil sama di dashboard.
+Availability = Literal["ok", "partial", "unavailable", "not_supported"]
 Category = Literal["runtime", "app", "config", "device", "identity"]
 Decision = Literal["allow", "step_up", "limited", "deny"]
 Sensitivity = Literal["standard", "classified"]
@@ -64,6 +69,29 @@ class NetworkBlock(BaseModel):
     beacon_jitter_pct: float = 100.0   # makin kecil makin teratur
 
 
+class IndicatorStatus(BaseModel):
+    """Status satu indikator pada satu pemeriksaan (FR-02 dan FR-03)."""
+    status: Availability = "ok"
+    reason: str = ""              # wajib diisi jika status bukan ok
+    source: str = "agent"         # agent | resolver | mdm
+    checked_at: datetime | None = None
+
+
+# Kunci indikator yang dikenal sistem. Nama ini dipakai agent, mesin aturan,
+# dan dashboard, sehingga ketiganya tidak dapat berbeda diam-diam.
+INDICATOR_KEYS = (
+    "permissions",            # 1 izin aplikasi
+    "accessibility",          # 2 layanan aksesibilitas dan hamparan
+    "certificates",           # 3a sertifikat CA pengguna
+    "vpn",                    # 3b profil VPN
+    "install_source",         # 4 sumber pemasangan
+    "integrity",              # 5 integritas perangkat dan patch
+    "network_volume",         # 6a volume keluar dan rasio layar
+    "network_destinations",   # 6b tujuan jaringan
+    "attestation",            # syarat kepercayaan laporan
+)
+
+
 class Telemetry(BaseModel):
     device_id: str
     collected_at: datetime
@@ -76,6 +104,10 @@ class Telemetry(BaseModel):
     apps: list[InstalledApp] = Field(default_factory=list)
     integrity: IntegrityBlock = Field(default_factory=IntegrityBlock)
     network: NetworkBlock = Field(default_factory=NetworkBlock)
+    # Dibiarkan kosong berarti agent lama yang belum melaporkan status.
+    # Backend memperlakukannya sebagai "ok" supaya tidak memecah kompatibilitas,
+    # dan dashboard menandainya sebagai status tidak dilaporkan.
+    availability: dict[str, IndicatorStatus] = Field(default_factory=dict)
 
 
 class Device(BaseModel):
@@ -121,6 +153,8 @@ class RiskAssessment(BaseModel):
     decay_applied: float = 0.0
     previous_score: float | None = None
     attestation_ok: bool = True
+    availability: dict[str, IndicatorStatus] = Field(default_factory=dict)
+    skipped_rules: list[str] = Field(default_factory=list)
 
 
 class AccessDecision(BaseModel):

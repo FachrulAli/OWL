@@ -25,7 +25,33 @@ import json
 from datetime import date, datetime, timedelta, timezone
 
 from . import db
-from .models import Telemetry
+from .models import IndicatorStatus, Telemetry
+
+
+def _status(now: datetime) -> dict[str, IndicatorStatus]:
+    """Status tiap indikator pada perangkat contoh (FR-02 dan FR-03).
+
+    Kedua perangkat ini berada di satuan yang sudah tergelar penuh, sehingga
+    tujuan jaringannya datang dari resolver DNS satuan, bukan dari agent.
+    Pembedaan sumber itu disebutkan apa adanya: agent Android biasa memang
+    tidak dapat membaca tujuan per aplikasi, dan dashboard menampilkan
+    sumbernya supaya tidak ada yang menyangka agent melakukan lebih daripada
+    yang mampu dilakukannya.
+    """
+    ok = lambda src="agent": IndicatorStatus(status="ok", source=src, checked_at=now)
+    return {
+        "permissions": ok(),
+        "accessibility": ok(),
+        "certificates": ok(),
+        "vpn": ok(),
+        "install_source": ok(),
+        "integrity": IndicatorStatus(
+            status="partial", source="agent", checked_at=now,
+            reason="status bootloader tidak diberikan API publik; dinilai lewat verdict integritas"),
+        "network_volume": ok(),
+        "network_destinations": ok("resolver"),
+        "attestation": ok(),
+    }
 
 P_MIC = "android.permission.RECORD_AUDIO"
 P_CAM = "android.permission.CAMERA"
@@ -60,9 +86,11 @@ def telemetry_bersih() -> Telemetry:
     """Perangkat yang wajar. Bukan nol: satu aplikasi pesan memegang izin
     mikrofon dan lokasi, patchnya tertinggal 75 hari, dan ada satu tujuan
     jaringan baru. Skor 18 berarti lolos, bukan berarti sempurna."""
+    now = datetime.now(timezone.utc)
     return Telemetry(
+        availability=_status(now),
         device_id="TACTICAL-07",
-        collected_at=datetime.now(timezone.utc),
+        collected_at=now,
         agent_version="1.0.0",
         attestation={
             "play_integrity": "MEETS_STRONG_INTEGRITY",
@@ -101,9 +129,11 @@ def telemetry_berisiko() -> Telemetry:
     layanan aksesibilitas asing, hamparan jendela, aplikasi sideload dengan
     izin mikrofon dan kamera, CA pengguna, VPN di luar daftar izin, dan
     unggahan besar saat perangkat tidak disentuh."""
+    now = datetime.now(timezone.utc)
     return Telemetry(
+        availability=_status(now),
         device_id="KOMANDO-02",
-        collected_at=datetime.now(timezone.utc),
+        collected_at=now,
         agent_version="1.0.0",
         attestation={
             "play_integrity": "MEETS_DEVICE_INTEGRITY",

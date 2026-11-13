@@ -36,7 +36,9 @@ CREATE TABLE IF NOT EXISTS assessments (
     findings    TEXT NOT NULL,
     categories  TEXT NOT NULL,
     telemetry   TEXT NOT NULL,
-    attestation_ok INTEGER NOT NULL DEFAULT 1
+    attestation_ok INTEGER NOT NULL DEFAULT 1,
+    availability   TEXT NOT NULL DEFAULT '{}',
+    skipped_rules  TEXT NOT NULL DEFAULT '[]'
 );
 CREATE INDEX IF NOT EXISTS ix_assessments_device ON assessments(device_id, assessed_at DESC);
 
@@ -61,6 +63,31 @@ CREATE TABLE IF NOT EXISTS soc_events (
     payload     TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_soc_sent ON soc_events(sent_at DESC);
+
+-- FR-04: telemetri yang ditolak dicatat, tidak dibuang diam-diam. Tanpa
+-- catatan ini, agent yang mengirim data rusak akan tampak seperti agent yang
+-- tidak pernah mengirim apa-apa, dan perangkatnya terlihat "belum dinilai"
+-- padahal sedang gagal.
+CREATE TABLE IF NOT EXISTS rejects (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    received_at TEXT NOT NULL,
+    source_ip   TEXT NOT NULL DEFAULT '',
+    device_id   TEXT NOT NULL DEFAULT '',
+    reason      TEXT NOT NULL,
+    detail      TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS ix_rejects_at ON rejects(received_at DESC);
+
+-- FR-12: perubahan bobot dan ambang dicatat beserta pelakunya.
+CREATE TABLE IF NOT EXISTS policy_audit (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    changed_at  TEXT NOT NULL,
+    actor       TEXT NOT NULL DEFAULT '',
+    field       TEXT NOT NULL,
+    old_value   TEXT NOT NULL,
+    new_value   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_policy_at ON policy_audit(changed_at DESC);
 """
 
 
@@ -115,7 +142,8 @@ async def list_devices() -> list[dict]:
     cur = await conn().execute(
         """SELECT d.*,
                   a.score AS score, a.level AS level, a.assessed_at AS assessed_at,
-                  a.findings AS findings, a.attestation_ok AS attestation_ok
+                  a.findings AS findings, a.attestation_ok AS attestation_ok,
+                  a.availability AS availability, a.skipped_rules AS skipped_rules
              FROM devices d
              LEFT JOIN assessments a ON a.id = (
                  SELECT id FROM assessments WHERE device_id = d.device_id
@@ -125,6 +153,8 @@ async def list_devices() -> list[dict]:
     for row in await cur.fetchall():
         r = dict(row)
         r["findings"] = json.loads(r["findings"]) if r.get("findings") else []
+        r["availability"] = json.loads(r["availability"]) if r.get("availability") else {}
+        r["skipped_rules"] = json.loads(r["skipped_rules"]) if r.get("skipped_rules") else []
         r["attestation_ok"] = bool(r["attestation_ok"]) if r.get("attestation_ok") is not None else None
         out.append(r)
     return out
@@ -135,13 +165,16 @@ async def list_devices() -> list[dict]:
 async def save_assessment(a: dict, telemetry: dict) -> int:
     cur = await conn().execute(
         """INSERT INTO assessments
-             (device_id, assessed_at, score, level, findings, categories, telemetry, attestation_ok)
-           VALUES (?,?,?,?,?,?,?,?)""",
+             (device_id, assessed_at, score, level, findings, categories, telemetry,
+              attestation_ok, availability, skipped_rules)
+           VALUES (?,?,?,?,?,?,?,?,?,?)""",
         (a["device_id"], a["assessed_at"], a["score"], a["level"],
          json.dumps(a["findings"], ensure_ascii=False),
          json.dumps(a["categories"], ensure_ascii=False),
          json.dumps(telemetry, ensure_ascii=False, default=str),
-         int(a.get("attestation_ok", True))),
+         int(a.get("attestation_ok", True)),
+         json.dumps(a.get("availability", {}), ensure_ascii=False, default=str),
+         json.dumps(a.get("skipped_rules", []), ensure_ascii=False)),
     )
     await conn().commit()
     return cur.lastrowid
@@ -157,6 +190,8 @@ async def last_assessment(device_id: str) -> dict | None:
     r = dict(row)
     r["findings"] = json.loads(r["findings"])
     r["categories"] = json.loads(r["categories"])
+    r["availability"] = json.loads(r.get("availability") or "{}")
+    r["skipped_rules"] = json.loads(r.get("skipped_rules") or "[]")
     r["telemetry"] = json.loads(r["telemetry"])
     r["attestation_ok"] = bool(r["attestation_ok"])
     return r
@@ -203,7 +238,33 @@ async def recent_soc_events(limit: int = 20) -> list[dict]:
     return [dict(r) | {"delivered": bool(r["delivered"])} for r in await cur.fetchall()]
 
 
+async def save_reject(device_id: str, reason: str, detail: str, source_ip: str = "") -> None:
+    await conn().execute(
+        "INSERT INTO rejects (received_at, source_ip, device_id, reason, detail) VALUES (?,?,?,?,?)",
+        (_now(), source_ip, device_id, reason, detail[:2000]))
+    await conn().commit()
+
+
+async def recent_rejects(limit: int = 50) -> list[dict]:
+    cur = await conn().execute(
+        "SELECT * FROM rejects ORDER BY received_at DESC, id DESC LIMIT ?", (limit,))
+    return [dict(r) for r in await cur.fetchall()]
+
+
+async def save_policy_change(actor: str, field: str, old: str, new: str) -> None:
+    await conn().execute(
+        "INSERT INTO policy_audit (changed_at, actor, field, old_value, new_value) VALUES (?,?,?,?,?)",
+        (_now(), actor, field, old, new))
+    await conn().commit()
+
+
+async def policy_audit(limit: int = 50) -> list[dict]:
+    cur = await conn().execute(
+        "SELECT * FROM policy_audit ORDER BY changed_at DESC, id DESC LIMIT ?", (limit,))
+    return [dict(r) for r in await cur.fetchall()]
+
+
 async def reset() -> None:
-    for t in ("soc_events", "decisions", "assessments", "devices"):
+    for t in ("soc_events", "decisions", "assessments", "devices", "rejects"):
         await conn().execute(f"DELETE FROM {t}")
     await conn().commit()

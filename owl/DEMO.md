@@ -42,6 +42,14 @@ Buka tab **Aturan & bobot** sebentar.
 > "Dan ini seluruh aturannya, beserta bobot dan tingkat keyakinan tiap
 > metode. Yang keyakinannya rendah ditulis rendah."
 
+Sekarang buka tab **Perangkat**, klik salah satu baris.
+
+> "Dan ini yang jarang ada di produk sejenis: status tiap indikator. Yang
+> tidak dapat dibaca ditulis Unavailable atau Not Supported, bukan dikirim
+> sebagai daftar kosong yang terlihat seperti bersih. Aturan yang
+> indikatornya tidak terbaca dilewati, dan tidak dihitung lulus. Perangkat
+> yang tidak dapat diperiksa bukan perangkat yang aman."
+
 Kembali ke **Gerbang**.
 
 ## 1:30 — Gerbangnya
@@ -53,6 +61,13 @@ Kartu kanan menjadi amber: **DITOLAK**, dengan baris karantina di bawahnya.
 
 > "Perangkat bintara lolos. Perangkat perwira ditolak dan dikarantina,
 > eskalasi naik ke komando. Inilah gerbangnya."
+
+Jika juri bertanya apakah ini benar-benar memblokir:
+
+> "Yang kami keluarkan adalah rekomendasi keputusan akses. Pemblokirannya
+> dilakukan gateway, IAM, atau MDM satuan lewat integrasi, dan itu belum
+> terpasang di purwarupa. Kami menyebutnya rekomendasi, dan dashboard pun
+> menulisnya begitu di layar."
 
 Sekarang tekan **Jaringan biasa**, lalu **Jalankan gerbang** sekali lagi.
 

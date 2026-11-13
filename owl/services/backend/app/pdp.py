@@ -1,5 +1,11 @@
 """Policy Decision Point: skor risiko menjadi keputusan akses (deepdive §7.3).
 
+CATATAN PENTING TENTANG PENEGAKAN. Pada purwarupa ini keluarannya adalah
+REKOMENDASI keputusan akses. Pemblokiran yang sungguh-sungguh menuntut
+integrasi dengan mekanisme penegak, yaitu gateway, IAM, atau MDM satuan.
+Requirements §8 meminta pembedaan itu dinyatakan, bukan dikaburkan, dan
+dashboard menyebutnya demikian di layar.
+
 Catatan atas satu ketidakcocokan di dokumen sumber. Tabel ambang pada
 proposal §4 menempatkan deny dan karantina di 90 ke atas, sedangkan naskah
 demo menyatakan perangkat berskor 87 DITOLAK. Keduanya dapat berdiri
@@ -16,14 +22,17 @@ kedua, sesuai use case pre-deployment screening.
 """
 from __future__ import annotations
 
-from .config import settings
+from . import policy
 from .models import AccessDecision, RiskAssessment, Sensitivity
 
+# Penamaan mengikuti Requirements §3.3: Allow, Step-up, Restrict,
+# Deny/Quarantine. Padanan Indonesianya dipakai di dashboard.
 _REASON = {
-    "allow": "Skor di bawah ambang. Akses penuh diberikan.",
-    "step_up": "Skor sedang. Akses diberikan setelah verifikasi tambahan (MFA).",
-    "limited": "Skor tinggi. Akses dibatasi pada sumber daya tidak sensitif.",
-    "deny": "Skor melewati ambang untuk sumber daya ini. Akses ditolak dan perangkat dikarantina.",
+    "allow": "Allow. Skor di bawah ambang, akses penuh direkomendasikan.",
+    "step_up": "Step-up. Skor sedang, akses direkomendasikan setelah verifikasi tambahan (MFA).",
+    "limited": "Restrict. Skor tinggi, akses ke sumber daya sensitif direkomendasikan dibatasi.",
+    "deny": "Deny / Quarantine. Skor melewati ambang untuk sumber daya ini; "
+            "akses direkomendasikan ditolak dan perangkat dikarantina.",
 }
 
 
@@ -41,13 +50,14 @@ def decide(a: RiskAssessment, resource: Sensitivity = "standard") -> AccessDecis
             top_contributors=["OWL-X01 attestation agent tidak sah"],
         )
 
-    deny_at = settings.T_HIGH if resource == "classified" else settings.T_CRITICAL
+    th = policy.thresholds()
+    deny_at = th["high"] if resource == "classified" else th["critical"]
 
     if s >= deny_at:
         decision = "deny"
-    elif s >= settings.T_HIGH:
+    elif s >= th["high"]:
         decision = "limited"
-    elif s >= settings.T_MEDIUM:
+    elif s >= th["medium"]:
         decision = "step_up"
     else:
         decision = "allow"

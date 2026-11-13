@@ -136,8 +136,12 @@ object Posture {
      * Alias yang diawali "user:" berasal dari trust store pengguna, dan
      * itulah yang menjadi prasyarat penyadapan TLS.
      */
+    /** Diisi jika trust store gagal dibaca, supaya status indikator jujur. */
+    private var certError: String? = null
+
     fun userCertificates(): JSONArray {
         val out = JSONArray()
+        certError = null
         try {
             val ks = KeyStore.getInstance("AndroidCAStore")
             ks.load(null, null)
@@ -151,10 +155,13 @@ object Posture {
                     put("sha256", sha256(cert.encoded))
                 })
             }
-        } catch (_: Exception) {
-            // Gagal membaca trust store dilaporkan sebagai daftar kosong.
-            // Backend tidak menganggap daftar kosong sebagai bukti bersih:
-            // attestation agent yang menjaga itu, bukan pemeriksaan ini.
+        } catch (e: Exception) {
+            // Daftar kosong karena GAGAL DIBACA tidak sama dengan daftar
+            // kosong karena memang tidak ada CA pengguna. Kegagalannya
+            // dicatat dan dikirim sebagai status indikator, sehingga
+            // dashboard menandainya "tidak dapat diperiksa" dan aturan
+            // OWL-C01 tidak dijalankan, bukan dianggap lulus.
+            certError = e.message ?: "trust store tidak dapat dibaca"
         }
         return out
     }
@@ -305,6 +312,55 @@ object Posture {
         } catch (_: Exception) { 1.0 }
     }
 
+    // ——— status tiap indikator (FR-02 dan FR-03) ———
+
+    private fun st(status: String, reason: String = "", source: String = "agent"): JSONObject =
+        JSONObject().apply {
+            put("status", status)
+            put("reason", reason)
+            put("source", source)
+            put("checked_at", Iso.now())
+        }
+
+    /**
+     * Status tiap indikator pada pemeriksaan ini.
+     *
+     * Aturannya satu: indikator yang TIDAK dapat dibaca dilaporkan apa
+     * adanya, tidak pernah dikirim sebagai daftar kosong yang terlihat sama
+     * dengan "sudah diperiksa dan memang bersih". OWL Core tidak menjalankan
+     * aturan yang indikatornya tidak terbaca, dan dashboard menampilkannya
+     * sebagai tidak dapat diperiksa.
+     */
+    fun availability(ctx: Context, playVerdict: String): JSONObject = JSONObject().apply {
+        put("permissions", st("ok"))
+        put("accessibility", st("ok"))
+        put("install_source", st("ok"))
+        put("vpn", st("ok"))
+
+        put("certificates", certError.let {
+            if (it == null) st("ok") else st("unavailable", it)
+        })
+
+        put("integrity", st("partial",
+            "status bootloader tidak diberikan API publik; dinilai lewat verdict integritas"))
+
+        put("network_volume", if (hasUsageAccess(ctx)) st("ok") else st(
+            "unavailable",
+            "izin Akses penggunaan belum diberikan, sehingga volume keluar dan rasio layar tidak terbaca"))
+
+        put("network_destinations", st("not_supported",
+            "tujuan jaringan per aplikasi tidak dapat dibaca aplikasi biasa; " +
+            "butuh resolver DNS satuan atau agent sebagai Device Owner"))
+
+        put("attestation", when {
+            Attestation.chainSha256().isEmpty() ->
+                st("unavailable", "Keystore perangkat keras tidak memberikan rantai attestation")
+            playVerdict == "UNAVAILABLE" ->
+                st("partial", "verdict Play Integrity tidak dapat diperoleh; Key Attestation terbukti")
+            else -> st("ok")
+        })
+    }
+
     // ——— rangkai menjadi satu laporan ———
 
     fun report(ctx: Context, attestation: JSONObject, playVerdict: String): JSONObject =
@@ -315,11 +371,14 @@ object Posture {
             put("attestation", attestation)
             put("accessibility_services", accessibilityServices(ctx))
             put("overlay_packages", overlayPackages(ctx))
+            // userCertificates() harus dipanggil SEBELUM availability(),
+            // karena di situlah kegagalan membaca trust store tercatat.
             put("user_certificates", userCertificates())
             put("vpn_profiles", vpnProfiles(ctx))
             put("apps", apps(ctx))
             put("integrity", integrity(ctx, playVerdict))
             put("network", network(ctx))
+            put("availability", availability(ctx, playVerdict))
         }
 
     private fun sha256(b: ByteArray): String =

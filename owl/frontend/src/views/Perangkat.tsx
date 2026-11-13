@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Contributors } from '../components/Contributors'
+import { Indicators } from '../components/Indicators'
 import { Ring } from '../components/Ring'
 import { CATEGORY_LABEL, scoreColor } from '../lib/api'
 import type { DeviceRow } from '../lib/types'
@@ -57,7 +58,10 @@ export function Perangkat({ devices }: { devices: DeviceRow[] }) {
             </div>
           </div>
 
-          <div className="kicker">Rincian skor</div>
+          <div className="kicker">Status indikator pada pemeriksaan terakhir</div>
+          <Indicators availability={sel.availability} skipped={sel.skipped_rules} />
+
+          <div className="kicker" style={{ marginTop: 20 }}>Rincian skor</div>
           <Contributors findings={sel.findings} />
 
           <div className="kicker" style={{ marginTop: 20 }}>Pemetaan MITRE ATT&amp;CK Mobile</div>

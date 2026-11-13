@@ -2,6 +2,15 @@ export type Severity = 'low' | 'medium' | 'high' | 'critical'
 export type Category = 'runtime' | 'app' | 'config' | 'device' | 'identity'
 export type DecisionKind = 'allow' | 'step_up' | 'limited' | 'deny'
 export type Sensitivity = 'standard' | 'classified'
+export type Availability = 'ok' | 'partial' | 'unavailable' | 'not_supported'
+
+/** Status satu indikator pada satu pemeriksaan (FR-02 dan FR-03). */
+export interface IndicatorStatus {
+  status: Availability
+  reason: string
+  source: string
+  checked_at: string | null
+}
 
 export interface Finding {
   rule_id: string
@@ -35,6 +44,8 @@ export interface Assessment {
   decay_applied: number
   previous_score: number | null
   attestation_ok: boolean
+  availability: Record<string, IndicatorStatus>
+  skipped_rules: string[]
 }
 
 export interface Decision {
@@ -60,6 +71,8 @@ export interface DeviceRow {
   assessed_at: string | null
   findings: Finding[]
   attestation_ok: boolean | null
+  availability: Record<string, IndicatorStatus>
+  skipped_rules: string[]
 }
 
 export interface Rule {

@@ -66,6 +66,15 @@ class Settings:
     # ——— penerimaan telemetri ———
     INGEST_TOKEN: str = _s("OWL_INGEST_TOKEN", "owl-demo-token")
 
+    # Kunci baca untuk dashboard dan API (NFR 5.1). Dibiarkan kosong, API
+    # terbuka, dan itu HANYA sah untuk purwarupa di jaringan terisolasi.
+    # /health dan dokumentasi API tetap terbuka supaya pemeriksaan kesehatan
+    # tidak menuntut rahasia.
+    API_KEY: str = _s("OWL_API_KEY", "")
+
+    # Kunci administrasi untuk mengubah bobot dan ambang (FR-12).
+    ADMIN_TOKEN: str = _s("OWL_ADMIN_TOKEN", "owl-demo-admin")
+
     # Air-gapped: tidak ada panggilan keluar selain ke SOC di dalam jaringan
     # sendiri. Diberlakukan oleh jaringan, dan ditegaskan di sini supaya
     # terbaca sebagai keputusan, bukan kelalaian.

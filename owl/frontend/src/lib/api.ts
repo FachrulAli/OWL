@@ -119,11 +119,39 @@ export const CATEGORY_LABEL: Record<string, string> = {
   identity: 'Perilaku jaringan',
 }
 
+/** Nama keputusan. Padanan resminya ada di Requirements §3.3. */
 export const DECISION_LABEL: Record<string, string> = {
   allow: 'LOLOS',
   step_up: 'LOLOS + MFA',
   limited: 'TERBATAS',
   deny: 'DITOLAK',
+}
+
+export const DECISION_EN: Record<string, string> = {
+  allow: 'Allow',
+  step_up: 'Step-up',
+  limited: 'Restrict',
+  deny: 'Deny / Quarantine',
+}
+
+/** Nama indikator pada laporan agent, untuk tabel status (FR-02, FR-03). */
+export const INDICATOR_LABEL: Record<string, string> = {
+  permissions: '1. Izin aplikasi',
+  accessibility: '2. Layanan aksesibilitas dan hamparan',
+  certificates: '3a. Sertifikat CA pengguna',
+  vpn: '3b. Profil VPN',
+  install_source: '4. Sumber pemasangan aplikasi',
+  integrity: '5. Integritas perangkat dan patch',
+  network_volume: '6a. Volume keluar dan rasio layar',
+  network_destinations: '6b. Tujuan jaringan',
+  attestation: 'Attestation agent',
+}
+
+export const AVAILABILITY_LABEL: Record<string, string> = {
+  ok: 'Terbaca',
+  partial: 'Sebagian',
+  unavailable: 'Unavailable',
+  not_supported: 'Not Supported',
 }
 
 export function scoreColor(score: number): string {

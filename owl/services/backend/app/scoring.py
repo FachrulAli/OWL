@@ -17,15 +17,18 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from .config import settings
+from . import policy
+from . import rules as rules_mod
 from .models import CategoryScore, Finding, RiskAssessment, Telemetry
 
 
 def _level(score: float) -> str:
-    if score >= settings.T_CRITICAL:
+    th = policy.thresholds()
+    if score >= th["critical"]:
         return "kritis"
-    if score >= settings.T_HIGH:
+    if score >= th["high"]:
         return "tinggi"
-    if score >= settings.T_MEDIUM:
+    if score >= th["medium"]:
         return "sedang"
     return "rendah"
 
@@ -45,7 +48,7 @@ def score(
     last_seen: datetime | None = None,
 ) -> RiskAssessment:
     now = datetime.now(timezone.utc)
-    weights = settings.WEIGHTS
+    weights = policy.weights()
     sev_points = settings.SEVERITY
     sat = settings.CATEGORY_SATURATION
 
@@ -105,4 +108,6 @@ def score(
         decay_applied=decayed,
         previous_score=previous,
         attestation_ok=attestation_ok,
+        availability=telemetry.availability,
+        skipped_rules=rules_mod.skipped(telemetry),
     )
