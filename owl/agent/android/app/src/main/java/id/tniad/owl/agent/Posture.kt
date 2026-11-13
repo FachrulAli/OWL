@@ -159,22 +159,54 @@ object Posture {
         return out
     }
 
-    /** Profil VPN yang sedang aktif pada transport perangkat. */
+    /**
+     * Profil VPN yang sedang aktif.
+     *
+     * Dua jalur dipakai bersama karena masing-masing punya celah.
+     * `getAllNetworks` memang ditandai deprecated sejak API 31, tetapi sampai
+     * sekarang tidak ada pengganti SINKRON untuk menyebut seluruh jaringan;
+     * penggantinya `registerNetworkCallback` bersifat asinkron dan tidak cocok
+     * dipanggil dari penyusunan satu laporan. Jadi pemakaiannya disengaja,
+     * bukan kelalaian, dan diberi jaring pengaman berupa pemeriksaan antarmuka
+     * tun yang tetap menangkap VPN jika API itu suatu saat dicabut.
+     */
     fun vpnProfiles(ctx: Context): JSONArray {
         val out = JSONArray()
+        val seen = mutableSetOf<String>()
         try {
             val cm = ctx.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            for (net in cm.allNetworks) {
+            @Suppress("DEPRECATION")
+            val networks = cm.allNetworks
+            for (net in networks) {
                 val caps = cm.getNetworkCapabilities(net) ?: continue
                 if (!caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) continue
                 val owner = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
                     caps.ownerUid.toString() else "tidak diketahui"
+                val name = vpnNameFor(ctx, caps)
+                if (!seen.add(name)) continue
                 out.put(JSONObject().apply {
-                    put("name", vpnNameFor(ctx, caps))
+                    put("name", name)
                     put("package", "uid:$owner")
                 })
             }
         } catch (_: Exception) { }
+
+        // Jaring pengaman: antarmuka tun yang hidup berarti ada terowongan,
+        // walaupun kerangka kerja tidak melaporkannya sebagai jaringan VPN.
+        try {
+            val ifs = java.net.NetworkInterface.getNetworkInterfaces() ?: return out
+            for (nif in ifs) {
+                if (!nif.isUp) continue
+                val n = nif.name ?: continue
+                if (!n.startsWith("tun") && !n.startsWith("ppp") && !n.startsWith("ipsec")) continue
+                if (!seen.add(n)) continue
+                out.put(JSONObject().apply {
+                    put("name", n)
+                    put("package", "antarmuka")
+                })
+            }
+        } catch (_: Exception) { }
+
         return out
     }
 

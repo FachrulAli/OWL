@@ -179,7 +179,11 @@ rules:
     detail: >-
       Laporan datang dari agent yang tidak dapat membuktikan dirinya build
       asli pada Keystore berbasis perangkat keras. Laporan "perangkat bersih"
-      dari agent yang tidak terverifikasi tidak berarti apa-apa.
+      dari agent yang tidak terverifikasi tidak berarti apa-apa. Turun ke
+      medium jika kunci terbukti tetapi verdict Play Integrity tidak dapat
+      diperoleh, dan hilang sama sekali pada mode air-gapped, sebab di situ
+      verdict memang mustahil diambil dan Key Attestation adalah penggantinya
+      yang sah.
     mitre: T1512 Masquerading
     confidence: tinggi
     corroborate: false

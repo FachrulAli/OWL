@@ -88,7 +88,12 @@ def score(
     # gunanya peluruhan bertahap, bukan penghapusan seketika.
     final = max(total, floor)
 
-    attestation_ok = not any(f.rule_id == "OWL-X01" for f in findings)
+    # Hanya temuan X01 yang BERAT yang membatalkan kepercayaan pada laporan.
+    # X01 tingkat medium berarti verdict Play Integrity tidak diperoleh
+    # sementara Key Attestation terbukti: laporannya tetap dipercaya, dengan
+    # catatan yang terlihat analis.
+    attestation_ok = not any(
+        f.rule_id == "OWL-X01" and f.severity == "critical" for f in findings)
 
     return RiskAssessment(
         device_id=telemetry.device_id,

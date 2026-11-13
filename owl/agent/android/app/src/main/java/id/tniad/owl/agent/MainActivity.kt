@@ -1,5 +1,6 @@
 package id.tniad.owl.agent
 
+import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
 import android.os.Build
@@ -11,17 +12,24 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 
 /**
  * Layar satu halaman untuk prajurit pemilik perangkat.
+ *
+ * Memakai `android.app.Activity`, BUKAN `AppCompatActivity`. Yang kedua
+ * menuntut tema turunan `Theme.AppCompat`, dan tanpa itu aplikasi mati
+ * seketika saat dibuka dengan `IllegalStateException`. Kegagalan itu lolos
+ * kompilator dan hanya muncul saat dijalankan, dan pernah benar-benar
+ * terjadi di sini pada 2026-11-13. Layar ini tidak memerlukan satu pun fitur
+ * AppCompat, jadi pustakanya dibuang sekalian supaya jebakan yang sama tidak
+ * dapat kembali lewat pintu lain.
  *
  * Isinya tiga hal: apa yang dibaca OWL, apa yang TIDAK dibaca OWL, dan satu
  * tombol untuk memberikan izin Akses penggunaan yang tidak dapat diminta
  * lewat dialog biasa. Keterbukaan ini bukan hiasan; tanpa itu agent
  * pemantau pada perangkat pribadi dinas sulit dipertanggungjawabkan.
  */
-class MainActivity : AppCompatActivity() {
+class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

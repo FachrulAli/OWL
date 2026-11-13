@@ -111,16 +111,55 @@ def test_korelasi_tidak_menurunkan_saat_sinyal_banyak():
 
 # ——————————————————————— attestation ———————————————————————
 
-def test_attestation_gagal_menolak_walau_perangkat_terlihat_bersih():
+def test_kunci_tidak_terbukti_menolak_walau_perangkat_terlihat_bersih():
     """Laporan 'perangkat bersih' dari agent yang tidak terverifikasi tidak
     berarti apa-apa (deepdive §7.4)."""
     t = demo.telemetry_bersih()
     t.attestation.key_attestation = False
-    t.attestation.play_integrity = "FAILED"
     a = _assess(t)
     assert a.attestation_ok is False
     d = pdp.decide(a, "standard")
     assert d.decision == "deny" and d.quarantine is True
+
+
+def test_verdict_failed_menolak_walau_kunci_terbukti():
+    """FAILED berarti verdict berhasil diambil DAN menyatakan agent palsu.
+    Itu berbeda dari verdict yang tidak dapat diambil."""
+    t = demo.telemetry_bersih()
+    t.attestation.play_integrity = "FAILED"
+    a = _assess(t)
+    assert a.attestation_ok is False
+    assert pdp.decide(a, "standard").decision == "deny"
+
+
+def test_verdict_tidak_diperoleh_sah_pada_mode_air_gapped():
+    """Pada jaringan air-gapped token Play Integrity mustahil diverifikasi,
+    karena membukanya menuntut menghubungi Google. Menyamakan ketiadaan
+    verdict dengan agent palsu pernah membuat SELURUH perangkat ditolak pada
+    mode penggelaran utama produk ini."""
+    t = demo.telemetry_bersih()
+    t.attestation.play_integrity = "UNAVAILABLE"
+    t.attestation.key_attestation = True
+    f = rules.evaluate(t)
+    assert not any(x.rule_id == "OWL-X01" for x in f)
+    a = scoring.score(t, f)
+    assert a.attestation_ok is True
+    assert pdp.decide(a, "classified").decision == "allow"
+
+
+def test_verdict_tidak_diperoleh_dicatat_pada_mode_terhubung(monkeypatch):
+    """Di luar air-gapped, verdict yang tidak diperoleh tetap dicatat sebagai
+    temuan medium: laporannya dipercaya, tetapi analis melihat catatannya."""
+    class Terhubung:
+        AIR_GAPPED = False
+    monkeypatch.setattr(rules, "settings", Terhubung)
+    t = demo.telemetry_bersih()
+    t.attestation.play_integrity = "UNAVAILABLE"
+    f = rules.evaluate(t)
+    x = next(x for x in f if x.rule_id == "OWL-X01")
+    assert x.severity == "medium"
+    a = scoring.score(t, f)
+    assert a.attestation_ok is True
 
 
 # ——————————————————————— peluruhan ———————————————————————

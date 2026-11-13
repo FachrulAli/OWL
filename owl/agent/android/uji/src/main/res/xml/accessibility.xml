@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Konfigurasi layanan aksesibilitas yang sengaja dibuat MINIMAL.
+
+  Tidak ada flagRetrieveInteractiveWindows, tidak ada canRetrieveWindowContent,
+  dan tidak ada event yang diminta. Layanan ini tidak dapat membaca isi layar
+  dan tidak melakukan apa pun. Yang diuji adalah kemampuan OWL melihat bahwa
+  SEBUAH layanan aksesibilitas aktif di luar daftar izin, bukan kemampuan
+  layanan ini menyalahgunakan apa pun.
+-->
+<accessibility-service
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/svc_desc"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:notificationTimeout="1000" />

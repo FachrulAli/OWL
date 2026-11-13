@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  APLIKASI UJI INDIKATOR — bukan malware, dan sengaja dibuat tidak berdaya.
+
+  Tujuannya satu: menempatkan perangkat pada keadaan yang memang menyalakan
+  aturan OWL-R01 (layanan aksesibilitas di luar daftar izin) dan OWL-R02
+  (hamparan jendela), sehingga deteksinya dapat dibuktikan dari keadaan
+  perangkat yang sungguhan, bukan dari telemetri yang disusun tangan.
+
+  Aplikasi ini tidak punya kode yang membaca layar, tidak menggambar hamparan,
+  tidak membuka jaringan, dan tidak meminta izin lain. Ia hanya ADA, dengan
+  dua deklarasi yang memang hendak dilihat OWL.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+
+    <application
+        android:label="@string/app_name"
+        android:allowBackup="false"
+        android:theme="@android:style/Theme.Material.NoActionBar">
+
+        <activity android:name=".UjiActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".LayananKosong"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility"/>
+        </service>
+    </application>
+</manifest>

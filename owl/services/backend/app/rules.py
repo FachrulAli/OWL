@@ -11,6 +11,7 @@ from pathlib import Path
 
 import yaml
 
+from .config import settings
 from .models import Finding, Telemetry
 
 _CATALOG: dict = {}
@@ -190,13 +191,40 @@ def _n03(t: Telemetry) -> Finding | None:
 
 
 def _x01(t: Telemetry) -> Finding | None:
+    """Attestation agent, dengan dua lapis yang tidak setara.
+
+    Key Attestation dapat diperiksa sepenuhnya luring: rantai sertifikatnya
+    diverifikasi terhadap akar Google yang disematkan di OWL Core. Play
+    Integrity tidak bisa, karena tokennya hanya dapat dibuka dengan menghubungi
+    Google, dan itu mustahil pada jaringan air-gapped.
+
+    Karena itu ketiadaan verdict Play Integrity BUKAN bukti agent palsu.
+    Menyamakan keduanya pernah membuat seluruh perangkat ditolak pada mode
+    air-gapped, yaitu justru mode penggelaran utama produk ini. Ditemukan
+    2026-11-13 saat agent sungguhan pertama kali dijalankan di emulator.
+
+      kunci tidak terbukti di perangkat keras  -> critical, laporan tidak dipercaya
+      verdict FAILED                           -> critical, agent dinyatakan palsu
+      verdict tidak diperoleh, kunci terbukti  -> air-gapped: sah, tidak ada temuan
+                                                  terhubung: medium, perlu diperiksa
+    """
     a = t.attestation
-    if a.play_integrity in ("MEETS_STRONG_INTEGRITY", "MEETS_DEVICE_INTEGRITY") and a.key_attestation:
-        return None
-    ev = [f"Play Integrity agent: {a.play_integrity}"]
     if not a.key_attestation:
-        ev.append("kunci agent tidak terbukti berada di Keystore perangkat keras")
-    return _mk("OWL-X01", ev)
+        return _mk("OWL-X01", [
+            "kunci agent tidak terbukti berada di Keystore perangkat keras",
+            f"verdict Play Integrity: {a.play_integrity}",
+        ])
+    if a.play_integrity == "FAILED":
+        return _mk("OWL-X01", ["Play Integrity menyatakan agent bukan build asli: FAILED"])
+    if a.play_integrity in ("MEETS_STRONG_INTEGRITY", "MEETS_DEVICE_INTEGRITY",
+                            "MEETS_BASIC_INTEGRITY"):
+        return None
+    if settings.AIR_GAPPED:
+        return None
+    return _mk("OWL-X01", [
+        f"verdict Play Integrity tidak diperoleh: {a.play_integrity}",
+        "Key Attestation terbukti, jadi laporan tetap dipercaya dengan catatan",
+    ], severity="medium")
 
 
 _CHECKS = {
