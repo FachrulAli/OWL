@@ -46,6 +46,21 @@ a { color: var(--teal-soft); }
 
 .spacer { flex: 1; }
 
+/* ——— pemilih bahasa, di pojok bilah atas ——— */
+.langswitch {
+  display: inline-flex; border: 1px solid var(--line); border-radius: 999px;
+  padding: 2px; gap: 2px; background: rgba(15, 42, 79, .6);
+}
+.langswitch button {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .08em;
+  background: transparent; color: var(--slate-2); border: 0; border-radius: 999px;
+  padding: 5px 11px; cursor: pointer; transition: .15s;
+}
+.langswitch button:hover { color: var(--off); }
+.langswitch button[aria-pressed='true'] {
+  background: rgba(20, 184, 166, .18); color: var(--teal-soft);
+}
+
 .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 22px; }
 .tabs button {
   font-family: var(--display); font-size: 14px; font-weight: 500;

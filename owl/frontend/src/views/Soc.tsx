@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
+import { useT } from '../lib/i18n'
 import type { DeviceRow, SocEvent } from '../lib/types'
 
 /**
@@ -8,6 +9,7 @@ import type { DeviceRow, SocEvent } from '../lib/types'
  * yang ditulis untuk slide.
  */
 export function Soc({ devices }: { devices: DeviceRow[] }) {
+  const { t, locale } = useT()
   const [events, setEvents] = useState<SocEvent[]>([])
   const [sel, setSel] = useState<SocEvent | null>(null)
   const [err, setErr] = useState('')
@@ -23,46 +25,47 @@ export function Soc({ devices }: { devices: DeviceRow[] }) {
     <div className="grid" style={{ gridTemplateColumns: 'minmax(0,.9fr) minmax(0,1.1fr)' }}>
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '16px 20px 4px' }}>
-          <div className="kicker">Event ke Kartika CSIRT</div>
-          <p className="muted" style={{ marginBottom: 10 }}>
-            STIX 2.1 lewat webhook bertanda tangan HMAC, dan CEF lewat Syslog.
-            Status <em>belum terkirim</em> adalah keadaan normal pada mode air-gapped:
-            event tetap tersimpan untuk diambil petugas.
-          </p>
+          <div className="kicker">{t('soc.kicker')}</div>
+          <p className="muted" style={{ marginBottom: 10 }}>{t('soc.note')}</p>
         </div>
         {err && <p className="muted" style={{ color: '#F87171', padding: '0 20px 12px' }}>{err}</p>}
         <table>
-          <thead><tr><th>Waktu</th><th>Perangkat</th><th>Jenis</th><th>Status</th></tr></thead>
+          <thead>
+            <tr>
+              <th>{t('soc.col.time')}</th><th>{t('soc.col.device')}</th>
+              <th>{t('soc.col.kind')}</th><th>{t('soc.col.status')}</th>
+            </tr>
+          </thead>
           <tbody>
             {events.map((e) => (
               <tr key={e.id} className="clickable" onClick={() => setSel(e)}>
                 <td className="muted" style={{ fontFamily: 'var(--mono)', fontSize: 11.5 }}>
-                  {new Date(e.sent_at).toLocaleTimeString('id-ID')}
+                  {new Date(e.sent_at).toLocaleTimeString(locale)}
                 </td>
                 <td style={{ fontFamily: 'var(--mono)', fontSize: 11.5 }}>{e.device_id}</td>
                 <td><span className={`sev ${e.kind === 'stix' ? 'medium' : 'low'}`}>{e.kind}</span></td>
-                <td className="muted">{e.delivered ? 'terkirim' : 'tersimpan lokal'}</td>
+                <td className="muted">{e.delivered ? t('soc.delivered') : t('soc.stored')}</td>
               </tr>
             ))}
             {events.length === 0 && (
-              <tr><td colSpan={4}><p className="empty">Belum ada event. Jalankan gerbang lebih dahulu.</p></td></tr>
+              <tr><td colSpan={4}><p className="empty">{t('soc.empty')}</p></td></tr>
             )}
           </tbody>
         </table>
       </div>
 
       <div className="card">
-        <div className="kicker">Payload</div>
+        <div className="kicker">{t('soc.payload')}</div>
         {sel ? (
           <>
             <p className="muted" style={{ marginBottom: 10 }}>
               {sel.kind.toUpperCase()} · {sel.device_id} ·{' '}
-              {new Date(sel.sent_at).toLocaleString('id-ID')}
+              {new Date(sel.sent_at).toLocaleString(locale)}
             </p>
             <pre>{sel.kind === 'stix' ? prettyJson(sel.payload) : sel.payload}</pre>
           </>
         ) : (
-          <p className="empty">Pilih satu event untuk melihat payload yang dikirim.</p>
+          <p className="empty">{t('soc.pickEvent')}</p>
         )}
       </div>
     </div>

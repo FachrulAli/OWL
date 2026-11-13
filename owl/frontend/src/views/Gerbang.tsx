@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Contributors } from '../components/Contributors'
 import { Ring } from '../components/Ring'
-import { api, DECISION_EN, DECISION_LABEL } from '../lib/api'
+import { api } from '../lib/api'
+import { DECISION_EN, useT } from '../lib/i18n'
 import type { Decision, DeviceRow, Sensitivity } from '../lib/types'
 
 /**
@@ -12,6 +13,7 @@ import type { Decision, DeviceRow, Sensitivity } from '../lib/types'
  * POST /api/gate dan menampilkan apa yang dijawab Policy Decision Point.
  */
 export function Gerbang({ devices, onRefresh }: { devices: DeviceRow[]; onRefresh: () => void }) {
+  const { t, locale, decision, reason } = useT()
   const [resource, setResource] = useState<Sensitivity>('classified')
   const [results, setResults] = useState<Record<string, Decision>>({})
   const [busy, setBusy] = useState(false)
@@ -40,14 +42,11 @@ export function Gerbang({ devices, onRefresh }: { devices: DeviceRow[]; onRefres
   if (devices.length === 0) {
     return (
       <div className="card">
-        <div className="kicker">Gerbang Risiko Perangkat</div>
-        <h3>Belum ada perangkat terdaftar</h3>
-        <p className="muted" style={{ marginBottom: 16 }}>
-          Muat dua perangkat contoh, satu bersih dan satu berisiko, lalu jalankan gerbangnya.
-          Keduanya dinilai lewat mesin aturan yang sama dengan telemetri agent sungguhan.
-        </p>
+        <div className="kicker">{t('gate.kicker')}</div>
+        <h3>{t('gate.emptyTitle')}</h3>
+        <p className="muted" style={{ marginBottom: 16 }}>{t('gate.emptyBody')}</p>
         <button className="btn" onClick={seed} disabled={busy}>
-          {busy ? 'Memuat…' : 'Muat dua perangkat contoh'}
+          {busy ? t('gate.seeding') : t('gate.seed')}
         </button>
         {err && <p className="muted" style={{ color: '#F87171', marginTop: 12 }}>{err}</p>}
       </div>
@@ -59,26 +58,20 @@ export function Gerbang({ devices, onRefresh }: { devices: DeviceRow[]; onRefres
       <div className="card" style={{ marginBottom: 18 }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 260 }}>
-            <div className="kicker">Gerbang Risiko Perangkat</div>
-            <p className="muted">
-              Pilih sumber daya yang hendak diakses, lalu jalankan gerbang. Ambang deny
-              berbeda menurut kepekaan sumber daya: 70 untuk sistem terklasifikasi, 90
-              untuk jaringan biasa.
-            </p>
+            <div className="kicker">{t('gate.kicker')}</div>
+            <p className="muted">{t('gate.threshold')}</p>
             <p className="muted" style={{ marginTop: 6 }}>
-              Keluarannya adalah <strong>rekomendasi keputusan akses</strong>. Pemblokiran
-              yang sungguh-sungguh menuntut integrasi dengan gateway, IAM, atau MDM satuan,
-              dan itu belum terpasang pada purwarupa ini.
+              {t('gate.note1')} <strong>{t('gate.noteBold')}</strong>{t('gate.note2')}
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button className={resource === 'classified' ? 'btn' : 'btn ghost'}
-                    onClick={() => setResource('classified')}>Sistem terklasifikasi</button>
+                    onClick={() => setResource('classified')}>{t('gate.classified')}</button>
             <button className={resource === 'standard' ? 'btn' : 'btn ghost'}
-                    onClick={() => setResource('standard')}>Jaringan biasa</button>
+                    onClick={() => setResource('standard')}>{t('gate.standard')}</button>
             <button className="btn amber" disabled={busy}
                     onClick={() => runGate(devices.map((d) => d.device_id))}>
-              {busy ? 'Menilai…' : 'Jalankan gerbang'}
+              {busy ? t('gate.running') : t('gate.run')}
             </button>
           </div>
         </div>
@@ -98,17 +91,16 @@ export function Gerbang({ devices, onRefresh }: { devices: DeviceRow[]; onRefres
                   <div className="sub">{d.device_id} · {d.unit || '—'}</div>
                   <div className="sub">{d.model} · {d.os_version}</div>
                   <div className="sub">
-                    diperiksa{' '}
                     {d.assessed_at
-                      ? new Date(d.assessed_at).toLocaleString('id-ID')
-                      : 'belum pernah'}
+                      ? t('gate.checked', { time: new Date(d.assessed_at).toLocaleString(locale) })
+                      : t('gate.neverChecked')}
                   </div>
                   {d.attestation_ok === false && (
-                    <div className="flag" style={{ marginTop: 6 }}>attestation agent tidak sah</div>
+                    <div className="flag" style={{ marginTop: 6 }}>{t('gate.attestationBad')}</div>
                   )}
                   {d.skipped_rules?.length > 0 && (
                     <div className="flag" style={{ marginTop: 4 }}>
-                      {d.skipped_rules.length} indikator tidak dapat diperiksa
+                      {t('gate.skipped', { n: d.skipped_rules.length })}
                     </div>
                   )}
                 </div>
@@ -116,20 +108,18 @@ export function Gerbang({ devices, onRefresh }: { devices: DeviceRow[]; onRefres
 
               <div style={{ marginTop: 18 }}>
                 <div className={`verdict ${res ? lane : 'pending'}`}>
-                  {res ? DECISION_LABEL[res.decision] : 'BELUM DINILAI'}
+                  {res ? decision(res.decision) : t('gate.pending')}
                 </div>
                 {res && (
                   <div className="sub" style={{ fontFamily: 'var(--mono)', fontSize: 11, marginTop: 2 }}>
-                    rekomendasi: {DECISION_EN[res.decision]}
+                    {t('gate.recommendation')}: {DECISION_EN[res.decision]}
                   </div>
                 )}
                 <p className="muted" style={{ marginTop: 6 }}>
-                  {res ? res.reason : 'Tekan "Jalankan gerbang" untuk meminta keputusan dari Policy Decision Point.'}
+                  {res ? reason(res.reason) : t('gate.hint')}
                 </p>
                 {res?.quarantine && (
-                  <p className="flag" style={{ marginTop: 8 }}>
-                    perangkat dikarantina, eskalasi dikirim ke komando dan CSIRT
-                  </p>
+                  <p className="flag" style={{ marginTop: 8 }}>{t('gate.quarantine')}</p>
                 )}
               </div>
 

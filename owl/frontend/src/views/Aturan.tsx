@@ -1,4 +1,4 @@
-import { CATEGORY_LABEL } from '../lib/api'
+import { useT } from '../lib/i18n'
 import type { Catalog } from '../lib/types'
 
 /**
@@ -9,7 +9,8 @@ import type { Catalog } from '../lib/types'
  * melihat seluruh aturan beserta bobot dan tingkat keyakinannya di sini.
  */
 export function Aturan({ catalog }: { catalog: Catalog | null }) {
-  if (!catalog) return <div className="card"><p className="empty">Memuat katalog…</p></div>
+  const { t, category, word, ruleTitle, ruleDetail } = useT()
+  if (!catalog) return <div className="card"><p className="empty">{t('rules.loading')}</p></div>
 
   const byCat = new Map<string, typeof catalog.rules>()
   for (const r of catalog.rules) {
@@ -20,16 +21,16 @@ export function Aturan({ catalog }: { catalog: Catalog | null }) {
     <>
       <div className="grid cols-3" style={{ marginBottom: 18 }}>
         <div className="card">
-          <div className="kicker">Bobot kategori</div>
+          <div className="kicker">{t('rules.weights')}</div>
           {Object.entries(catalog.weights).map(([c, w]) => (
             <div key={c} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
-              <span className="muted">{CATEGORY_LABEL[c] ?? c}</span>
+              <span className="muted">{category(c)}</span>
               <span style={{ fontFamily: 'var(--mono)', fontSize: 13 }}>{w}</span>
             </div>
           ))}
         </div>
         <div className="card">
-          <div className="kicker">Severitas</div>
+          <div className="kicker">{t('rules.severity')}</div>
           {Object.entries(catalog.severity).map(([s, v]) => (
             <div key={s} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
               <span className={`sev ${s}`}>{s}</span>
@@ -37,15 +38,19 @@ export function Aturan({ catalog }: { catalog: Catalog | null }) {
             </div>
           ))}
           <p className="muted" style={{ marginTop: 10 }}>
-            Satu kategori mencapai bobot penuhnya pada jumlah severitas {catalog.saturation}.
+            {t('rules.saturation', { n: catalog.saturation })}
           </p>
         </div>
         <div className="card">
-          <div className="kicker">Ambang keputusan</div>
-          <p className="muted">0 sampai {catalog.thresholds.medium - 1}: lolos</p>
-          <p className="muted">{catalog.thresholds.medium} sampai {catalog.thresholds.high - 1}: lolos dengan MFA</p>
-          <p className="muted">{catalog.thresholds.high} sampai {catalog.thresholds.critical - 1}: akses terbatas, dan ditolak untuk sistem terklasifikasi</p>
-          <p className="muted">{catalog.thresholds.critical} ke atas: ditolak dan dikarantina di mana pun</p>
+          <div className="kicker">{t('rules.thresholds')}</div>
+          <p className="muted">{t('rules.th1', { n: catalog.thresholds.medium - 1 })}</p>
+          <p className="muted">
+            {t('rules.th2', { a: catalog.thresholds.medium, b: catalog.thresholds.high - 1 })}
+          </p>
+          <p className="muted">
+            {t('rules.th3', { a: catalog.thresholds.high, b: catalog.thresholds.critical - 1 })}
+          </p>
+          <p className="muted">{t('rules.th4', { n: catalog.thresholds.critical })}</p>
         </div>
       </div>
 
@@ -53,29 +58,34 @@ export function Aturan({ catalog }: { catalog: Catalog | null }) {
         <div key={cat} className="card" style={{ marginBottom: 14, padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '14px 20px 0' }}>
             <div className="kicker" style={{ marginBottom: 2 }}>
-              {CATEGORY_LABEL[cat] ?? cat} · bobot {catalog.weights[cat as keyof typeof catalog.weights]}
+              {category(cat)} ·{' '}
+              {t('rules.weightOf', { n: catalog.weights[cat as keyof typeof catalog.weights] })}
             </div>
           </div>
           <table>
             <thead>
-              <tr><th>Id</th><th>Aturan</th><th>Severitas</th><th>MITRE</th><th>Keyakinan</th></tr>
+              <tr>
+                <th>{t('rules.col.id')}</th><th>{t('rules.col.rule')}</th>
+                <th>{t('rules.col.severity')}</th><th>{t('rules.col.mitre')}</th>
+                <th>{t('rules.col.confidence')}</th>
+              </tr>
             </thead>
             <tbody>
               {rs.map((r) => (
                 <tr key={r.id}>
                   <td style={{ fontFamily: 'var(--mono)', fontSize: 11.5, whiteSpace: 'nowrap' }}>{r.id}</td>
                   <td>
-                    <div style={{ fontWeight: 600, fontSize: 13 }}>{r.title}</div>
-                    <div className="muted" style={{ fontSize: 12.5, marginTop: 4 }}>{r.detail}</div>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{ruleTitle(r.id, r.title)}</div>
+                    <div className="muted" style={{ fontSize: 12.5, marginTop: 4 }}>
+                      {ruleDetail(r.id, r.detail)}
+                    </div>
                     {r.corroborate && (
-                      <div className="flag" style={{ marginTop: 5 }}>
-                        turun satu tingkat jika menyala sendirian
-                      </div>
+                      <div className="flag" style={{ marginTop: 5 }}>{t('rules.corroborate')}</div>
                     )}
                   </td>
                   <td><span className={`sev ${r.severity}`}>{r.severity}</span></td>
                   <td className="muted" style={{ fontSize: 12 }}>{r.mitre || '—'}</td>
-                  <td className="muted" style={{ fontSize: 12 }}>{r.confidence}</td>
+                  <td className="muted" style={{ fontSize: 12 }}>{word(r.confidence)}</td>
                 </tr>
               ))}
             </tbody>
