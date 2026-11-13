@@ -160,7 +160,7 @@ make test
                           │   │            │          │ ───► │ SIEM satuan  │
                           │   ▼            ▼          │      └──────────────┘
                           │ SQLite  ◄─ Zero Trust PDP │      ┌──────────────┐
-                          │ perangkat    rekomendasi  │ ───► │ TRINETRA     │
+                          │ perangkat    rekomendasi  │ ───► │ Analitik     │
                           │ penilaian    akses        │ skor │ insider      │
                           │ keputusan        │        │      └──────────────┘
                           │ penolakan        ▼        │
@@ -248,10 +248,11 @@ lewat webhook bertanda tangan HMAC-SHA256, dan satu baris CEF lewat Syslog.
 Pada mode air-gapped keduanya tetap dicatat di basis data lokal dengan status
 belum terkirim, bukan dibuang diam-diam.
 
-**TRINETRA.** Skor risiko perangkat menjadi input penilaian insider threat:
-perangkat yang terkompromi adalah indikator awal akun atau personel yang
-terkompromi. OWL menjadi sensor endpoint, TRINETRA mengerjakan korelasi
-perilaku dan orkestrasinya.
+**Analitik insider threat satuan.** Skor risiko perangkat menjadi input
+penilaian insider threat: perangkat yang terkompromi adalah indikator awal
+akun atau personel yang terkompromi. OWL berperan sebagai sensor endpoint,
+sedangkan korelasi perilaku dan orkestrasinya dikerjakan sistem analitik
+satuan lewat jalur STIX dan CEF yang sama.
 
 **MDM.** OWL melengkapi Knox dan Intune, tidak menggantikannya. MDM mengelola
 dan menegakkan; OWL menilai dan memutuskan.

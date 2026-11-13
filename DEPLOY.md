@@ -89,5 +89,5 @@ Membagikannya berarti membagikan versi yang akan kedaluwarsa tanpa
 pemberitahuan, dan juri yang membukanya seminggu kemudian akan menemukan
 halaman mati.
 
-Alamat lama `trinetra-id.vercel.app` berasal dari produk sebelumnya di
-repositori ini dan tidak dipakai lagi.
+Alamat pratinjau per-deploy yang muncul di dasbor bukan alamat yang
+dibagikan.

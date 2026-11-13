@@ -39,7 +39,7 @@ Enam sinyal itu dikorelasikan menjadi **satu skor risiko**. Dan di situlah momen
 
 Perangkat itu datang ke gerbang — entah milik prajurit di lapangan, atau milik perwira tinggi di ruang komando. OWL menilai dalam hitungan detik. Kalau skornya bersih — **lolos**, diberikan akses. Kalau berisiko — **ditolak**, dikarantina, dinaikkan ke komando.
 
-Dan semuanya terjadi **di dalam tembok sendiri** — on-prem, air-gapped, terhubung langsung ke Kartika CSIRT dan TRINETRA. Bukan di cloud orang lain.
+Dan semuanya terjadi **di dalam tembok sendiri** — on-prem, air-gapped, terhubung langsung ke Kartika CSIRT. Bukan di cloud orang lain.
 
 Jadi ceritanya bukan "kami membuat antivirus". Ceritanya adalah: *"Di tengah penyadapan yang meningkat, setiap perangkat — dari prajurit sampai pimpinan — harus melewati gerbang. OWL adalah gerbang itu."*
 
@@ -81,7 +81,7 @@ Perangkat komunikasi adalah titik buta pertahanan satuan: SOC/CSIRT memantau ser
 | **2. Scoring gap** | MDM tahu "terdaftar/tidak", bukan "berisiko/tidak" lintas-indikator |
 | **3. Sovereignty gap** | Intune/Knox cloud-hosted di luar negeri; tidak bisa air-gapped & kedaulatan penuh |
 
-**Pembeda yang tidak bisa diserang:** OWL berjalan **on-prem/air-gapped** dan terintegrasi langsung ke **Kartika CSIRT + TRINETRA** — kedaulatan data penuh. Ini yang tidak dimiliki Intune/Knox.
+**Pembeda yang tidak bisa diserang:** OWL berjalan **on-prem/air-gapped** dan terintegrasi langsung ke **Kartika CSIRT** — kedaulatan data penuh. Ini yang tidak dimiliki Intune/Knox.
 
 ---
 
@@ -150,7 +150,7 @@ Momen yang membuat juri ingat (3 menit):
 | Kelola perangkat | Ya | Tidak menggantikan |
 | Conditional access berbasis risiko | Ya (cloud) | Ya (**air-gapped**) |
 | **Kedaulatan data / on-prem** | Tidak (cloud vendor) | **Ya — inti pembeda** |
-| **Integrasi Kartika CSIRT + TRINETRA** | Tidak | **Ya** |
+| **Integrasi Kartika CSIRT** | Tidak | **Ya** |
 | **Skor risiko lintas-indikator yang explainable** | Parsial | **Ya — inti** |
 
 **Satu pembeda utama yang dikunci:** *kedaulatan + on-prem + integrasi CSIRT* — resonan dengan juri PUSSIBERAD dan tidak bisa ditiru vendor asing.
@@ -165,7 +165,7 @@ Momen yang membuat juri ingat (3 menit):
 | 2 | **Akses sistem terklasifikasi** | Conditional access untuk data sensitif |
 | 3 | **Pivot ke jaringan OT/SCADA** | Blokir perangkat berisiko dari sistem vital |
 | 4 | **Perwira berisiko tinggi** | Peringatan dini indikator kompromi |
-| 5 | **Sensor Kartika CSIRT / TRINETRA** | Perangkat terinfeksi = indikator insider threat |
+| 5 | **Sensor Kartika CSIRT** | Perangkat terinfeksi = indikator awal insider threat |
 
 ---
 

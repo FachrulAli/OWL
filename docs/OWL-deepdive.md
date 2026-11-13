@@ -24,7 +24,7 @@
 5. Analisis Masalah Mendalam
 6. Threat Model & Batas Cakupan (MITRE ATT&CK Mobile)
 7. Solusi Inti (Modul A–F + Detection Coverage + Agent Attestation)
-8. Arsitektur Teknis (Zero Trust PDP + STIX/CEF + On-Prem + TRINETRA)
+8. Arsitektur Teknis (Zero Trust PDP + STIX/CEF + On-Prem + umpan insider threat)
 9. Diferensiasi (Komplemen Knox/Intune, bukan kompetitor)
 10. MVP Hackathon (Spesifikasi Buildable + Validasi Sample Nyata)
 11. Use Case (TNI AD-Full)
@@ -45,7 +45,7 @@
 
 - **Komplemen MDM** (Samsung Knox / Intune): MDM mengelola & menegakkan; OWL **menilai risiko lintas-indikator** dan **memberi keputusan akses**.
 - **Sensor SOC/CSIRT**: mengirim alert & event via **STIX 2.1 / CEF (Syslog)** ke Kartika CSIRT / Satsiber.
-- **Input ke TRINETRA** (insider threat): perangkat terinfeksi = indikator awal akun/personel terkompromi.
+- **Umpan ke analitik insider threat satuan**: perangkat terinfeksi = indikator awal akun/personel terkompromi.
 
 **Prinsip kredibilitas:** semua klaim dibatasi pada indikator yang **teramati dan dapat didemonstrasikan**; tidak ada klaim deteksi yang tidak bisa dibuktikan dalam demo.
 
@@ -61,7 +61,7 @@ Ini bagian paling penting dari dokumen — batas kemampuan dinyatakan di depan, 
 |---|---|
 | **Fungsi inti** | Continuous Mobile Risk Scoring (0–100) + Conditional Access |
 | **Lensa deteksi** | Korelasi indikator **app-layer**: izin, aksesibilitas, CA, VPN, sideload, root, patch |
-| **Peran** | Komplemen MDM + sensor SOC/CSIRT + input TRINETRA |
+| **Peran** | Komplemen MDM + sensor SOC/CSIRT + umpan analitik insider threat |
 | **Arsitektur** | Zero Trust **Policy Decision Point** untuk perangkat mobile |
 
 ### 2.2 OWL BUKAN (dan tidak diklaim)
@@ -83,7 +83,7 @@ Ini bagian paling penting dari dokumen — batas kemampuan dinyatakan di depan, 
 | **Zero Trust untuk perangkat mobile** | Skor risiko device menjadi input *conditional access* (device tidak patuh → akses dibatasi/ditolak) |
 | **Pengamanan IT/OT satuan** | Perangkat endpoint adalah pivot tersembunyi ke jaringan taktis/OT; OWL menutup blind spot itu |
 | **Ekosistem CSIRT (Kartika CSIRT / Satsiber)** | OWL mengirim telemetri & alert via STIX/CEF sebagai sensor endpoint |
-| **Insider threat & akun terkompromi** | Perangkat terinfeksi = indikator awal (jembatan ke TRINETRA) |
+| **Insider threat & akun terkompromi** | Perangkat terinfeksi = indikator awal, diteruskan ke analitik perilaku satuan |
 | **Kedaulatan data** | On-prem / air-gapped; telemetri tidak keluar lingkungan TNI AD |
 | **Prosedur operasi** | *Pre-deployment device screening* + *continuous access decision* |
 
@@ -261,7 +261,7 @@ flowchart TB
     subgraph EXT["Integrasi"]
         MDM[Knox / Intune - MDM]
         CS[Kartika CSIRT / SOC]
-        TR[TRINETRA]
+        TR[Analitik insider threat satuan]
         IAM[Identity / SSO]
     end
     AG --> GW --> ID --> TC
@@ -328,9 +328,9 @@ X-OWL-Signature: HMAC-SHA256(payload, secret)
 { "event": "risk_threshold_breached", "device_id": "...", "risk_score": 87, "severity": "critical", "stix_bundle": {...} }
 ```
 
-### 8.4 Jembatan TRINETRA
+### 8.4 Umpan ke analitik insider threat
 
-Skor risiko OWL menjadi **input** risk scoring TRINETRA (insider threat). Perangkat terinfeksi = indikator awal akun/personel terkompromi. OWL = sensor endpoint; TRINETRA = korelasi perilaku & orkestrasi.
+Skor risiko OWL menjadi **input** penilaian insider threat satuan. Perangkat yang terkompromi adalah indikator awal akun atau personel yang terkompromi. OWL berperan sebagai sensor endpoint; korelasi perilaku dan orkestrasinya dikerjakan sistem analitik satuan, lewat jalur STIX dan CEF yang sama dengan jalur ke CSIRT.
 
 ---
 
@@ -419,7 +419,7 @@ FastAPI/Go + rule YAML + risk scoring + PostgreSQL (SQLite demo) · React + D3/R
 | 6 | Cara kerja: telemetri → skor → akses | *Dari perangkat ke keputusan akses* |
 | 7 | Fitur: korelasi, skor explainable, attestation, STIX | *Bukan antivirus biasa* |
 | 8 | Demo: bersih vs terinfeksi + deny/allow | *Ini nyata, bukan konsep* |
-| 9 | Arsitektur: Zero Trust PDP + on-prem + TRINETRA | *Terintegrasi ke CSIRT satuan* |
+| 9 | Arsitektur: Zero Trust PDP + on-prem + umpan insider threat | *Terintegrasi ke CSIRT satuan* |
 | 10 | Pengguna: screening prajurit, akses terklasifikasi, pivot OT | *Dari satuan sampai operasi* |
 | 11 | Roadmap | *Dari purwarupa ke kedaulatan* |
 | 12 | Penutup | *Keamanan endpoint adalah pertahanan kita* |
@@ -458,7 +458,7 @@ FastAPI/Go + rule YAML + risk scoring + PostgreSQL (SQLite demo) · React + D3/R
 
 **30 detik:** "MDM mengelola perangkat, tapi tidak menilai risiko. OWL, On Device Watch Layer, membaca izin, aksesibilitas, sertifikat, VPN, dan integritas perangkat — mengorelasikannya menjadi skor risiko yang dapat dijelaskan, lalu memakainya sebagai keputusan akses Zero Trust dan feed ke SOC/CSIRT satuan. Melihat & mendengar dalam gelap."
 
-**5 menit:** 1) Masalah & data · 2) Solusi (risk scoring + conditional access) · 3) Demo (deny/allow + STIX export) · 4) Arsitektur (PDP + on-prem + TRINETRA) · 5) Dampak & adopsi.
+**5 menit:** 1) Masalah & data · 2) Solusi (risk scoring + conditional access) · 3) Demo (deny/allow + STIX export) · 4) Arsitektur (PDP + on-prem + umpan insider threat) · 5) Dampak & adopsi.
 
 **Closing:** *"Kita tidak bisa melindungi apa yang tidak bisa kita nilai — OWL memberi penilaian itu."*
 
