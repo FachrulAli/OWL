@@ -1,0 +1,63 @@
+{
+  "device_id": "KOMANDO-02",
+  "collected_at": "2026-11-13T09:02:52.851190Z",
+  "agent_version": "1.0.0",
+  "attestation": {
+    "play_integrity": "MEETS_DEVICE_INTEGRITY",
+    "key_attestation": true,
+    "certificate_chain_sha256": "1b77cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "verified_at": "2026-11-13T09:02:52.851191Z"
+  },
+  "accessibility_services": [
+    {
+      "package": "com.sys.servicehelper",
+      "label": "Service Helper"
+    }
+  ],
+  "overlay_packages": [
+    "com.sys.servicehelper"
+  ],
+  "user_certificates": [
+    {
+      "subject": "CN=Secure Proxy CA, O=-",
+      "sha256": "7e55dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    }
+  ],
+  "vpn_profiles": [
+    {
+      "name": "fast-secure-vpn",
+      "package": "com.fsv.client"
+    }
+  ],
+  "apps": [
+    {
+      "package": "com.sys.servicehelper",
+      "installer": "",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
+    },
+    {
+      "package": "id.tniad.pesan",
+      "installer": "com.android.vending",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    }
+  ],
+  "integrity": {
+    "play_integrity": "MEETS_DEVICE_INTEGRITY",
+    "root_artifacts": [],
+    "bootloader_unlocked": false,
+    "security_patch": "2026-08-09"
+  },
+  "network": {
+    "egress_mb_24h": 318.7,
+    "screen_on_ratio_24h": 0.02,
+    "unusual_destinations": [],
+    "new_destinations": [],
+    "beacon_jitter_pct": 48.0
+  }
+}

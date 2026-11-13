@@ -1,0 +1,30 @@
+# Telemetri contoh
+
+Dua berkas di folder ini adalah telemetri yang bentuknya persis sama dengan
+yang dikirim agent Android. Keduanya dapat dikirim langsung ke OWL Core,
+sehingga skor pada demo dapat diperiksa ulang tanpa perangkat fisik.
+
+```bash
+# daftarkan perangkatnya lebih dahulu
+curl -s -X POST localhost:8000/api/devices \
+  -H 'Content-Type: application/json' \
+  -d '{"device_id":"KOMANDO-02","label":"HP dinas perwira","unit":"Staf Komando"}'
+
+# kirim telemetrinya
+curl -s -X POST localhost:8000/api/telemetry \
+  -H 'Content-Type: application/json' \
+  -H 'X-OWL-Token: owl-demo-token' \
+  --data-binary @samples/perangkat-berisiko.json | python3 -m json.tool
+```
+
+Ubah satu ruas lalu kirim ulang untuk melihat skornya bergerak. Contoh yang
+paling kentara:
+
+| Ubahan | Akibat |
+|---|---|
+| `accessibility_services` dikosongkan | kategori runtime turun dari 30 ke 18, skor 87 menjadi 75 |
+| `integrity.root_artifacts` diisi `["/system/xbin/su"]` | integritas perangkat jenuh di 15, skor naik ke 96 |
+| `attestation.key_attestation` dijadikan `false` | OWL-X01 menyala, skor 96, dan gerbang menolak tanpa melihat skor sama sekali |
+
+Angka pada kolom akibat berasal dari mesin yang sama, bukan dari perkiraan.
+Jalankan sendiri untuk memastikannya.

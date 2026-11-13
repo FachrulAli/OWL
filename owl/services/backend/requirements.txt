@@ -1,0 +1,8 @@
+# Versi dipilih yang punya wheel untuk Python 3.13 dan 3.14, supaya
+# pemasangan tidak menuntut rantai kompilasi Rust di mesin juri.
+fastapi==0.118.0
+uvicorn[standard]==0.37.0
+pydantic==2.12.0
+aiosqlite==0.21.0
+httpx==0.28.1
+PyYAML==6.0.2

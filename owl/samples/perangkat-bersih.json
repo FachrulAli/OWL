@@ -1,0 +1,45 @@
+{
+  "device_id": "TACTICAL-07",
+  "collected_at": "2026-11-13T09:02:52.850926Z",
+  "agent_version": "1.0.0",
+  "attestation": {
+    "play_integrity": "MEETS_STRONG_INTEGRITY",
+    "key_attestation": true,
+    "certificate_chain_sha256": "9f2caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "verified_at": "2026-11-13T09:02:52.851129Z"
+  },
+  "accessibility_services": [],
+  "overlay_packages": [],
+  "user_certificates": [],
+  "vpn_profiles": [],
+  "apps": [
+    {
+      "package": "id.tniad.pesan",
+      "installer": "com.android.vending",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
+    },
+    {
+      "package": "com.android.chrome",
+      "installer": "com.android.vending",
+      "permissions": []
+    }
+  ],
+  "integrity": {
+    "play_integrity": "MEETS_STRONG_INTEGRITY",
+    "root_artifacts": [],
+    "bootloader_unlocked": false,
+    "security_patch": "2026-08-30"
+  },
+  "network": {
+    "egress_mb_24h": 12.4,
+    "screen_on_ratio_24h": 0.41,
+    "unusual_destinations": [],
+    "new_destinations": [
+      "cdn.pembaruan-peta.id"
+    ],
+    "beacon_jitter_pct": 64.0
+  }
+}

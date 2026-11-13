@@ -1,20 +1,28 @@
-
-!.env.example
-# dependencies / builds
-# env / secrets
-# os / editor
-*.log
-*.pyc
-.DS_Store
-.env
-.env*
-.env.*
-.venv/
-.vercel
-.vercel/
-.vite/
-__pycache__/
-deploy/k8s/secrets.yaml
+# dependensi dan hasil build
 dist/
 node_modules/
+__pycache__/
+*.pyc
+.venv/
 venv/
+build/
+.gradle/
+.kotlin/
+
+# basis data purwarupa
+owl/services/backend/owl.db
+*.db-journal
+
+# rahasia dan setelan per-mesin
+.env
+.env.*
+!.env.example
+local.properties
+.vercel
+.vercel/
+
+# sistem dan editor
+.DS_Store
+*.log
+.idea/
+*.iml

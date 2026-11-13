@@ -1,0 +1,185 @@
+# Katalog aturan OWL — enam sinyal (proposal §4, deepdive §7.1 dan §7.5).
+#
+# Berkas ini memuat METADATA dan PARAMETER. Logika pemeriksaannya ada di
+# app/rules.py, satu fungsi per id aturan. Pemisahan itu disengaja: satuan
+# dapat menyetel ambang dan daftar izin tanpa menyentuh kode, sedangkan
+# definisi pemeriksaannya tetap dapat diaudit sebagai kode, bukan sebagai
+# ekspresi yang dirakit saat berjalan.
+#
+# Kolom:
+#   category   runtime | app | config | device | identity  (bobot di config.py)
+#   severity   low | medium | high | critical
+#   corroborate  true  = severitas diturunkan satu tingkat jika aturan ini
+#                        satu-satunya yang menyala. Korelasi multi-sinyal
+#                        (deepdive §7.1 modul C) untuk menekan positif palsu.
+#   mitre      teknik ATT&CK Mobile yang dipetakan (deepdive §6.3)
+#   confidence tingkat keyakinan metode, dari §7.5. Ditampilkan apa adanya.
+
+version: 1
+updated: 2026-11-13
+
+allowlists:
+  # Diisi oleh satuan saat penggelaran. Kosong pada purwarupa, dan aturan
+  # memperlakukan daftar kosong sebagai "belum ada yang diizinkan", bukan
+  # sebagai "semua diizinkan".
+  accessibility_services: []
+  vpn_profiles: []
+  installers:
+    - com.android.vending          # Google Play
+    - com.google.android.packageinstaller
+    - id.tniad.owl.store           # toko aplikasi satuan (rencana)
+
+parameters:
+  patch_warn_days: 60              # patch keamanan lebih tua dari ini: medium
+  patch_fail_days: 180             # lebih tua dari ini: high
+  egress_idle_mb: 50.0             # unggahan 24 jam saat perangkat idle
+  beacon_jitter_pct: 10.0          # interval keluar yang terlalu teratur
+  unusual_destination_min: 1
+  new_destination_min: 1
+
+rules:
+  # ——— 1. Perilaku runtime (bobot kategori 30) ———
+  - id: OWL-R01
+    category: runtime
+    severity: critical
+    title: Layanan aksesibilitas di luar daftar izin
+    detail: >-
+      Aplikasi memegang BIND_ACCESSIBILITY_SERVICE tanpa berada di daftar izin
+      satuan. Izin ini membaca seluruh isi layar dan dapat menekan tombol
+      menggantikan pengguna, dan merupakan jalur utama pencurian kredensial.
+    mitre: T1417 Input Capture
+    confidence: tinggi
+    corroborate: false
+
+  - id: OWL-R02
+    category: runtime
+    severity: high
+    title: Jendela hamparan di atas aplikasi lain
+    detail: >-
+      Aplikasi memegang SYSTEM_ALERT_WINDOW. Dipakai sah oleh beberapa
+      aplikasi, sehingga sendirian tidak cukup; bersama OWL-R01 pola ini
+      adalah overlay pencuri kredensial.
+    mitre: T1411 Input Prompt
+    confidence: sedang
+    corroborate: true
+
+  # ——— 2. Integritas aplikasi (bobot kategori 25) ———
+  - id: OWL-A01
+    category: app
+    severity: high
+    title: Aplikasi dipasang dari luar toko resmi
+    detail: >-
+      Sumber pemasangan tidak ada di daftar installer yang diizinkan.
+      Sideload adalah vektor masuk utama spyware komersial.
+    mitre: T1478 Install Insecure or Malicious Configuration
+    confidence: tinggi
+    corroborate: false
+
+  - id: OWL-A02
+    category: app
+    severity: medium
+    title: Izin mikrofon, kamera, atau lokasi yang berlebihan
+    detail: >-
+      Aplikasi memegang gabungan izin perekaman yang tidak sejalan dengan
+      fungsinya. Diukur sebagai gabungan, bukan satu izin, karena satu izin
+      mikrofon pada aplikasi pesan adalah hal yang wajar.
+    mitre: T1429 Audio Capture / T1512 Video Capture
+    confidence: sedang
+    corroborate: true
+
+  # ——— 3. Konfigurasi: sertifikat dan VPN (bobot kategori 20) ———
+  - id: OWL-C01
+    category: config
+    severity: high
+    title: Sertifikat CA dipasang pengguna
+    detail: >-
+      Ada CA di trust store pengguna. Pada perangkat dinas tidak ada alasan
+      sah untuk itu, dan CA semacam ini adalah prasyarat penyadapan TLS.
+    mitre: T1557 Adversary-in-the-Middle
+    confidence: tinggi
+    corroborate: false
+
+  - id: OWL-C02
+    category: config
+    severity: medium
+    title: Profil VPN di luar daftar izin
+    detail: >-
+      VPN aktif yang bukan milik satuan mengalihkan seluruh lalu lintas
+      perangkat ke pihak yang tidak diketahui.
+    mitre: T1557 Adversary-in-the-Middle
+    confidence: sedang
+    corroborate: true
+
+  # ——— 4. Integritas perangkat (bobot kategori 15) ———
+  - id: OWL-D01
+    category: device
+    severity: critical
+    title: Integritas perangkat gagal
+    detail: >-
+      Play Integrity menolak perangkat, atau ditemukan artefak root
+      (su, Magisk), atau bootloader terbuka. Root membatalkan hampir seluruh
+      asumsi keamanan yang dipakai pemeriksaan lain.
+    mitre: T1404 Exploitation for Privilege Escalation
+    confidence: tinggi
+    corroborate: false
+
+  - id: OWL-D02
+    category: device
+    severity: medium
+    title: Patch keamanan tertinggal
+    detail: >-
+      Tingkat patch keamanan lebih tua daripada ambang satuan. Naik ke high
+      jika melewati ambang kedua.
+    mitre: T1404 Exploitation for Privilege Escalation
+    confidence: tinggi
+    corroborate: false
+
+  # ——— 5. Perilaku jaringan (bobot kategori 10) ———
+  - id: OWL-N01
+    category: identity
+    severity: high
+    title: Unggahan besar saat perangkat tidak dipakai
+    detail: >-
+      Volume keluar 24 jam melewati ambang sementara layar mati. Metadata
+      saja; isi lalu lintas tidak pernah dibaca.
+    mitre: T1437 Exfiltration Over C2 Channel
+    confidence: sedang
+    corroborate: true
+
+  - id: OWL-N02
+    category: identity
+    severity: medium
+    title: Tujuan jaringan tidak lazim atau pola beacon teratur
+    detail: >-
+      Tujuan di luar daftar yang biasa dihubungi perangkat satuan, atau
+      interval keluar yang terlalu teratur untuk lalu lintas manusia.
+    mitre: T1437 Exfiltration Over C2 Channel
+    confidence: sedang
+    corroborate: true
+
+  - id: OWL-N03
+    category: identity
+    severity: low
+    title: Tujuan jaringan baru di luar kebiasaan perangkat
+    detail: >-
+      Perangkat menghubungi tujuan yang belum pernah terlihat pada riwayatnya
+      sendiri. Sendirian ini bukan bukti apa-apa, karena pemakaian wajar pun
+      memunculkan tujuan baru. Dicatat sebagai sinyal lemah supaya analis
+      melihatnya jika sinyal lain ikut menyala.
+    mitre: T1437 Exfiltration Over C2 Channel
+    confidence: rendah
+    corroborate: true
+
+  # ——— 6. Attestation agent (deepdive §7.4) ———
+  # Bukan sinyal perangkat, melainkan syarat agar laporan perangkat dipercaya.
+  - id: OWL-X01
+    category: device
+    severity: critical
+    title: Attestation agent tidak sah
+    detail: >-
+      Laporan datang dari agent yang tidak dapat membuktikan dirinya build
+      asli pada Keystore berbasis perangkat keras. Laporan "perangkat bersih"
+      dari agent yang tidak terverifikasi tidak berarti apa-apa.
+    mitre: T1512 Masquerading
+    confidence: tinggi
+    corroborate: false

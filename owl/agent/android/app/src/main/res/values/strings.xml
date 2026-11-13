@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OWL Agent</string>
+    <string name="svc_channel">Pemantauan OWL</string>
+    <string name="svc_title">OWL aktif</string>
+    <string name="svc_text">Menilai postur keamanan perangkat. Isi pesan dan berkas tidak dibaca.</string>
+</resources>

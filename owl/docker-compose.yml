@@ -1,0 +1,45 @@
+name: owl
+
+# OWL — On Device Watch Layer.
+#
+# Dua layanan, dan itu disengaja. MVP pada deepdive §10.3 menetapkan FastAPI
+# dengan SQLite, bukan antrean pesan dan gudang kolom. Stack yang dapat
+# dijalankan satu perintah di laptop juri lebih berguna daripada arsitektur
+# yang benar di diagram tetapi tidak pernah menyala.
+#
+#   backend   OWL Core: mesin aturan, skor risiko, PDP, ekspor STIX/CEF
+#   frontend  dashboard gerbang
+#
+# Jalankan:  docker compose up --build   lalu buka http://localhost:8080
+
+services:
+  backend:
+    build: ./services/backend
+    environment:
+      OWL_DB: /data/owl.db
+      OWL_INGEST_TOKEN: ${OWL_INGEST_TOKEN:-owl-demo-token}
+      OWL_AIR_GAPPED: "true"
+      # Isi kedua nilai di bawah pada penggelaran satuan. Dibiarkan kosong,
+      # event tetap dicatat di basis data lokal untuk diambil petugas.
+      OWL_SOC_WEBHOOK: ${OWL_SOC_WEBHOOK:-}
+      OWL_SYSLOG_HOST: ${OWL_SYSLOG_HOST:-}
+    volumes:
+      - owl-data:/data
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+
+volumes:
+  owl-data:

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OWL — Gerbang Risiko Perangkat TNI AD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B1F3A; --navy-2:#0E2A4E; --teal:#14B8A6; --teal-soft:#5EEAD4;
+    --amber:#F59E0B; --slate:#64748B; --slate-2:#94A3B8; --off:#F8FAFC;
+    --card:#10294A; --card-2:#0F2A4F; --line:rgba(148,163,184,.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:'Inter',system-ui,sans-serif;background:radial-gradient(1200px 600px at 80% -10%, #123458 0%, var(--navy) 45%, #071527 100%);color:var(--off);overflow:hidden;-webkit-font-smoothing:antialiased}
+  .deck{position:relative;height:100vh;width:100vw}
+  .slide{position:absolute;inset:0;display:flex;flex-direction:column;padding:clamp(24px,5vh,64px) clamp(24px,6vw,96px);opacity:0;transform:translateX(24px);transition:opacity .45s ease,transform .45s ease;pointer-events:none;overflow-y:auto}
+  .slide.active{opacity:1;transform:none;pointer-events:auto}
+  .kicker{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.22em;color:var(--teal);text-transform:uppercase;margin-bottom:14px}
+  h1,h2{font-family:'Space Grotesk',sans-serif;line-height:1.1;letter-spacing:-.015em}
+  h2{font-weight:600}
+  .lead{font-size:clamp(18px,2.5vw,28px);line-height:1.45;color:var(--slate-2);max-width:62ch;font-weight:400}
+  .big{font-size:clamp(30px,4.5vw,56px);font-weight:700;line-height:1.12}
+  .accent{color:var(--teal-soft)}.amber{color:var(--amber)}.mono{font-family:'IBM Plex Mono',monospace}
+  .grid{display:grid;gap:18px}
+  .cols-2{grid-template-columns:repeat(2,1fr)}.cols-3{grid-template-columns:repeat(3,1fr)}
+  .card{background:linear-gradient(180deg,var(--card) 0%,var(--card-2) 100%);border:1px solid var(--line);border-radius:16px;padding:20px}
+  .card h3{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;margin-bottom:8px}
+  .card p{color:var(--slate-2);font-size:14px;line-height:1.5}
+  .stat{font-family:'Space Grotesk',sans-serif;font-weight:700}
+  .stat .num{font-size:clamp(28px,3.4vw,44px);color:var(--teal-soft);display:block;line-height:1}
+  .stat .lbl{font-size:13px;color:var(--slate-2);font-weight:500}
+  .tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--teal-soft);border:1px solid rgba(94,234,212,.4);border-radius:999px;padding:3px 10px;margin:3px}
+  .cover{justify-content:center;align-items:flex-start}
+  .brand{display:flex;align-items:center;gap:18px;margin-bottom:24px}
+  .brand .word{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(40px,6vw,80px);letter-spacing:.03em}
+  .brand .subname{font-family:'IBM Plex Mono',monospace;color:var(--teal-soft);font-size:clamp(13px,1.4vw,18px);letter-spacing:.1em;margin-top:6px}
+  .flow{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap}
+  .flow .step{flex:1;min-width:110px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .flow .step .n{font-family:'IBM Plex Mono',monospace;color:var(--amber);font-size:12px}
+  .flow .step h3{font-family:'Space Grotesk',sans-serif;font-size:15px;margin:8px 0 6px}
+  .flow .step p{font-size:12.5px;color:var(--slate-2);line-height:1.45}
+  .flow .arrow{align-self:center;color:var(--teal);font-size:22px;flex:0 0 auto}
+  .gate{display:flex;gap:18px;align-items:stretch}
+  .gate .lane{flex:1;border-radius:16px;padding:22px;border:1px solid var(--line)}
+  .gate .allow{background:rgba(20,184,166,.1);border-color:rgba(94,234,212,.5)}
+  .gate .deny{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.5)}
+  .gate .v{font-family:'Space Grotesk',sans-serif;font-size:clamp(22px,3vw,40px);font-weight:700}
+  .nav{position:fixed;bottom:18px;right:22px;display:flex;gap:10px;z-index:50}
+  .nav button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:rgba(16,41,74,.7);color:var(--off);font-size:18px;cursor:pointer}
+  .nav button:hover{background:rgba(20,184,166,.25)}
+  .progress{position:fixed;bottom:24px;left:26px;z-index:50;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--slate-2)}
+  .bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--teal),var(--amber));z-index:60;transition:width .4s ease}
+  .center{justify-content:center}
+  .mt-8{margin-top:8px}.mt-16{margin-top:16px}.mt-24{margin-top:24px}.mt-32{margin-top:32px}
+  .icon{font-size:40px}
+  @media (max-width:760px){.cols-2,.cols-3{grid-template-columns:1fr}.flow{flex-direction:column}.flow .arrow{transform:rotate(90deg);align-self:center}.gate{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="bar" id="bar"></div>
+<div class="deck" id="deck">
+
+  <!-- 1 COVER -->
+  <section class="slide active cover">
+    <div class="kicker">Kartika Cyber Hackathon 2026 · Defensive Shield · TNI AD</div>
+    <div class="brand">
+      <svg width="80" height="80" viewBox="0 0 72 72" fill="none" aria-hidden="true">
+        <path d="M36 3 L62 11 V33 C62 49 50 60 36 67 C22 60 10 49 10 33 V11 Z" stroke="#14B8A6" stroke-width="2" fill="rgba(20,184,166,.06)"/>
+        <path d="M23 17 L20 6 L33 14 Z" fill="#0E2A4E" stroke="#14B8A6" stroke-width="1.5"/><path d="M49 17 L52 6 L39 14 Z" fill="#0E2A4E" stroke="#14B8A6" stroke-width="1.5"/>
+        <circle cx="28" cy="39" r="11" stroke="#F59E0B" stroke-width="2" fill="none"/><circle cx="28" cy="39" r="5.5" fill="#F59E0B"/><circle cx="28" cy="39" r="2.2" fill="#0B1F3A"/>
+        <circle cx="44" cy="39" r="11" stroke="#F59E0B" stroke-width="2" fill="none"/><circle cx="44" cy="39" r="5.5" fill="#F59E0B"/><circle cx="44" cy="39" r="2.2" fill="#0B1F3A"/>
+        <path d="M36 47 L33 53 L39 53 Z" fill="#14B8A6"/>
+      </svg>
+      <div><div class="word">OWL</div><div class="subname">ON DEVICE WATCH LAYER</div></div>
+    </div>
+    <div class="big">Gerbang risiko perangkat<br><span class="accent">untuk data &amp; komunikasi prajurit.</span></div>
+    <p class="lead mt-16">Melihat &amp; mendengar dalam gelap — menolak perangkat yang disadap sebelum menyentuh sistem satuan.</p>
+  </section>
+
+  <!-- 2 DI SAKU PRAJURIT -->
+  <section class="slide center">
+    <div class="kicker">Di Saku Prajurit</div>
+    <h2 class="big">Di sakunya ada satu benda<br>yang menyimpan <span class="accent">hampir seluruh tugasnya</span>.</h2>
+    <p class="lead mt-16">Pesan kedinasan · dokumen rahasia · akses sistem satuan · lokasi real-time · mikrofon · kamera. Benda kecil — tapi di situlah semua hal penting berada. Benda yang sama ada di tangan para pimpinan: perwira tinggi yang percakapannya adalah keputusan strategis.</p>
+    <div class="grid cols-3 mt-24">
+      <div class="card"><h3>💬 Komunikasi penting</h3><p>Pesan kedinasan &amp; koordinasi operasi.</p></div>
+      <div class="card"><h3>📁 Data penting</h3><p>Dokumen rahasia &amp; akses sistem satuan.</p></div>
+      <div class="card"><h3>🎖️ Petinggi militer</h3><p>Perwira tinggi = target penyadapan bernilai tinggi.</p></div>
+    </div>
+  </section>
+
+  <!-- 3 TITIK BUTA -->
+  <section class="slide center">
+    <div class="kicker">Titik Buta</div>
+    <h2 class="big">Semua mata tertuju ke server &amp; jaringan.<br><span class="accent">Tidak satu pun ke ponsel itu.</span></h2>
+    <p class="lead mt-16">Di ruang SOC dan CSIRT, semuanya sibuk mengamankan infrastruktur — firewall, IDS, monitoring trafik. Tapi perangkat yang dibawa prajurit ke lapangan, dan ponsel di meja perwira tinggi, tidak terlihat oleh pertahanan mana pun.</p>
+    <div class="mt-24"><span class="tag">Visibility gap</span><span class="tag">Endpoint = blind spot</span></div>
+  </section>
+
+  <!-- 4 MUSUH TAHU -->
+  <section class="slide">
+    <div class="kicker">Musuh Tahu · Penyadapan Meningkat</div>
+    <h2 class="big">Penyadapan smartphone<br><span class="amber">nyata dan meningkat.</span></h2>
+    <div class="grid cols-3 mt-24">
+      <div class="card stat"><span class="num">Pegasus</span><span class="lbl mt-8">spyware mercenary menyasar pejabat &amp; tokoh strategis — Amnesty/Citizen Lab</span></div>
+      <div class="card stat"><span class="num">+196%</span><span class="lbl mt-8">lonjakan trojan perbankan mobile — Kaspersky, 2024</span></div>
+      <div class="card stat"><span class="num">&gt;33 jt</span><span class="lbl mt-8">malware mobile global yang merekam mic, kamera, lokasi — Securelist, 2024</span></div>
+    </div>
+    <p class="lead mt-24">Mereka masuk lewat aplikasi yang kelihatan biasa — minta izin berlebihan, aktifkan aksesibilitas, palsukan sertifikat — lalu diam-diam mendengar dan melihat.</p>
+  </section>
+
+  <!-- 5 MDM + CLOUD -->
+  <section class="slide center">
+    <div class="kicker">Dua Celah yang Tertinggal</div>
+    <h2 class="big">MDM mengelola perangkat,<br>tapi <span class="accent">tidak menilai risiko</span>.</h2>
+    <div class="grid cols-2 mt-24">
+      <div class="card"><h3>Scoring gap</h3><p>Knox/Intune tahu "terdaftar atau tidak" — bukan "sedang disadap atau tidak", bukan "aman masuk area operasi atau tidak".</p></div>
+      <div class="card"><h3>Sovereignty gap</h3><p>MDM berjalan di cloud vendor luar negeri — data &amp; keputusan keamanan mengalir keluar dari tembok kedaulatan sendiri.</p></div>
+    </div>
+  </section>
+
+  <!-- 6 OWL MASUK -->
+  <section class="slide center">
+    <div class="kicker">OWL Masuk</div>
+    <h2 class="big">Seperti burung hantu di bahu prajurit,<br><span class="accent">melihat &amp; mendengar dalam gelap.</span></h2>
+    <p class="lead mt-16">OWL tidak membaca isi pesan, tidak menyadap. Ia justru <strong>melihat tanda-tanda penyadapan</strong>: izin mic &amp; kamera mencurigakan, aksesibilitas disalahgunakan, sertifikat palsu, VPN gelap, aplikasi dari luar, root, patch usang.</p>
+    <div class="grid cols-3 mt-24">
+      <div class="card"><h3>👁️ Izin mencurigakan</h3><p>Mic, kamera, lokasi berlebihan.</p></div>
+      <div class="card"><h3>🔓 Aksesibilitas</h3><p>Disalahgunakan untuk curi kredensial.</p></div>
+      <div class="card"><h3>📡 Sertifikat &amp; VPN</h3><p>CA palsu &amp; VPN gelap = indikator penyadapan.</p></div>
+    </div>
+  </section>
+
+  <!-- 7 ENAM SINYAL -->
+  <section class="slide">
+    <div class="kicker">Cara Kerja</div>
+    <h2 class="big">Enam sinyal → satu skor risiko.</h2>
+    <div class="flow mt-24">
+      <div class="step"><div class="n">01</div><h3>Registrasi</h3><p>Perangkat + identitas.</p></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">02</div><h3>Telemetri</h3><p>Izin, aksesibilitas, CA, VPN, sideload, root, patch.</p></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">03</div><h3>Korelasi</h3><p>Multi-sinyal → deteksi.</p></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">04</div><h3>Skor</h3><p>0–100 + kontributor.</p></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">05</div><h3>Keputusan</h3><p>Lolos atau ditolak.</p></div>
+    </div>
+  </section>
+
+  <!-- 8 GERBANG -->
+  <section class="slide">
+    <div class="kicker">Momennya · Gerbang</div>
+    <h2 class="big">Perangkat datang ke gerbang.<br><span class="accent">Lolos, atau ditolak.</span></h2>
+    <div class="gate mt-24">
+      <div class="lane allow"><div class="v" style="color:#5EEAD4">LOLOS</div><p class="lead mt-8">Skor bersih → akses diberikan.</p><div class="mono mt-16" style="font-size:32px;color:#5EEAD4">18 / 100</div></div>
+      <div class="lane deny"><div class="v" style="color:#F59E0B">DITOLAK</div><p class="lead mt-8">Berisiko → karantina + eskalasi komando.</p><div class="mono mt-16" style="font-size:32px;color:#F59E0B">87 / 100</div></div>
+    </div>
+    <p class="lead mt-24">Dari prajurit di lapangan sampai perwira tinggi di ruang komando — OWL menilai dalam hitungan detik, dan bisa dibuktikan di depan juri.</p>
+  </section>
+
+  <!-- 9 DALAM TEMBOK SENDIRI -->
+  <section class="slide center">
+    <div class="kicker">Kedaulatan</div>
+    <h2 class="big">Semuanya terjadi<br><span class="accent">di dalam tembok sendiri.</span></h2>
+    <div class="grid cols-3 mt-24">
+      <div class="card"><h3>🏰 On-prem / air-gapped</h3><p>Bukan di cloud vendor luar negeri.</p></div>
+      <div class="card"><h3>🛡️ Kartika CSIRT</h3><p>Feed alert &amp; event (STIX/CEF) ke SOC satuan.</p></div>
+      <div class="card"><h3>🔗 TRINETRA</h3><p>Perangkat terinfeksi = indikator insider threat.</p></div>
+    </div>
+  </section>
+
+  <!-- 10 DARI PRAJURIT SAMPAI PIMPINAN -->
+  <section class="slide">
+    <div class="kicker">Dampak</div>
+    <h2 class="big">Dari prajurit<br>sampai pimpinan.</h2>
+    <div class="grid cols-3 mt-24">
+      <div class="card"><h3>🎖️ Screening prajurit</h3><p>Skor sebelum masuk area operasi.</p></div>
+      <div class="card"><h3>👤 Perwira tinggi</h3><p>Jaga komunikasi &amp; keputusan strategis dari penyadapan.</p></div>
+      <div class="card"><h3>⚡ Pivot ke OT/SCADA</h3><p>Blokir perangkat berisiko dari sistem vital.</p></div>
+      <div class="card"><h3>🏛️ Akses terklasifikasi</h3><p>Conditional access untuk data sensitif.</p></div>
+      <div class="card"><h3>📡 Data &amp; komunikasi</h3><p>Lindungi pesan kedinasan &amp; dokumen rahasia.</p></div>
+      <div class="card"><h3>🔗 CSIRT / TRINETRA</h3><p>Sensor endpoint ke SOC satuan.</p></div>
+    </div>
+  </section>
+
+  <!-- 11 ROADMAP -->
+  <section class="slide">
+    <div class="kicker">Roadmap</div>
+    <h2 class="big">Dari purwarupa ke kedaulatan.</h2>
+    <div class="flow mt-24">
+      <div class="step"><div class="n">1</div><h3>Foundation</h3><p>MVP Android.</p></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">2</div><h3>Detection</h3><p>Rule + intel.</p></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">3</div><h3>Behavioral</h3><p>Baseline + ML.</p></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">4</div><h3>Response</h3><p>Playbook + MDM.</p></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">5</div><h3>Multi-Platform</h3><p>iOS + Windows.</p></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="n">6</div><h3>Deployment</h3><p>Satuan &amp; pemerintah.</p></div>
+    </div>
+  </section>
+
+  <!-- 12 PENUTUP -->
+  <section class="slide center">
+    <div class="kicker">Penutup</div>
+    <div class="brand">
+      <svg width="60" height="60" viewBox="0 0 72 72" fill="none"><path d="M36 3 L62 11 V33 C62 49 50 60 36 67 C22 60 10 49 10 33 V11 Z" stroke="#14B8A6" stroke-width="2" fill="rgba(20,184,166,.06)"/><path d="M23 17 L20 6 L33 14 Z" fill="#0E2A4E" stroke="#14B8A6" stroke-width="1.5"/><path d="M49 17 L52 6 L39 14 Z" fill="#0E2A4E" stroke="#14B8A6" stroke-width="1.5"/><circle cx="28" cy="39" r="11" stroke="#F59E0B" stroke-width="2" fill="none"/><circle cx="28" cy="39" r="5.5" fill="#F59E0B"/><circle cx="44" cy="39" r="11" stroke="#F59E0B" stroke-width="2" fill="none"/><circle cx="44" cy="39" r="5.5" fill="#F59E0B"/><path d="M36 47 L33 53 L39 53 Z" fill="#14B8A6"/></svg>
+      <div><div class="word" style="font-size:clamp(30px,4vw,54px)">OWL</div><div class="subname">ON DEVICE WATCH LAYER</div></div>
+    </div>
+    <h2 class="big mt-16">Di tengah penyadapan yang meningkat,<br>setiap perangkat harus melewati gerbang.<br><span class="accent">OWL adalah gerbang itu.</span></h2>
+    <p class="lead mt-16">Kita tidak bisa melindungi apa yang tidak bisa kita nilai — OWL memberi penilaian itu, di dalam tembok kedaulatan kita sendiri.</p>
+  </section>
+
+</div>
+<div class="nav"><button id="prev" aria-label="Sebelumnya">‹</button><button id="next" aria-label="Berikutnya">›</button></div>
+<div class="progress" id="progress">1 / 12</div>
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const bar=document.getElementById('bar'),progress=document.getElementById('progress');
+  let i=0;
+  function show(n){i=Math.max(0,Math.min(slides.length-1,n));slides.forEach((s,k)=>s.classList.toggle('active',k===i));bar.style.width=((i+1)/slides.length*100)+'%';progress.textContent=(i+1)+' / '+slides.length;}
+  document.getElementById('next').onclick=()=>show(i+1);
+  document.getElementById('prev').onclick=()=>show(i-1);
+  document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown')show(i+1);if(e.key==='ArrowLeft'||e.key==='PageUp')show(i-1);if(e.key==='Home')show(0);if(e.key==='End')show(slides.length-1);});
+  show(0);
+</script>
+</body>
+</html>
