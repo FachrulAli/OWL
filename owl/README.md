@@ -238,8 +238,12 @@ tab yang ditutup menutup sesinya.
 Bawaannya `adminowl`, disetel lewat `OWL_API_KEY` di `docker-compose.yml` dan
 `Makefile`. **Ganti pada penggelaran satuan.**
 
-Tombol **Keluar** di bilah atas menghapus kunci dari `sessionStorage` dan
-mengunci layar kembali.
+Tombol **Keluar** di bilah atas menghapus kunci dari `sessionStorage` lalu
+melempar kembali ke halaman depan, bukan menyodorkan kotak kata sandi pada
+orang yang baru saja pamit. Kartu kata sandi juga punya tombol tutup dan
+menerima Esc, dan keduanya berakhir di halaman depan. Kata sandi yang benar
+tidak langsung menyingkap layar: ada layar pendek "membuka dashboard", lalu
+buram di belakangnya luruh.
 
 Layar kunci juga punya tombol **Masuk sebagai tamu**, dan tamu memperoleh akses
 yang sama dengan admin: tombol itu memakai kunci baca bawaan. Jadi pada

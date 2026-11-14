@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { DEMO_PASSWORD, setKey, verifyKey } from '../lib/api'
 import { useT } from '../lib/i18n'
@@ -12,12 +12,20 @@ import { useT } from '../lib/i18n'
  * memegangnya; dalam keadaan itu layar ini hanya menahan tampilan dan
  * mengatakannya terus terang kepada pembuka halaman.
  */
-export function Login({ onOpen }: { onOpen: () => void }) {
+export function Login({ onOpen, onClose }: { onOpen: () => void; onClose: () => void }) {
   const { t } = useT()
   const [password, setPassword] = useState('')
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   const [luring, setLuring] = useState(false)
+
+  // Esc menutup layar kunci, sama seperti tombol tutup. Kotak yang tidak
+  // dapat ditinggalkan terasa seperti jebakan, bukan pengaman.
+  useEffect(() => {
+    const onTombol = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    addEventListener('keydown', onTombol)
+    return () => removeEventListener('keydown', onTombol)
+  }, [onClose])
 
   /**
    * Mode tamu.
@@ -72,6 +80,15 @@ export function Login({ onOpen }: { onOpen: () => void }) {
   return (
     <div className="lock">
       <form className="lock-card" onSubmit={submit}>
+        <button
+          type="button"
+          className="lock-close"
+          aria-label={t('login.close')}
+          title={t('login.close')}
+          onClick={onClose}
+        >
+          ×
+        </button>
         <h3>{t('login.title')}</h3>
         <p className="muted">{t('login.body')}</p>
         <input

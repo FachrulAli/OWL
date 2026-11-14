@@ -65,6 +65,7 @@ export default function App() {
   const [locked, setLocked] = useState(!hasKey())
   const [muat, setMuat] = useState(perluLayarPembuka)
   const [pindahKe, setPindahKe] = useState<string | null>(null)
+  const [bukaDash, setBukaDash] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
 
   const refresh = useCallback(async () => {
@@ -100,6 +101,35 @@ export default function App() {
       setTimeout(() => setPindahKe(null), 40)
     }, 380)
   }, [])
+
+  /**
+   * Membuka kunci dashboard.
+   *
+   * Kata sandi yang benar tidak langsung menyingkap layar, sebab lompatan
+   * seketika dari kartu kata sandi ke tabel penuh angka terbaca seperti
+   * layar yang berganti sendiri. Satu layar pendek menutup peralihannya,
+   * lalu buram di belakangnya luruh.
+   */
+  const bukaKunci = useCallback(() => {
+    if (diamSaja()) { setLocked(false); return }
+    setBukaDash(true)
+    setTimeout(() => { setLocked(false); setBukaDash(false) }, 1750)
+  }, [])
+
+  /**
+   * Keluar, dan menutup layar kunci.
+   *
+   * Keduanya berakhir di halaman depan, bukan di kotak kata sandi.
+   * Pengguna yang menekan Keluar sedang pergi, jadi menyodorkan kotak
+   * kata sandi di detik yang sama adalah menahan orang yang pamit.
+   * Penguncian dinyalakan setelah tiraihnya menutup, supaya kartunya
+   * tidak sempat berkedip di layar.
+   */
+  const keluar = useCallback(() => {
+    clearKey()
+    pindah('/')
+    setTimeout(() => setLocked(true), diamSaja() ? 0 : 400)
+  }, [pindah])
 
   useEffect(() => {
     if (!muat) return
@@ -154,6 +184,15 @@ export default function App() {
           </div>
         </div>
       )}
+      {bukaDash && (
+        <div className="boot cepat">
+          <div className="boot-isi">
+            <Logo size={58} />
+            <div className="boot-bar"><i /></div>
+            <div className="boot-line">{t('loader.unlock')}</div>
+          </div>
+        </div>
+      )}
       <div className={`xfade${pindahKe ? ' is-on' : ''}`} aria-hidden="true" />
     </>
   )
@@ -178,7 +217,7 @@ export default function App() {
   return (
     <>
     {tirai}
-    {locked && !muat && <Login onOpen={() => setLocked(false)} />}
+    {locked && !muat && !bukaDash && <Login onOpen={bukaKunci} onClose={keluar} />}
     <div className={`halaman shell${locked ? ' locked' : ''}`} aria-hidden={locked}>
       <header className="topbar">
         <button className="brand" onClick={() => pindah('/')} title={t('land.home')}>
@@ -194,9 +233,7 @@ export default function App() {
           : health?.air_gapped && <span className="pill ok">{t('top.airgapped')}</span>}
         {health && <span className="pill">v{health.version}</span>}
         <button className="btn ghost" onClick={() => void refresh()}>{t('top.refresh')}</button>
-        <button className="btn ghost" onClick={() => { clearKey(); setLocked(true) }}>
-          {t('top.logout')}
-        </button>
+        <button className="btn ghost" onClick={keluar}>{t('top.logout')}</button>
         <LangToggle />
       </header>
 

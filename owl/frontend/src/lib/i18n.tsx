@@ -40,6 +40,11 @@ const S = {
     en: 'starting the rule engine',
   },
 
+  'loader.unlock': {
+    id: 'membuka dashboard',
+    en: 'opening the dashboard',
+  },
+
   'top.refresh': { id: 'Muat ulang', en: 'Reload' },
   'top.offline': { id: 'mode luring · rekaman', en: 'offline mode · recorded' },
   'top.airgapped': { id: 'on-prem · air-gapped', en: 'on-prem · air-gapped' },
@@ -68,6 +73,10 @@ const S = {
   'login.body': {
     id: 'Masukkan kata sandi satuan untuk membuka penilaian perangkat.',
     en: 'Enter the unit password to open the device assessments.',
+  },
+  'login.close': {
+    id: 'Tutup dan kembali ke halaman depan',
+    en: 'Close and go back to the landing page',
   },
   'login.password': { id: 'Kata sandi', en: 'Password' },
   'login.open': { id: 'Buka', en: 'Unlock' },

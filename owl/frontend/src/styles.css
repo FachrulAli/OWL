@@ -220,7 +220,15 @@ pre {
 /* ——— layar kunci dashboard ———
    Halaman di belakangnya diburamkan dan tidak dapat difokus; yang menahan
    datanya tetap OWL Core, bukan efek ini. */
-.shell.locked { filter: blur(7px); pointer-events: none; user-select: none; }
+/* Buram di belakang layar kunci luruh, bukan hilang seketika. */
+.shell {
+  transition: filter .7s cubic-bezier(.22, .8, .2, 1),
+              opacity .7s ease, transform .7s cubic-bezier(.22, .8, .2, 1);
+}
+.shell.locked {
+  filter: blur(9px); opacity: .55; transform: scale(.994);
+  pointer-events: none; user-select: none;
+}
 
 .lock {
   position: fixed; inset: 0; z-index: 100;
@@ -252,7 +260,16 @@ pre {
   animation: lock-garis .9s ease .3s both;
 }
 @keyframes lock-garis { from { opacity: 0; transform: scaleX(.2); } to { opacity: 1; transform: none; } }
-.lock-card h3 { font-family: var(--display); font-size: 17px; font-weight: 600; }
+.lock-close {
+  position: absolute; top: 12px; right: 14px;
+  width: 30px; height: 30px; line-height: 1; font-size: 20px;
+  display: grid; place-items: center;
+  background: transparent; color: var(--slate); border: 0; border-radius: 50%;
+  cursor: pointer; transition: color .2s ease, background .2s ease;
+}
+.lock-close:hover { color: var(--gold-soft); background: rgba(201, 162, 39, .12); }
+
+.lock-card h3 { font-family: var(--display); font-size: 17px; font-weight: 600; padding-right: 28px; }
 .lock-card input {
   font-family: var(--mono); font-size: 14px; letter-spacing: .12em;
   background: rgba(0, 0, 0, .55); color: var(--off);
@@ -764,6 +781,17 @@ pre {
 @keyframes boot-keluar {
   to { opacity: 0; visibility: hidden; transform: scale(1.03); }
 }
+/* Layar pendek saat kunci dibuka: tanpa kata OWL, tanpa gerak keluar yang
+   panjang, sebab yang ditunggu pembaca adalah dashboardnya. */
+.boot.cepat {
+  animation: boot-masuk .3s ease both;
+  background: rgba(0, 0, 0, .94);
+  backdrop-filter: blur(6px);
+}
+@keyframes boot-masuk { from { opacity: 0; } to { opacity: 1; } }
+.boot.cepat .boot-bar { margin-top: 24px; }
+.boot.cepat .boot-bar i { animation-duration: 1.25s; animation-delay: .15s; }
+
 .boot-isi { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .boot-isi > * { animation: boot-naik .8s cubic-bezier(.22,.8,.2,1) both; }
 .boot-isi img { animation-delay: .05s; }
@@ -801,7 +829,7 @@ pre {
 .xfade {
   position: fixed; inset: 0; z-index: 150; pointer-events: none;
   background: var(--ink); opacity: 0;
-  transition: opacity .38s ease;
+  transition: opacity .42s cubic-bezier(.4, 0, .2, 1);
 }
 .xfade.is-on { opacity: 1; }
 
