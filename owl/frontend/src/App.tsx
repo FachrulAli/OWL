@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Logo } from './components/Logo'
 import { Login } from './components/Login'
-import { api, hasKey, isOffline, onOfflineChange, onUnauthorized, snapshotGeneratedAt } from './lib/api'
+import { api, clearKey, hasKey, isOffline, onOfflineChange, onUnauthorized, snapshotGeneratedAt } from './lib/api'
 import { LangToggle, useT } from './lib/i18n'
 import type { Key } from './lib/i18n'
 import type { Catalog, DeviceRow } from './lib/types'
@@ -25,6 +25,26 @@ function jalurSekarang(): string {
   return p === '' ? '/' : p
 }
 
+function diamSaja(): boolean {
+  return typeof matchMedia === 'function'
+    && matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+/**
+ * Layar pembuka hanya pada kunjungan pertama satu sesi.
+ *
+ * Tiga detik terasa sinematik sekali, dan menyebalkan pada kali kesepuluh.
+ * Demo menuntut halaman dimuat ulang berkali-kali, jadi sesudah kunjungan
+ * pertama layar ini dilewati, dan pembaca yang mematikan animasi tidak
+ * pernah melihatnya sama sekali.
+ */
+const SESI_MUAT = 'owl.boot'
+
+function perluLayarPembuka(): boolean {
+  if (diamSaja()) return false
+  try { return sessionStorage.getItem(SESI_MUAT) === null } catch { return false }
+}
+
 const TABS: { id: Tab; label: Key }[] = [
   { id: 'gerbang', label: 'tab.gerbang' },
   { id: 'perangkat', label: 'tab.perangkat' },
@@ -42,6 +62,8 @@ export default function App() {
   const [err, setErr] = useState('')
   const [offline, setOffline] = useState(isOffline())
   const [locked, setLocked] = useState(!hasKey())
+  const [muat, setMuat] = useState(perluLayarPembuka)
+  const [pindahKe, setPindahKe] = useState<string | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
 
   const refresh = useCallback(async () => {
@@ -59,11 +81,31 @@ export default function App() {
     return () => removeEventListener('popstate', kembali)
   }, [])
 
+  // Perpindahan halaman: layar diredupkan lebih dahulu, jalurnya diganti di
+  // balik redup itu, lalu halaman baru muncul dari gelap. Tanpa jeda ini,
+  // peralihannya terasa seperti layar yang patah, bukan berpindah.
   const pindah = useCallback((p: string) => {
-    history.pushState({}, '', p)
-    setRoute(p)
-    scrollTo({ top: 0 })
+    if (diamSaja()) {
+      history.pushState({}, '', p)
+      setRoute(p)
+      scrollTo({ top: 0 })
+      return
+    }
+    setPindahKe(p)
+    setTimeout(() => {
+      history.pushState({}, '', p)
+      setRoute(p)
+      scrollTo({ top: 0 })
+      setTimeout(() => setPindahKe(null), 40)
+    }, 380)
   }, [])
+
+  useEffect(() => {
+    if (!muat) return
+    try { sessionStorage.setItem(SESI_MUAT, '1') } catch { /* jendela privat */ }
+    const t = setTimeout(() => setMuat(false), 3100)
+    return () => clearTimeout(t)
+  }, [muat])
 
   useEffect(() => onOfflineChange(setOffline), [])
 
@@ -72,11 +114,11 @@ export default function App() {
   useEffect(() => onUnauthorized(() => setLocked(true)), [])
 
   useEffect(() => {
-    if (locked || route !== '/dashboard') return
+    if (locked || muat || route !== '/dashboard') return
     void refresh()
     api.catalog().then(setCatalog).catch(() => undefined)
     api.health().then(setHealth).catch(() => undefined)
-  }, [refresh, locked, route])
+  }, [refresh, locked, muat, route])
 
   // Siaran dari backend: setiap penilaian dan keputusan gerbang mendorong
   // muat ulang, sehingga dashboard tidak perlu menebak kapan harus bertanya.
@@ -97,24 +139,45 @@ export default function App() {
     return () => { ws?.close(); wsRef.current = null }
   }, [refresh, locked, route])
 
+  const tirai = (
+    <>
+      {muat && (
+        <div className="boot">
+          <div className="boot-isi">
+            <Logo size={78} />
+            <div className="boot-word">OWL</div>
+            <div className="boot-sub">ON DEVICE WATCH LAYER</div>
+            <div className="boot-bar"><i /></div>
+            <div className="boot-line">{t('loader.line')}</div>
+          </div>
+        </div>
+      )}
+      <div className={`xfade${pindahKe ? ' is-on' : ''}`} aria-hidden="true" />
+    </>
+  )
+
   if (route !== '/dashboard') {
     return (
       <>
+        {tirai}
         <header className="land-top">
           <button className="btn ghost" onClick={() => pindah('/dashboard')}>
             {t('land.toDashboard')}
           </button>
           <LangToggle />
         </header>
-        <Landing onOpenDashboard={() => pindah('/dashboard')} />
+        <div key="landing" className="halaman">
+          <Landing onOpenDashboard={() => pindah('/dashboard')} />
+        </div>
       </>
     )
   }
 
   return (
     <>
-    {locked && <Login onOpen={() => setLocked(false)} />}
-    <div className={locked ? 'shell locked' : 'shell'} aria-hidden={locked}>
+    {tirai}
+    {locked && !muat && <Login onOpen={() => setLocked(false)} />}
+    <div className={`halaman shell${locked ? ' locked' : ''}`} aria-hidden={locked}>
       <header className="topbar">
         <button className="brand" onClick={() => pindah('/')} title={t('land.home')}>
           <Logo />
@@ -129,6 +192,9 @@ export default function App() {
           : health?.air_gapped && <span className="pill ok">{t('top.airgapped')}</span>}
         {health && <span className="pill">v{health.version}</span>}
         <button className="btn ghost" onClick={() => void refresh()}>{t('top.refresh')}</button>
+        <button className="btn ghost" onClick={() => { clearKey(); setLocked(true) }}>
+          {t('top.logout')}
+        </button>
         <LangToggle />
       </header>
 
@@ -157,10 +223,12 @@ export default function App() {
         </div>
       )}
 
-      {tab === 'gerbang' && <Gerbang devices={devices} onRefresh={refresh} />}
-      {tab === 'perangkat' && <Perangkat devices={devices} />}
-      {tab === 'aturan' && <Aturan catalog={catalog} />}
-      {tab === 'soc' && <Soc devices={devices} />}
+      <div className="tabisi" key={tab}>
+        {tab === 'gerbang' && <Gerbang devices={devices} onRefresh={refresh} />}
+        {tab === 'perangkat' && <Perangkat devices={devices} />}
+        {tab === 'aturan' && <Aturan catalog={catalog} />}
+        {tab === 'soc' && <Soc devices={devices} />}
+      </div>
     </div>
     </>
   )

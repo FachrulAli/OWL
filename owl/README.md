@@ -117,6 +117,11 @@ terlihat sama dengan perangkat bersih. Lambangnya berkas PNG beralfa di
 
 ## Halaman depan dan dashboard
 
+Kunjungan pertama pada satu sesi dibuka layar pembuka tiga detik; kunjungan
+berikutnya melewatinya, sebab demo menuntut halaman dimuat ulang berkali-kali.
+Perpindahan antara halaman depan dan dashboard meredup lebih dahulu, dan
+seluruh gerak dimatikan pada `prefers-reduced-motion`.
+
 Yang terbuka pertama kali adalah halaman depan di `/`: masalah, enam sinyal,
 cara kerja, hasil gerbang, dan batas klaim yang dinyatakan di depan. Dashboard
 ada di `/dashboard`, di belakang layar kunci. Jalur `/dashboard` yang dibuka
@@ -225,6 +230,9 @@ tab yang ditutup menutup sesinya.
 
 Bawaannya `adminowl`, disetel lewat `OWL_API_KEY` di `docker-compose.yml` dan
 `Makefile`. **Ganti pada penggelaran satuan.**
+
+Tombol **Keluar** di bilah atas menghapus kunci dari `sessionStorage` dan
+mengunci layar kembali.
 
 Layar kunci juga punya tombol **Masuk sebagai tamu**, dan tamu memperoleh akses
 yang sama dengan admin: tombol itu memakai kunci baca bawaan. Jadi pada

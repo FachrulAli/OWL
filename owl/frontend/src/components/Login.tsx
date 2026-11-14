@@ -2,7 +2,6 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { DEMO_PASSWORD, setKey, verifyKey } from '../lib/api'
 import { useT } from '../lib/i18n'
-import { Lockup } from './Logo'
 
 /**
  * Layar kunci dashboard (NFR 5.1).
@@ -73,9 +72,6 @@ export function Login({ onOpen }: { onOpen: () => void }) {
   return (
     <div className="lock">
       <form className="lock-card" onSubmit={submit}>
-        <div className="lock-brand">
-          <Lockup width={190} />
-        </div>
         <h3>{t('login.title')}</h3>
         <p className="muted">{t('login.body')}</p>
         <input

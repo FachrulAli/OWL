@@ -34,6 +34,12 @@ const S = {
   'land.toDashboard': { id: 'Dashboard', en: 'Dashboard' },
   'land.home': { id: 'Kembali ke halaman depan', en: 'Back to the landing page' },
 
+  'top.logout': { id: 'Keluar', en: 'Log out' },
+  'loader.line': {
+    id: 'menyalakan mesin aturan',
+    en: 'starting the rule engine',
+  },
+
   'top.refresh': { id: 'Muat ulang', en: 'Reload' },
   'top.offline': { id: 'mode luring · rekaman', en: 'offline mode · recorded' },
   'top.airgapped': { id: 'on-prem · air-gapped', en: 'on-prem · air-gapped' },
