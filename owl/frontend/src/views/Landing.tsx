@@ -264,17 +264,19 @@ export function Landing({ onOpenDashboard }: { onOpenDashboard: () => void }) {
   return (
     <div className="land">
       <section className="land-hero">
-        <div className="kicker">{c.kicker}</div>
-        <div className="land-brand">
-          <Lockup width={330} />
+        <div className="land-hero-copy">
+          <div className="kicker">{c.kicker}</div>
+          <h1>{c.judul1}<br /><span className="accent">{c.judul2}</span></h1>
+          <p className="land-lead">{c.lead}</p>
+          <div className="land-cta">
+            <button className="btn" onClick={onOpenDashboard}>{c.ctaDashboard}</button>
+            <a className="btn ghost" href={REPO} target="_blank" rel="noreferrer">{c.ctaRepo}</a>
+          </div>
+          <p className="land-claim">{c.batasKlaim}</p>
         </div>
-        <h1>{c.judul1}<br /><span className="accent">{c.judul2}</span></h1>
-        <p className="land-lead">{c.lead}</p>
-        <div className="land-cta">
-          <button className="btn" onClick={onOpenDashboard}>{c.ctaDashboard}</button>
-          <a className="btn ghost" href={REPO} target="_blank" rel="noreferrer">{c.ctaRepo}</a>
+        <div className="land-hero-logo">
+          <Lockup width={430} />
         </div>
-        <p className="land-claim">{c.batasKlaim}</p>
       </section>
 
       <section className="land-sec">

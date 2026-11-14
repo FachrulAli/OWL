@@ -203,18 +203,26 @@ pre {
   backdrop-filter: blur(6px);
 }
 
-.land { max-width: 1120px; margin: 0 auto; padding: 0 20px 80px; }
+.land { max-width: 1180px; margin: 0 auto; padding: 0 20px 80px; }
 
 .land h1, .land h2 {
   font-family: var(--display); font-weight: 700; line-height: 1.12;
   letter-spacing: -.015em;
 }
-.land h1 { font-size: clamp(32px, 5vw, 60px); }
+.land h1 { font-size: clamp(31px, 4.1vw, 52px); }
 .land h2 { font-size: clamp(24px, 3.2vw, 38px); font-weight: 600; margin-bottom: 14px; }
 .land .accent { color: var(--gold-soft); }
 
-.land-hero { padding: clamp(28px, 6vh, 64px) 0 clamp(32px, 7vh, 72px); }
-.land-brand { margin: 6px 0 22px; }
+/* Hero dua kolom: naskah di kiri, lambang di kanan, supaya satu sisi tidak
+   menanggung seluruh bobot halaman. */
+.land-hero {
+  display: grid; align-items: center;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr);
+  gap: clamp(24px, 4vw, 56px);
+  padding: clamp(28px, 6vh, 64px) 0 clamp(32px, 7vh, 72px);
+}
+.land-hero-logo { display: flex; justify-content: center; }
+.land-hero-logo img { width: min(360px, 100%); }
 .land-brand .word {
   font-family: var(--display); font-weight: 700;
   font-size: clamp(34px, 5vw, 56px); letter-spacing: .04em;
@@ -304,6 +312,12 @@ pre {
 .topbar .brand {
   background: none; border: 0; padding: 0; cursor: pointer;
   text-align: left; color: inherit; font: inherit;
+}
+
+@media (max-width: 920px) {
+  .land-hero { grid-template-columns: 1fr; gap: 18px; }
+  .land-hero-logo { order: -1; justify-content: flex-start; }
+  .land-hero-logo img { width: min(300px, 78%); }
 }
 
 @media (max-width: 860px) {
