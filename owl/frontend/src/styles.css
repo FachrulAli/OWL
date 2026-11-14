@@ -25,6 +25,15 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Latar bergerak: jaring sinyal emas, selalu di belakang segalanya. */
+.latar {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  opacity: .85; transition: opacity .6s ease;
+}
+/* Di dashboard latar diredupkan: yang harus terbaca di sana angka dan
+   tabel, bukan hiasannya. */
+.latar.redup { opacity: .32; }
+
 .logo-mark { display: block; object-fit: contain; }
 .logo-lockup { display: block; max-width: 100%; height: auto; }
 
@@ -42,7 +51,7 @@ body {
 a { color: var(--gold-soft); }
 
 /* ——— kerangka ——— */
-.shell { max-width: 1280px; margin: 0 auto; padding: 24px 20px 64px; }
+.shell { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 24px 20px 64px; }
 
 .topbar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
 .brand { display: flex; align-items: center; gap: 12px; }

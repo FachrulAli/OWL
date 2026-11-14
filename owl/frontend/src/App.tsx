@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Latar } from './components/Latar'
 import { Logo } from './components/Logo'
 import { Login } from './components/Login'
 import { api, clearKey, hasKey, isOffline, onOfflineChange, onUnauthorized, snapshotGeneratedAt } from './lib/api'
@@ -141,6 +142,7 @@ export default function App() {
 
   const tirai = (
     <>
+      <Latar redup={route === '/dashboard'} />
       {muat && (
         <div className="boot">
           <div className="boot-isi">

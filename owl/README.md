@@ -117,6 +117,13 @@ terlihat sama dengan perangkat bersih. Lambangnya berkas PNG beralfa di
 
 ## Halaman depan dan dashboard
 
+Latar bergerak digambar kanvas, bukan video: jaring sinyal emas dengan satu
+pita pemindai yang turun. Berkas video berukuran megabyte akan merusak janji
+yang paling sering diucapkan produk ini, yaitu berjalan di jaringan satuan
+yang terisolasi. Latar berhenti ketika tab tidak terlihat, mengecil sendiri
+pada layar kecil, diam pada `prefers-reduced-motion`, dan diredupkan di
+dashboard supaya angka dan tabel tetap yang paling terbaca.
+
 Kunjungan pertama pada satu sesi dibuka layar pembuka tiga detik; kunjungan
 berikutnya melewatinya, sebab demo menuntut halaman dimuat ulang berkali-kali.
 Perpindahan antara halaman depan dan dashboard meredup lebih dahulu, dan
