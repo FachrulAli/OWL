@@ -107,6 +107,14 @@ tidak berarti apa-apa, dan ditolak tanpa melihat skornya.
 
 ---
 
+## Halaman depan dan dashboard
+
+Yang terbuka pertama kali adalah halaman depan di `/`: masalah, enam sinyal,
+cara kerja, hasil gerbang, dan batas klaim yang dinyatakan di depan. Dashboard
+ada di `/dashboard`, di belakang layar kunci. Jalur `/dashboard` yang dibuka
+langsung tetap sampai, sebab nginx dan `vercel.json` mengarahkan setiap jalur
+ke `index.html`.
+
 ## Menjalankan
 
 ### Cara cepat, Docker
@@ -209,6 +217,13 @@ tab yang ditutup menutup sesinya.
 
 Bawaannya `adminowl`, disetel lewat `OWL_API_KEY` di `docker-compose.yml` dan
 `Makefile`. **Ganti pada penggelaran satuan.**
+
+Layar kunci juga punya tombol **Masuk sebagai tamu**, dan tamu memperoleh akses
+yang sama dengan admin: tombol itu memakai kunci baca bawaan. Jadi pada
+purwarupa ini layar kunci menahan tampilan, bukan membatasi hak, dan layarnya
+mengatakan itu sendiri. Begitu `OWL_API_KEY` diganti, kunci bawaannya ditolak
+OWL Core dan mode tamu berhenti bekerja tanpa perlu dicabut. Pemisahan peran
+pada antarmuka dan daftar pengguna per orang belum dibangun.
 
 Pada tautan publik yang hanya memuat rekaman, tidak ada OWL Core yang
 menjawab, sehingga layar kunci di sana hanya menahan tampilan dan tidak

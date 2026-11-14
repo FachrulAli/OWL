@@ -20,6 +20,30 @@ export function Login({ onOpen }: { onOpen: () => void }) {
   const [busy, setBusy] = useState(false)
   const [luring, setLuring] = useState(false)
 
+  /**
+   * Mode tamu.
+   *
+   * Sementara ini dashboard belum memisahkan peran, jadi tamu memperoleh
+   * akses yang sama dengan admin: tombol ini memakai kunci baca bawaan.
+   * Begitu satuan mengganti `OWL_API_KEY`, kunci itu ditolak OWL Core dan
+   * mode tamu berhenti bekerja dengan sendirinya, tanpa perlu dicabut.
+   */
+  async function masukTamu() {
+    if (busy) return
+    setBusy(true); setErr('')
+    try {
+      const hasil = await verifyKey(DEMO_PASSWORD)
+      if (hasil === 'ok' || hasil === 'luring') {
+        setKey(DEMO_PASSWORD)
+        onOpen()
+        return
+      }
+      setErr(t('login.guestUnavailable'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function submit(e: FormEvent) {
     e.preventDefault()
     if (busy) return
@@ -70,6 +94,10 @@ export function Login({ onOpen }: { onOpen: () => void }) {
         <button className="btn" type="submit" disabled={busy || password === ''}>
           {busy ? t('login.checking') : t('login.open')}
         </button>
+        <button className="btn ghost" type="button" disabled={busy} onClick={masukTamu}>
+          {t('login.guest')}
+        </button>
+        <p className="muted small">{t('login.guestNote')}</p>
         {err && <p className="lock-err">{err}</p>}
         {luring && <p className="muted small">{t('login.offlineNote')}</p>}
       </form>

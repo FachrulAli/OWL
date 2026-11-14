@@ -31,6 +31,9 @@ const S = {
   'tab.aturan': { id: 'Aturan & bobot', en: 'Rules & weights' },
   'tab.soc': { id: 'SOC / CSIRT', en: 'SOC / CSIRT' },
 
+  'land.toDashboard': { id: 'Dashboard', en: 'Dashboard' },
+  'land.home': { id: 'Kembali ke halaman depan', en: 'Back to the landing page' },
+
   'top.refresh': { id: 'Muat ulang', en: 'Reload' },
   'top.offline': { id: 'mode luring · rekaman', en: 'offline mode · recorded' },
   'top.airgapped': { id: 'on-prem · air-gapped', en: 'on-prem · air-gapped' },
@@ -64,6 +67,19 @@ const S = {
   'login.open': { id: 'Buka', en: 'Unlock' },
   'login.checking': { id: 'Memeriksa…', en: 'Checking…' },
   'login.wrong': { id: 'Kata sandi salah.', en: 'Wrong password.' },
+  'login.guest': { id: 'Masuk sebagai tamu', en: 'Continue as guest' },
+  'login.guestNote': {
+    id: 'Mode tamu memperoleh akses yang sama dengan admin. Pemisahan peran '
+      + 'belum dipasang, jadi layar ini menahan tampilan, bukan membatasi hak.',
+    en: 'Guest mode gets the same access as admin. Role separation is not in '
+      + 'place yet, so this screen holds back the view rather than limiting rights.',
+  },
+  'login.guestUnavailable': {
+    id: 'Mode tamu tidak tersedia pada penggelaran ini, sebab kunci bacanya '
+      + 'sudah diganti. Masukkan kata sandi satuan.',
+    en: 'Guest mode is not available on this deployment, because the read key has '
+      + 'been changed. Enter the unit password.',
+  },
   'login.offlineNote': {
     id: 'OWL Core tidak terjangkau dari sini, jadi kata sandi tidak dapat '
       + 'diperiksa di server dan layar ini hanya menahan tampilan rekaman.',

@@ -6,11 +6,24 @@ import { LangToggle, useT } from './lib/i18n'
 import type { Key } from './lib/i18n'
 import type { Catalog, DeviceRow } from './lib/types'
 import { Aturan } from './views/Aturan'
+import { Landing } from './views/Landing'
 import { Gerbang } from './views/Gerbang'
 import { Perangkat } from './views/Perangkat'
 import { Soc } from './views/Soc'
 
 type Tab = 'gerbang' | 'perangkat' | 'aturan' | 'soc'
+
+/**
+ * Dua halaman, satu berkas.
+ *
+ * Yang dibuka pertama kali adalah halaman depan, bukan dashboard. Jalur
+ * `/dashboard` yang dibuka langsung tetap sampai ke dashboard, sebab
+ * `vercel.json` dan nginx mengarahkan setiap jalur ke index.html.
+ */
+function jalurSekarang(): string {
+  const p = location.pathname.replace(/\/+$/, '')
+  return p === '' ? '/' : p
+}
 
 const TABS: { id: Tab; label: Key }[] = [
   { id: 'gerbang', label: 'tab.gerbang' },
@@ -21,6 +34,7 @@ const TABS: { id: Tab; label: Key }[] = [
 
 export default function App() {
   const { t, locale } = useT()
+  const [route, setRoute] = useState(jalurSekarang)
   const [tab, setTab] = useState<Tab>('gerbang')
   const [devices, setDevices] = useState<DeviceRow[]>([])
   const [catalog, setCatalog] = useState<Catalog | null>(null)
@@ -39,6 +53,18 @@ export default function App() {
     }
   }, [])
 
+  useEffect(() => {
+    const kembali = () => setRoute(jalurSekarang())
+    addEventListener('popstate', kembali)
+    return () => removeEventListener('popstate', kembali)
+  }, [])
+
+  const pindah = useCallback((p: string) => {
+    history.pushState({}, '', p)
+    setRoute(p)
+    scrollTo({ top: 0 })
+  }, [])
+
   useEffect(() => onOfflineChange(setOffline), [])
 
   // Kunci dicabut di tengah sesi: layar dikunci lagi, bukan dibiarkan
@@ -46,16 +72,16 @@ export default function App() {
   useEffect(() => onUnauthorized(() => setLocked(true)), [])
 
   useEffect(() => {
-    if (locked) return
+    if (locked || route !== '/dashboard') return
     void refresh()
     api.catalog().then(setCatalog).catch(() => undefined)
     api.health().then(setHealth).catch(() => undefined)
-  }, [refresh, locked])
+  }, [refresh, locked, route])
 
   // Siaran dari backend: setiap penilaian dan keputusan gerbang mendorong
   // muat ulang, sehingga dashboard tidak perlu menebak kapan harus bertanya.
   useEffect(() => {
-    if (locked) return
+    if (locked || route !== '/dashboard') return
     const url = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws'
     let ws: WebSocket | null = null
     try {
@@ -69,20 +95,34 @@ export default function App() {
       ws = null
     }
     return () => { ws?.close(); wsRef.current = null }
-  }, [refresh, locked])
+  }, [refresh, locked, route])
+
+  if (route !== '/dashboard') {
+    return (
+      <>
+        <header className="land-top">
+          <button className="btn ghost" onClick={() => pindah('/dashboard')}>
+            {t('land.toDashboard')}
+          </button>
+          <LangToggle />
+        </header>
+        <Landing onOpenDashboard={() => pindah('/dashboard')} />
+      </>
+    )
+  }
 
   return (
     <>
     {locked && <Login onOpen={() => setLocked(false)} />}
     <div className={locked ? 'shell locked' : 'shell'} aria-hidden={locked}>
       <header className="topbar">
-        <div className="brand">
+        <button className="brand" onClick={() => pindah('/')} title={t('land.home')}>
           <Logo />
           <div>
             <div className="word">OWL</div>
             <div className="sub">ON DEVICE WATCH LAYER</div>
           </div>
-        </div>
+        </button>
         <div className="spacer" />
         {offline
           ? <span className="pill warn">{t('top.offline')}</span>
