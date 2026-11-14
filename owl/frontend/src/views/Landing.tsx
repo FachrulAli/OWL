@@ -1,4 +1,4 @@
-import { Logo } from '../components/Logo'
+import { Lockup } from '../components/Logo'
 import { useT } from '../lib/i18n'
 
 /**
@@ -266,16 +266,12 @@ export function Landing({ onOpenDashboard }: { onOpenDashboard: () => void }) {
       <section className="land-hero">
         <div className="kicker">{c.kicker}</div>
         <div className="land-brand">
-          <Logo size={62} />
-          <div>
-            <div className="word">OWL</div>
-            <div className="sub">ON DEVICE WATCH LAYER</div>
-          </div>
+          <Lockup width={330} />
         </div>
         <h1>{c.judul1}<br /><span className="accent">{c.judul2}</span></h1>
         <p className="land-lead">{c.lead}</p>
         <div className="land-cta">
-          <button className="btn amber" onClick={onOpenDashboard}>{c.ctaDashboard}</button>
+          <button className="btn" onClick={onOpenDashboard}>{c.ctaDashboard}</button>
           <a className="btn ghost" href={REPO} target="_blank" rel="noreferrer">{c.ctaRepo}</a>
         </div>
         <p className="land-claim">{c.batasKlaim}</p>
@@ -379,7 +375,7 @@ export function Landing({ onOpenDashboard }: { onOpenDashboard: () => void }) {
         <h2>{c.tutupJudul}</h2>
         <p className="land-lead">{c.tutupLead}</p>
         <div className="land-cta">
-          <button className="btn amber" onClick={onOpenDashboard}>{c.ctaDashboard}</button>
+          <button className="btn" onClick={onOpenDashboard}>{c.ctaDashboard}</button>
         </div>
       </section>
 

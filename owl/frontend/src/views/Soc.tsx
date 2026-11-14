@@ -28,7 +28,7 @@ export function Soc({ devices }: { devices: DeviceRow[] }) {
           <div className="kicker">{t('soc.kicker')}</div>
           <p className="muted" style={{ marginBottom: 10 }}>{t('soc.note')}</p>
         </div>
-        {err && <p className="muted" style={{ color: '#F87171', padding: '0 20px 12px' }}>{err}</p>}
+        {err && <p className="muted" style={{ color: 'var(--red)', padding: '0 20px 12px' }}>{err}</p>}
         <table>
           <thead>
             <tr>

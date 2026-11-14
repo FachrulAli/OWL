@@ -106,7 +106,7 @@ Ini bagian paling penting dari dokumen — batas kemampuan dinyatakan di depan, 
 
 **Positioning:** *"Lapisan penilaian risiko on-device untuk armada perangkat TNI AD — menilai yang tidak terlihat oleh MDM."*
 
-**Logo:** wajah burung hantu geometris (mata radar + tanduk) dalam kontur perisai. Palet: Navy `#0B1F3A`, Teal `#14B8A6`, Amber `#F59E0B`, Slate `#64748B`, Off-white `#F8FAFC`. Tipografi: Space Grotesk/Sora (display), Inter (body), IBM Plex Mono (data).
+**Logo:** wajah burung hantu geometris di dalam kontur perisai heksagonal, emas pada hitam. Palet: Hitam `#000000`, Emas `#C9A227`, Emas terang `#E7C878`, Emas redup `#8A6F22`, Off-white hangat `#F5F1E6`. Jingga `#E8A33D` dan merah `#D9534F` dipertahankan **hanya** untuk tingkat risiko tinggi dan kritis, sebab skala yang seluruhnya emas membuat perangkat kritis terlihat sama dengan perangkat bersih. Tipografi: Space Grotesk (display), Inter (body), IBM Plex Mono (data).
 
 ---
 

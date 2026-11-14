@@ -48,7 +48,7 @@ export function Gerbang({ devices, onRefresh }: { devices: DeviceRow[]; onRefres
         <button className="btn" onClick={seed} disabled={busy}>
           {busy ? t('gate.seeding') : t('gate.seed')}
         </button>
-        {err && <p className="muted" style={{ color: '#F87171', marginTop: 12 }}>{err}</p>}
+        {err && <p className="muted" style={{ color: 'var(--red)', marginTop: 12 }}>{err}</p>}
       </div>
     )
   }
@@ -75,7 +75,7 @@ export function Gerbang({ devices, onRefresh }: { devices: DeviceRow[]; onRefres
             </button>
           </div>
         </div>
-        {err && <p className="muted" style={{ color: '#F87171', marginTop: 12 }}>{err}</p>}
+        {err && <p className="muted" style={{ color: 'var(--red)', marginTop: 12 }}>{err}</p>}
       </div>
 
       <div className="grid cols-2">

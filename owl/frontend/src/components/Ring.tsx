@@ -5,12 +5,12 @@ export function Ring({ score, size = 104 }: { score: number | null; size?: numbe
   const r = (size - 12) / 2
   const c = 2 * Math.PI * r
   const pct = Math.max(0, Math.min(100, score ?? 0)) / 100
-  const color = score === null ? '#64748B' : scoreColor(score)
+  const color = score === null ? '#7A7468' : scoreColor(score)
   return (
     <div className="ring" style={{ width: size, height: size }}>
       <svg width={size} height={size} aria-hidden="true">
         <circle cx={size / 2} cy={size / 2} r={r} fill="none"
-                stroke="rgba(148,163,184,.16)" strokeWidth="7" />
+                stroke="rgba(201,162,39,.18)" strokeWidth="7" />
         <circle cx={size / 2} cy={size / 2} r={r} fill="none"
                 stroke={color} strokeWidth="7" strokeLinecap="round"
                 strokeDasharray={`${c * pct} ${c}`}

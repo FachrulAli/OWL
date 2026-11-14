@@ -107,6 +107,14 @@ tidak berarti apa-apa, dan ditolak tanpa melihat skornya.
 
 ---
 
+## Tampilan
+
+Hitam dengan emas, mengikuti lambang. Satu warna aksen saja dengan tiga
+tingkat terang; jingga dan merah dipertahankan **hanya** untuk risiko tinggi
+dan kritis, sebab skala yang seluruhnya emas membuat perangkat kritis
+terlihat sama dengan perangkat bersih. Lambangnya berkas PNG beralfa di
+`frontend/src/assets/`, dipakai ulang sebagai favicon tanpa tulisan.
+
 ## Halaman depan dan dashboard
 
 Yang terbuka pertama kali adalah halaman depan di `/`: masalah, enam sinyal,

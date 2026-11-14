@@ -195,9 +195,16 @@ export const api = {
  * dan jatuh ke rekaman ketika Core tidak terjangkau.
  */
 
+/**
+ * Warna skor.
+ *
+ * Emas untuk keadaan tenang, jingga dan merah untuk bahaya. Dua warna
+ * terakhir sengaja tidak diemaskan: skala yang seluruhnya emas membuat
+ * perangkat kritis terlihat sama dengan perangkat bersih.
+ */
 export function scoreColor(score: number): string {
-  if (score >= 90) return '#F87171'
-  if (score >= 70) return '#F59E0B'
-  if (score >= 30) return '#5EEAD4'
-  return '#14B8A6'
+  if (score >= 90) return '#D9534F'
+  if (score >= 70) return '#E8A33D'
+  if (score >= 30) return '#E7C878'
+  return '#C9A227'
 }
