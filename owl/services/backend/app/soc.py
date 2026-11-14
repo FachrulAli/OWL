@@ -20,6 +20,7 @@ import socket
 import httpx
 
 from . import db
+from .applog import log
 from .config import settings
 from .models import AccessDecision, RiskAssessment
 from . import cef as cef_mod
@@ -57,7 +58,8 @@ async def send_webhook(a: RiskAssessment, d: AccessDecision | None,
                 )
                 delivered = r.status_code < 300
         except Exception as e:                      # jaringan satuan bisa putus
-            print(f"[soc] webhook gagal: {e}", flush=True)
+            log().warning("webhook soc gagal", extra={
+                "device_id": a.device_id, "sebab": str(e)})
 
     await db.save_soc_event(a.device_id, "stix", raw.decode("utf-8"), delivered)
     return delivered, {"signature": signature, "body": body}
@@ -74,7 +76,8 @@ async def send_cef(a: RiskAssessment, d: AccessDecision | None,
                          (settings.CEF_SYSLOG_HOST, settings.CEF_SYSLOG_PORT))
             delivered = True
         except Exception as e:
-            print(f"[soc] syslog gagal: {e}", flush=True)
+            log().warning("syslog cef gagal", extra={
+                "device_id": a.device_id, "sebab": str(e)})
 
     await db.save_soc_event(a.device_id, "cef", msg, delivered)
     return delivered, msg

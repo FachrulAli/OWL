@@ -9,7 +9,9 @@ cd owl
 docker compose up --build       # atau: make backend + make frontend
 ```
 
-Buka dashboard, biarkan di tab **Gerbang**. Jangan tekan apa pun dulu.
+Buka dashboard. Layar kunci muncul lebih dahulu: masukkan kata sandi
+`adminowl` (bawaan; `OWL_API_KEY` pada penggelaran satuan). Setelah terbuka,
+biarkan di tab **Gerbang**. Jangan tekan apa pun dulu.
 
 Siapkan satu terminal di samping, sudah berada di folder `owl/`.
 

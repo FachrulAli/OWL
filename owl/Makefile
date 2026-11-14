@@ -7,7 +7,13 @@
 #   make test      jalankan uji backend
 #   make snapshot  rekam ulang hasil penilaian untuk mode luring dashboard
 #   make up        seluruh stack lewat Docker Compose
+#
+# Kata sandi dashboard: OWL_API_KEY (bawaan adminowl, ganti saat penggelaran)
 
+# Kata sandi dashboard. Dipakai sebagai kunci baca API (NFR 5.1); layar kunci
+# dashboard meneruskan apa yang diketik ke sini, jadi yang memutuskan benar
+# atau salah adalah OWL Core. Ganti pada penggelaran satuan.
+OWL_API_KEY ?= adminowl
 PY := services/backend/.venv/bin/python
 PIP := services/backend/.venv/bin/pip
 API ?= http://localhost:8000
@@ -21,7 +27,8 @@ setup:
 	@echo "siap. jalankan: make backend (terminal 1), make frontend (terminal 2)"
 
 backend:
-	cd services/backend && .venv/bin/python -m uvicorn app.main:app --reload --port 8000
+	cd services/backend && OWL_API_KEY=$(OWL_API_KEY) \
+	  .venv/bin/python -m uvicorn app.main:app --reload --port 8000
 
 frontend:
 	cd frontend && npm run dev

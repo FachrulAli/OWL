@@ -18,6 +18,13 @@ services:
     environment:
       OWL_DB: /data/owl.db
       OWL_INGEST_TOKEN: ${OWL_INGEST_TOKEN:-owl-demo-token}
+      # Kunci baca dashboard dan API. Layar kunci dashboard meneruskan kata
+      # sandi yang diketik ke sini, jadi kata sandi yang keliru membuat API
+      # menjawab 401. Ganti pada penggelaran satuan.
+      OWL_API_KEY: ${OWL_API_KEY:-adminowl}
+      OWL_ADMIN_TOKEN: ${OWL_ADMIN_TOKEN:-owl-demo-admin}
+      OWL_RETENTION_DAYS: ${OWL_RETENTION_DAYS:-90}
+      OWL_LOG_FILE: /data/owl.log
       OWL_AIR_GAPPED: "true"
       # Isi kedua nilai di bawah pada penggelaran satuan. Dibiarkan kosong,
       # event tetap dicatat di basis data lokal untuk diambil petugas.

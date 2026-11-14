@@ -191,11 +191,44 @@ Ringkasnya:
 | PUT | `/api/policy/weight` | ubah bobot kategori | `X-OWL-Admin` |
 | PUT | `/api/policy/threshold` | ubah ambang keputusan | `X-OWL-Admin` |
 | GET | `/api/catalog` | katalog aturan dan bobot | `X-OWL-Api-Key` |
+| GET | `/api/retention` | kebijakan retensi dan cacah baris tersimpan | `X-OWL-Api-Key` |
+| POST | `/api/retention/sweep` | hapus data lampau sekarang | `X-OWL-Admin` |
 | WS | `/ws` | siaran perubahan ke dashboard | terbuka |
 
 `X-OWL-Api-Key` hanya ditegakkan jika `OWL_API_KEY` diisi. Dibiarkan kosong,
 API baca terbuka, dan `/health` menyatakannya sebagai `api_auth: terbuka`.
 Itu hanya sah untuk purwarupa di jaringan terisolasi.
+
+## Kata sandi dashboard
+
+Dashboard dibuka lewat layar kunci. Kata sandi yang diketik diteruskan apa
+adanya sebagai `X-OWL-Api-Key`, jadi yang memutuskan benar atau salah adalah
+OWL Core: kata sandi yang keliru membuat seluruh API baca menjawab 401 dan
+tidak ada data yang keluar. Kuncinya disimpan di `sessionStorage`, sehingga
+tab yang ditutup menutup sesinya.
+
+Bawaannya `adminowl`, disetel lewat `OWL_API_KEY` di `docker-compose.yml` dan
+`Makefile`. **Ganti pada penggelaran satuan.**
+
+Pada tautan publik yang hanya memuat rekaman, tidak ada OWL Core yang
+menjawab, sehingga layar kunci di sana hanya menahan tampilan dan tidak
+melindungi apa pun. Layar itu menyatakannya sendiri ketika hal itu terjadi.
+
+## Retensi data dan pencatatan
+
+| Variabel | Bawaan | Guna |
+|---|---|---|
+| `OWL_RETENTION_DAYS` | `90` | umur maksimum penilaian, keputusan, event SOC, dan penolakan |
+| `OWL_RETENTION_SWEEP_HOURS` | `6` | jarak antar penyapuan; satu penyapuan juga jalan saat layanan mulai |
+| `OWL_LOG_FILE` | `owl.log` | berkas log JSON per baris, berputar pada 5 MB, 3 salinan |
+
+Penyapuan menghapus baris dari `assessments`, `decisions`, `soc_events`, dan
+`rejects`. Yang **tidak** dihapus: identitas perangkat yang masih terdaftar,
+dan `policy_audit`, sebab kewajiban audit perubahan kebijakan justru menuntut
+jejak itu tetap ada.
+
+Log tidak pernah memuat isi telemetri, kunci API, token administrasi, atau
+tanda tangan webhook, dan sifat itu dikunci uji.
 
 ## Dukungan Android
 
@@ -212,7 +245,7 @@ dan batas yang tidak dapat dilampaui aplikasi biasa ada di [`agent/README.md`](a
 ## Hasil pengujian
 
 ```
-38 uji lulus     (cd owl && make test)
+47 uji lulus     (cd owl && make test)
 ```
 
 | Berkas | Cakupan |
@@ -220,6 +253,7 @@ dan batas yang tidak dapat dilampaui aplikasi biasa ada di [`agent/README.md`](a
 | `tests/test_scoring.py` | angka demo 18 dan 87, kejenuhan kategori, peluruhan, korelasi multi-sinyal, attestation |
 | `tests/test_export.py` | bentuk bundle STIX 2.1, pelolosan karakter CEF, stabilitas tanda tangan HMAC |
 | `tests/test_api.py` | registrasi, validasi dan pencatatan penolakan, empat tingkat risiko, reproduksibilitas skor, autentikasi, perubahan kebijakan |
+| `tests/test_retention.py` | data lampau benar-benar terhapus, jejak audit selamat, penyapuan menuntut token admin, log JSON tanpa rahasia |
 
 Pemetaan lengkap tiap kebutuhan ke kode dan buktinya ada di
 [`docs/PEMENUHAN-REQUIREMENTS.md`](../docs/PEMENUHAN-REQUIREMENTS.md).

@@ -55,6 +55,22 @@ const S = {
     en: 'folder, then reload this page.',
   },
 
+  'login.title': { id: 'Dashboard terkunci', en: 'Dashboard locked' },
+  'login.body': {
+    id: 'Masukkan kata sandi satuan untuk membuka penilaian perangkat.',
+    en: 'Enter the unit password to open the device assessments.',
+  },
+  'login.password': { id: 'Kata sandi', en: 'Password' },
+  'login.open': { id: 'Buka', en: 'Unlock' },
+  'login.checking': { id: 'Memeriksa…', en: 'Checking…' },
+  'login.wrong': { id: 'Kata sandi salah.', en: 'Wrong password.' },
+  'login.offlineNote': {
+    id: 'OWL Core tidak terjangkau dari sini, jadi kata sandi tidak dapat '
+      + 'diperiksa di server dan layar ini hanya menahan tampilan rekaman.',
+    en: 'OWL Core cannot be reached from here, so the password cannot be checked '
+      + 'on the server and this screen only holds back the recorded view.',
+  },
+
   'err.title': { id: 'Gagal memuat data', en: 'Could not load data' },
 
   'gate.kicker': { id: 'Gerbang Risiko Perangkat', en: 'Device Risk Gate' },

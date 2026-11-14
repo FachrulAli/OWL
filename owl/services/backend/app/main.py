@@ -3,28 +3,47 @@
 Air-gapped, on-prem. Tidak ada panggilan keluar selain ke SOC di dalam
 jaringan satuan sendiri.
 """
-from contextlib import asynccontextmanager
-
+import asyncio
 import json
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from . import db, rules
+from . import db, retention, rules
 from .api import router
+from .applog import setup as setup_log
 from .config import settings
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    log = setup_log()
     await db.init()
     cat = rules.load()
-    print(f"[owl] {len(cat['rules'])} aturan dimuat, "
-          f"air-gapped={settings.AIR_GAPPED}", flush=True)
-    yield
-    await db.close()
+    log.info("owl core menyala", extra={
+        "aturan": len(cat["rules"]),
+        "air_gapped": settings.AIR_GAPPED,
+        "api_auth": "kunci" if settings.API_KEY else "terbuka",
+        "retensi_hari": settings.RETENTION_DAYS,
+    })
+
+    # Penyapuan pertama saat mulai, lalu berkala. Data lampau tidak menunggu
+    # jadwal berikutnya hanya karena layanan baru dinyalakan.
+    await retention.sweep()
+    sweeper = asyncio.create_task(retention.loop())
+    try:
+        yield
+    finally:
+        sweeper.cancel()
+        try:
+            await sweeper
+        except asyncio.CancelledError:
+            pass
+        log.info("owl core berhenti")
+        await db.close()
 
 
 app = FastAPI(
@@ -50,6 +69,8 @@ async def on_invalid(request: Request, exc: RequestValidationError):
     pada sistem pemantauan.
     """
     detail = json.dumps(exc.errors(), ensure_ascii=False, default=str)[:2000]
+    setup_log().warning("telemetri tidak valid ditolak",
+                        extra={"path": request.url.path})
     if request.url.path.startswith("/api/"):
         device_id = ""
         try:
@@ -62,7 +83,7 @@ async def on_invalid(request: Request, exc: RequestValidationError):
                 device_id, "telemetri tidak valid", detail,
                 request.client.host if request.client else "")
         except Exception as e:
-            print(f"[owl] gagal mencatat penolakan: {e}", flush=True)
+            setup_log().warning("gagal mencatat penolakan", extra={"sebab": str(e)})
     return JSONResponse(status_code=422,
                         content={"detail": exc.errors(), "dicatat": True})
 

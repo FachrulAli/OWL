@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Logo } from './components/Logo'
-import { api, isOffline, onOfflineChange, snapshotGeneratedAt } from './lib/api'
+import { Login } from './components/Login'
+import { api, hasKey, isOffline, onOfflineChange, onUnauthorized, snapshotGeneratedAt } from './lib/api'
 import { LangToggle, useT } from './lib/i18n'
 import type { Key } from './lib/i18n'
 import type { Catalog, DeviceRow } from './lib/types'
@@ -26,6 +27,7 @@ export default function App() {
   const [health, setHealth] = useState<{ version: string; air_gapped: boolean } | null>(null)
   const [err, setErr] = useState('')
   const [offline, setOffline] = useState(isOffline())
+  const [locked, setLocked] = useState(!hasKey())
   const wsRef = useRef<WebSocket | null>(null)
 
   const refresh = useCallback(async () => {
@@ -39,15 +41,21 @@ export default function App() {
 
   useEffect(() => onOfflineChange(setOffline), [])
 
+  // Kunci dicabut di tengah sesi: layar dikunci lagi, bukan dibiarkan
+  // memperlihatkan data terakhir yang sudah tidak berhak dilihat.
+  useEffect(() => onUnauthorized(() => setLocked(true)), [])
+
   useEffect(() => {
+    if (locked) return
     void refresh()
     api.catalog().then(setCatalog).catch(() => undefined)
     api.health().then(setHealth).catch(() => undefined)
-  }, [refresh])
+  }, [refresh, locked])
 
   // Siaran dari backend: setiap penilaian dan keputusan gerbang mendorong
   // muat ulang, sehingga dashboard tidak perlu menebak kapan harus bertanya.
   useEffect(() => {
+    if (locked) return
     const url = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws'
     let ws: WebSocket | null = null
     try {
@@ -61,10 +69,12 @@ export default function App() {
       ws = null
     }
     return () => { ws?.close(); wsRef.current = null }
-  }, [refresh])
+  }, [refresh, locked])
 
   return (
-    <div className="shell">
+    <>
+    {locked && <Login onOpen={() => setLocked(false)} />}
+    <div className={locked ? 'shell locked' : 'shell'} aria-hidden={locked}>
       <header className="topbar">
         <div className="brand">
           <Logo />
@@ -112,5 +122,6 @@ export default function App() {
       {tab === 'aturan' && <Aturan catalog={catalog} />}
       {tab === 'soc' && <Soc devices={devices} />}
     </div>
+    </>
   )
 }

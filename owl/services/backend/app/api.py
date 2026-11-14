@@ -8,9 +8,10 @@ from fastapi import (APIRouter, Depends, Header, HTTPException, Query, Request,
                      WebSocket, WebSocketDisconnect)
 from pydantic import BaseModel, Field
 
-from . import db, demo, pdp, policy, rules, scoring, soc
+from . import db, demo, pdp, policy, retention, rules, scoring, soc
 from . import cef as cef_mod
 from . import stix as stix_mod
+from .applog import log
 from .config import settings
 from .models import AccessDecision, Device, RiskAssessment, Sensitivity, Telemetry
 from .ws import hub
@@ -20,6 +21,7 @@ router = APIRouter()
 
 def _check_token(token: str | None) -> None:
     if token != settings.INGEST_TOKEN:
+        log().warning("telemetri ditolak, token penggelaran tidak sah")
         raise HTTPException(status_code=401, detail="token penggelaran tidak sah")
 
 
@@ -34,12 +36,14 @@ async def require_read(x_owl_api_key: str | None = Header(default=None)) -> None
     if not settings.API_KEY:
         return
     if x_owl_api_key != settings.API_KEY:
+        log().warning("akses baca ditolak, kunci API tidak sah")
         raise HTTPException(status_code=401, detail="kunci API tidak sah")
 
 
 async def require_admin(x_owl_admin: str | None = Header(default=None)) -> str:
     """Otorisasi administrasi kebijakan (FR-12 dan NFR 5.1)."""
     if not settings.ADMIN_TOKEN or x_owl_admin != settings.ADMIN_TOKEN:
+        log().warning("perubahan kebijakan ditolak, token administrasi tidak sah")
         raise HTTPException(status_code=403, detail="token administrasi tidak sah")
     return "admin"
 
@@ -51,6 +55,8 @@ async def health():
     return {"service": settings.SERVICE, "version": settings.VERSION,
             "air_gapped": settings.AIR_GAPPED,
             "api_auth": "aktif" if settings.API_KEY else "terbuka",
+            "retention_days": settings.RETENTION_DAYS,
+            "log_file": settings.LOG_FILE or "(hanya keluaran standar)",
             "enforcement": "rekomendasi"}
 
 
@@ -239,6 +245,31 @@ async def put_threshold(c: ThresholdChange, actor: str = Depends(require_admin))
     await hub.broadcast("policy", {"field": f"threshold.{c.name}", "value": new})
     return {"ok": True, "field": f"threshold.{c.name}", "old": old, "new": new,
             "catatan": "berlaku pada penilaian berikutnya; riwayat tidak dihitung ulang"}
+
+
+# ——————————————————————————— retensi ———————————————————————————
+
+@router.get("/api/retention", dependencies=[Depends(require_read)])
+async def get_retention():
+    """Kebijakan retensi beserta cacah baris yang sedang disimpan (NFR 5.1)."""
+    return {
+        "retention_days": settings.RETENTION_DAYS,
+        "sweep_hours": settings.RETENTION_SWEEP_HOURS,
+        "cutoff": retention.cutoff(),
+        "purged_tables": [t for t, _ in retention.TABLES],
+        "kept_tables": list(retention.KEPT),
+        "counts": await retention.counts(),
+        "catatan": "jejak audit kebijakan dan identitas perangkat tidak dihapus",
+    }
+
+
+@router.post("/api/retention/sweep")
+async def run_retention(days: float | None = Query(default=None, ge=0),
+                        actor: str = Depends(require_admin)):
+    """Jalankan penyapuan sekarang. `days` menimpa ambang hanya untuk sekali ini."""
+    hasil = await retention.sweep(days)
+    log().info("penyapuan retensi manual", extra={"actor": actor, **hasil})
+    return hasil
 
 
 # ——————————————————————————— demo ———————————————————————————

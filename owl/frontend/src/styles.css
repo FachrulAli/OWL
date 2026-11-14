@@ -147,3 +147,36 @@ pre {
 
 .empty { text-align: center; color: var(--slate); padding: 44px 16px; font-size: 14px; }
 .err { border-color: rgba(248,113,113,.5); background: rgba(248,113,113,.08); }
+
+/* ——— layar kunci dashboard ———
+   Halaman di belakangnya diburamkan dan tidak dapat difokus; yang menahan
+   datanya tetap OWL Core, bukan efek ini. */
+.shell.locked { filter: blur(7px); pointer-events: none; user-select: none; }
+
+.lock {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: rgba(7, 21, 39, .72);
+  backdrop-filter: blur(3px);
+}
+.lock-card {
+  width: 100%; max-width: 380px;
+  display: flex; flex-direction: column; gap: 12px;
+  background: linear-gradient(180deg, var(--card) 0%, var(--card-2) 100%);
+  border: 1px solid var(--line); border-radius: 18px; padding: 26px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .45);
+}
+.lock-brand { display: flex; align-items: center; gap: 11px; margin-bottom: 2px; }
+.lock-brand .word { font-family: var(--display); font-weight: 700; font-size: 22px; letter-spacing: .04em; }
+.lock-brand .sub { font-family: var(--mono); font-size: 9px; letter-spacing: .14em; color: var(--teal-soft); }
+.lock-card h3 { font-family: var(--display); font-size: 17px; font-weight: 600; }
+.lock-card input {
+  font-family: var(--mono); font-size: 14px; letter-spacing: .12em;
+  background: rgba(7, 21, 39, .55); color: var(--off);
+  border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; width: 100%;
+}
+.lock-card input:focus { outline: none; border-color: rgba(94, 234, 212, .55); }
+.lock-card input::placeholder { letter-spacing: normal; color: var(--slate); }
+.lock-card .btn { width: 100%; }
+.lock-err { color: var(--red); font-size: 13px; }
+.lock-card .small { font-size: 12px; line-height: 1.5; }

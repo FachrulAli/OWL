@@ -4,7 +4,7 @@ Dokumen ini memetakan tiap kebutuhan pada `OWL_Requirements_Hackathon.md` ke
 tempatnya di kode, dan ke bukti bahwa kebutuhan itu memang berjalan. Status
 ditulis apa adanya: yang belum selesai disebut belum selesai.
 
-Diperiksa 13 November 2026. Uji otomatis: **38 lulus**
+Diperiksa 14 November 2026. Uji otomatis: **47 lulus**
 (`cd owl && make test`).
 
 ## Kebutuhan fungsional
@@ -31,14 +31,14 @@ Diperiksa 13 November 2026. Uji otomatis: **38 lulus**
 | Tidak mengumpulkan konten pribadi | **Selesai** | Skema telemetri tidak punya tempat untuk isi pesan, berkas, kontak, atau lokasi presisi, dan manifest agent tidak meminta izinnya. Layar pertama agent menyebutkan keduanya kepada pemilik perangkat |
 | Pengumpulan data dibatasi | **Selesai** | Hanya indikator yang dipakai aturan. Aplikasi sistem dilewati saat membaca izin |
 | Kanal terenkripsi | **Sebagian** | Agent memakai HTTP biasa ke `10.0.2.2` untuk demo lokal. mTLS tercatat di arsitektur dan belum dipasang pada purwarupa. `usesCleartextTraffic` harus dimatikan sebelum penggelaran |
-| Autentikasi dashboard dan API | **Sebagian** | `OWL_API_KEY` menegakkan autentikasi baca, `OWL_ADMIN_TOKEN` untuk perubahan kebijakan, `OWL_INGEST_TOKEN` untuk telemetri. Dibiarkan kosong, API baca terbuka, dan keadaan itu dinyatakan di `/health` sebagai `api_auth: terbuka`. Belum ada pengguna dan peran |
-| Retensi data | **Belum** | Belum ada kebijakan penghapusan otomatis. Basis datanya tunggal dan dapat dihapus manual |
+| Autentikasi dashboard dan API | **Sebagian** | Dashboard dibuka lewat layar kunci; kata sandinya diteruskan sebagai `OWL_API_KEY`, jadi yang menolak adalah OWL Core, bukan browser. `OWL_ADMIN_TOKEN` untuk perubahan kebijakan dan penyapuan retensi, `OWL_INGEST_TOKEN` untuk telemetri. Tiga peran terpisah (baca, administrasi, penerimaan telemetri), tetapi **belum ada daftar pengguna**: satu kata sandi dipakai bersama. Dibiarkan kosong, API baca terbuka, dan keadaan itu dinyatakan di `/health` |
+| Retensi data | **Selesai** | `app/retention.py`. Penilaian beserta telemetri mentahnya, keputusan, event SOC, dan penolakan dihapus setelah `OWL_RETENTION_DAYS` (bawaan 90). Penyapuan jalan sekali saat layanan mulai, lalu tiap `OWL_RETENTION_SWEEP_HOURS`, dan dapat dipaksa lewat `POST /api/retention/sweep` dengan token administrasi. Identitas perangkat dan `policy_audit` sengaja tidak ikut dihapus, sebab kewajiban audit menuntut jejaknya tetap ada. Enam uji, termasuk satu yang memastikan telemetri lampau hilang dari tabelnya, bukan hanya dari API |
 | Audit perubahan kebijakan | **Selesai** | Tabel `policy_audit` menyimpan waktu, pelaku, ruas, nilai lama, dan nilai baru |
 | On-premise dan air-gapped | **Selesai** | Dua kontainer, SQLite, tanpa panggilan keluar. `/health` menyatakan `air_gapped` |
 | Inti tidak bergantung cloud | **Selesai** | Penilaian risiko tidak memanggil layanan luar. Play Integrity bersifat opsional dan ketiadaannya tidak membatalkan penilaian |
 | Menampilkan waktu pembaruan | **Selesai** | Kartu gerbang dan tabel perangkat menampilkan waktu pemeriksaan terakhir |
 | Kegagalan pengumpulan ditampilkan | **Selesai** | Lihat FR-03 |
-| Pencatatan error | **Sebagian** | Backend mencetak error ke keluaran standar dan mencatat penolakan ke basis data. Belum ada berkas log terstruktur |
+| Pencatatan error | **Selesai** | `app/applog.py`. Satu baris JSON per kejadian ke keluaran standar dan ke `OWL_LOG_FILE`, berputar pada 5 MB dengan 3 salinan. Tercatat: layanan menyala dan berhenti, telemetri tidak valid, kegagalan kunci API dan token administrasi, kegagalan webhook dan syslog, serta penyapuan retensi. Isi telemetri, kunci, token, dan tanda tangan webhook tidak pernah masuk log, dan sifat itu dikunci uji |
 | Versi Android disebutkan | **Selesai** | minSdk 29 (Android 10), compileSdk 35, diuji pada Android 15 API 35. Batasnya ada di `owl/agent/README.md` |
 
 ## Checklist submission
@@ -109,7 +109,7 @@ Attestation terbukti bernilai sah pada air-gapped.
 | Hal | Keterangan |
 |---|---|
 | Uji pada perangkat fisik | Baru diuji di emulator. Emulator tidak dapat menguji StrongBox sungguhan, verdict Play Integrity yang sah, dan perilaku termal |
-| mTLS agent ke backend | Tercatat di arsitektur, belum dipasang |
-| Pengguna dan peran pada dashboard | Baru kunci API tunggal |
+| mTLS agent ke backend | Tercatat di arsitektur, belum dipasang. Agent masih `usesCleartextTraffic` |
+| Daftar pengguna pada dashboard | Sudah ada layar kunci dan tiga peran terpisah, tetapi kata sandinya tunggal dan dipakai bersama. Belum ada pengguna per orang, jadi log tidak dapat menyebut siapa yang membuka apa |
 | Validasi korpus Drebin dan AndroZoo | Tercatat sebagai rencana pada deepdive §10.4, belum dijalankan |
-| Kebijakan retensi data | Belum ada |
+

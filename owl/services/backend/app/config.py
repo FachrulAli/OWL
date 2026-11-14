@@ -75,6 +75,22 @@ class Settings:
     # Kunci administrasi untuk mengubah bobot dan ambang (FR-12).
     ADMIN_TOKEN: str = _s("OWL_ADMIN_TOKEN", "owl-demo-admin")
 
+    # ——— retensi data (NFR 5.1) ———
+    # Telemetri, penilaian, keputusan, event SOC, dan penolakan dihapus
+    # setelah sekian hari. Jejak audit perubahan kebijakan TIDAK ikut dihapus,
+    # sebab kewajiban auditnya justru menuntut jejak itu tetap ada, dan
+    # identitas perangkat yang masih terdaftar juga tetap disimpan.
+    RETENTION_DAYS: float = _f("OWL_RETENTION_DAYS", 90.0)
+    # Jarak antar penyapuan. Penyapuan juga dijalankan sekali saat mulai.
+    RETENTION_SWEEP_HOURS: float = _f("OWL_RETENTION_SWEEP_HOURS", 6.0)
+
+    # ——— pencatatan (NFR 5.3) ———
+    # Baris JSON ke berkas, berputar pada ukuran tertentu. Dibiarkan kosong,
+    # pencatatan hanya ke keluaran standar.
+    LOG_FILE: str = _s("OWL_LOG_FILE", "owl.log")
+    LOG_MAX_BYTES: int = int(_s("OWL_LOG_MAX_BYTES", str(5 * 1024 * 1024)))
+    LOG_BACKUPS: int = int(_s("OWL_LOG_BACKUPS", "3"))
+
     # Air-gapped: tidak ada panggilan keluar selain ke SOC di dalam jaringan
     # sendiri. Diberlakukan oleh jaringan, dan ditegaskan di sini supaya
     # terbaca sebagai keputusan, bukan kelalaian.
