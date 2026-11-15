@@ -29,7 +29,7 @@
 export const UNDUH_AGENT = '/owl-agent.apk'
 
 /** Keterangan singkat pada tombol: versi dan ukuran, bila diketahui. */
-export const AGENT_INFO = 'v1.1.0 · 6,2 MB'
+export const AGENT_INFO = 'v1.2.1 · 6,2 MB'
 
 /**
  * Agent iOS belum ada, dan tombolnya mengatakan itu.
