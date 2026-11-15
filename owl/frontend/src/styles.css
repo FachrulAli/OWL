@@ -2126,3 +2126,13 @@ a.unduh-atas:hover { filter: brightness(1.08); }
   .kmd-sisi { min-height: 0; height: 420px; order: 2; } /* peta lebih dulu, daftar di bawahnya */
   .kmd-stat { gap: 20px; }
 }
+
+/* ——— Peta di puncak selebar penuh; ringkasan dan panel satuan di bawahnya ——— */
+.kmd-badan { display: flex; flex-direction: column; gap: 12px; }
+.kmd-strip { margin-bottom: 0; }
+.kmd-sisi { height: auto; min-height: 0; order: 0; }
+.kmd-sisi .kmd-isi { position: static; overflow: visible; padding: 20px; }
+.kmd-sisi .peta-pintas { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2px 20px; }
+.kmd-sisi .peta-sisi-daftar { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); column-gap: 24px; }
+.kmd-cari { max-width: 420px; }
+@media (max-width: 1000px) { .kmd-sisi { height: auto; order: 0; } }

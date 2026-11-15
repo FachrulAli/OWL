@@ -273,6 +273,16 @@ export function PetaKomando({
     setPandang(batas({ k: ZOOM_PIN, tx: CX - ZOOM_PIN * p.x, ty: CY - ZOOM_PIN * p.y }))
   }, [fokus, titik, batas])
 
+  // Panel satuan berada di bawah peta. Saat satuan dipilih, bawa panelnya
+  // ke layar tanpa menggulung lebih jauh dari yang perlu.
+  useEffect(() => {
+    if (!fokus) return
+    const el = document.querySelector('.kmd-sisi')
+    if (el && 'scrollIntoView' in el) {
+      (el as HTMLElement).scrollIntoView({ block: 'nearest', behavior: tenang ? 'auto' : 'smooth' })
+    }
+  }, [fokus, tenang])
+
   const pilih = useCallback((p: Titik) => {
     onFokus(p.s.id === fokus ? null : p.s.id)
   }, [fokus, onFokus])
@@ -407,7 +417,6 @@ export function PetaKomando({
 
   return (
     <div className="komando">
-      {ringkas && <div className="kmd-strip">{ringkas}</div>}
       <div className="kmd-badan">
       <div className={`peta-bungkus${geser ? ' geser' : ''}`} ref={bungkus}>
         <svg
@@ -615,8 +624,10 @@ export function PetaKomando({
         </div>
       </div>
 
-      {/* Panel satuan menempel di sisi peta, bukan mengambang di atasnya:
-          peta tidak pernah tertutup, dan daftar bisa dicari dan digulung. */}
+      {/* Peta di puncak dengan lebar penuh. Ringkasan dan panel satuan berada
+          di bawahnya, bukan di atas atau di sisinya: tidak ada yang menutupi
+          peta dan tidak ada yang mengurangi lebarnya. */}
+      {ringkas && <div className="kmd-strip">{ringkas}</div>}
       <aside className="kmd-sisi" aria-label={t('map.detail')}>
         <div className="kmd-isi">
           <KeteranganSatuan

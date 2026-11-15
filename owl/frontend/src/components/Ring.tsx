@@ -6,6 +6,9 @@ export function Ring({ score, size = 104 }: { score: number | null; size?: numbe
   const c = 2 * Math.PI * r
   const pct = Math.max(0, Math.min(100, score ?? 0)) / 100
   const color = score === null ? '#7A7468' : scoreColor(score)
+  // Cincin kecil tidak punya ruang untuk "/ 100": angkanya menimpa garis cincin.
+  // Skala 0 sampai 100 cukup disebut di label di sebelahnya.
+  const kecil = size < 80
   return (
     <div className="ring" style={{ width: size, height: size }}>
       <svg width={size} height={size} aria-hidden="true">
@@ -19,14 +22,14 @@ export function Ring({ score, size = 104 }: { score: number | null; size?: numbe
       </svg>
       <div
         className="val"
-        style={{ color, fontSize: Math.round(size * 0.29) }}
+        style={{ color, fontSize: Math.round(size * (kecil ? 0.36 : 0.29)) }}
       >
         {score === null ? '—' : score.toFixed(0)}
       </div>
       {/* Jarak "/ 100" dari pusat harus ikut ukuran cincin. Dipatok pada satu
           angka, ia pas pada ukuran yang dulu dipakai dan jatuh keluar kotak
           begitu cincinnya diperkecil. */}
-      <div className="unit" style={{ marginTop: Math.round(size * 0.42) }}>/ 100</div>
+      {!kecil && <div className="unit" style={{ marginTop: Math.round(size * 0.42) }}>/ 100</div>}
     </div>
   )
 }

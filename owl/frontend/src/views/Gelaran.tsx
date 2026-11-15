@@ -68,7 +68,7 @@ export function Gelaran({ devices, catalog }: { devices: DeviceRow[]; catalog: C
         <div className="kmd-postur" title={t('ov.postureNote', { n: r.dinilai })}>
           <Ring score={rataBulat} size={52} />
           <div>
-            <span className="l">{t('ov.posture')}</span>
+            <span className="l">{t('ov.posture')} · 0–100</span>
             <span
               className="kata"
               style={{ color: rataBulat === null ? 'var(--slate)' : scoreColor(rataBulat) }}
