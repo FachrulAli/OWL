@@ -648,13 +648,13 @@ const TEKS_SISI = {
     semua: 'Satuan dengan perangkat', cari: 'Cari satuan atau kota', kembali: '‹ Semua satuan',
     kosongCari: 'Tidak ada satuan yang cocok.', skor: 'rata-rata', awas: 'perlu tindakan',
     urut: 'Urut dari yang paling berisiko', petunjuk: 'Tekan pin di peta atau satuan di daftar ini.',
-    perangkat: 'perangkat',
+    perangkat: 'perangkat', lihatSemua: (n: number) => `Tampilkan semua ${n} satuan`, ringkas: 'Tampilkan lebih sedikit',
   },
   en: {
     semua: 'Commands with devices', cari: 'Search command or city', kembali: '‹ All commands',
     kosongCari: 'No command matches.', skor: 'average', awas: 'need action',
     urut: 'Riskiest first', petunjuk: 'Press a pin on the map or a command in this list.',
-    perangkat: 'devices',
+    perangkat: 'devices', lihatSemua: (n: number) => `Show all ${n} commands`, ringkas: 'Show fewer',
   },
 } as const
 
@@ -677,6 +677,7 @@ function KeteranganSatuan({
   const { t, word, lang } = useT()
   const L = TEKS_SISI[lang]
   const [kata, setKata] = useState('')
+  const [semua, setSemua] = useState(false)
   const aktif = titik.find((p) => p.s.id === fokus) ?? null
 
   if (!aktif) {
@@ -685,6 +686,7 @@ function KeteranganSatuan({
       .filter((p) => p.milik.length > 0)
       .filter((p) => !q || `${p.s.nama} ${p.s.markas} ${p.s.wilayah}`.toLowerCase().includes(q))
       .sort((a, b) => (b.skor ?? -1) - (a.skor ?? -1))
+    const terlihat = semua || q ? berisi : berisi.slice(0, 8)
     return (
       <>
         <div className="kicker">{L.semua}</div>
@@ -701,7 +703,7 @@ function KeteranganSatuan({
           <p className="muted">{L.kosongCari}</p>
         ) : (
           <ul className="peta-pintas">
-            {berisi.map((p) => (
+            {terlihat.map((p) => (
               <li key={p.s.id}>
                 <button onClick={() => onPilih(p)}>
                   <span className="nama">
@@ -719,7 +721,12 @@ function KeteranganSatuan({
             ))}
           </ul>
         )}
-        <p className="kmd-ket" style={{ marginTop: 14 }}>{L.petunjuk}</p>
+        {!q && berisi.length > 8 && (
+          <button className="tautan kmd-lebih" onClick={() => setSemua(!semua)}>
+            {semua ? L.ringkas : L.lihatSemua(berisi.length)}
+          </button>
+        )}
+        <p className="kmd-ket" style={{ marginTop: 12 }}>{L.petunjuk}</p>
       </>
     )
   }

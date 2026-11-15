@@ -2,23 +2,24 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Latar } from './components/Latar'
 import { Logo } from './components/Logo'
 import { Login } from './components/Login'
+import { StatusKoneksi } from './components/Status'
 import { Notifikasi } from './components/Notifikasi'
 import type { Kabar } from './components/Notifikasi'
-import { PanelAturan } from './components/PanelAturan'
-import { StatusKoneksi, Versi } from './components/Status'
+import { BilahAtas, Sidebar } from './components/Sidebar'
+import { KepalaHalaman } from './components/Ui'
+import { AdminContext } from './lib/admin'
 import { api, clearKey, hasKey, isOffline, onOfflineChange, onUnauthorized, snapshotGeneratedAt, wsQuery } from './lib/api'
 import { LangToggle, useT } from './lib/i18n'
-import type { Key } from './lib/i18n'
-import type { Catalog, DeviceRow, Metrics } from './lib/types'
+import { LABEL, TUJUAN, useNav } from './lib/nav'
+import type { Catalog, DeviceRow, Kasus, Metrics } from './lib/types'
+import { Aturan } from './views/Aturan'
 import { Gelaran } from './views/Gelaran'
-import { Landing } from './views/Landing'
 import { Gerbang } from './views/Gerbang'
+import { Landing } from './views/Landing'
+import { Pendaftaran } from './views/Pendaftaran'
+import { Penanganan } from './views/Penanganan'
 import { Perangkat } from './views/Perangkat'
-import { Operasi } from './views/Operasi'
-import { UNDUH_AGENT } from './lib/agent'
-import { Soc } from './views/Soc'
-
-type Tab = 'ikhtisar' | 'operasi' | 'perangkat'
+import { Sistem } from './views/Sistem'
 
 /**
  * Dua halaman, satu berkas.
@@ -52,34 +53,18 @@ function perluLayarPembuka(): boolean {
   try { return sessionStorage.getItem(SESI_MUAT) === null } catch { return false }
 }
 
-/**
- * Tiga layar, bukan lima.
- *
- * Gerbang, SOC/CSIRT, dan Operasi perangkat dibaca pada saat yang sama
- * oleh orang yang sama: petugas yang sedang menjalankan sesuatu. Dipisah
- * menjadi tiga tab, satu pekerjaan menuntut tiga kali perpindahan layar,
- * dan tiap perpindahan menyembunyikan akibat dari tindakan sebelumnya —
- * gerbang menolak, event keluar ke SOC, lalu penanganannya dibuka. Kini
- * ketiganya satu halaman bernama Operasi, berurutan menurut alur itu.
- *
- * Aturan & bobot juga bukan tab: sifatnya rujukan, dibuka untuk
- * membuktikan satu angka lalu ditutup, jadi ia tinggal di panel sisi kiri.
- */
-const TABS: { id: Tab; label: Key }[] = [
-  { id: 'ikhtisar', label: 'tab.ikhtisar' },
-  { id: 'operasi', label: 'tab.operasi' },
-  { id: 'perangkat', label: 'tab.perangkat' },
-]
-
 export default function App() {
-  const { t, locale } = useT()
+  const { t, lang, locale } = useT()
   const [route, setRoute] = useState(jalurSekarang)
-  const [tab, setTab] = useState<Tab>('ikhtisar')
+  const nav = useNav()
   const [devices, setDevices] = useState<DeviceRow[]>([])
   const [catalog, setCatalog] = useState<Catalog | null>(null)
   const [metrics, setMetrics] = useState<Metrics | null>(null)
-  const [panel, setPanel] = useState(false)
-  const [health, setHealth] = useState<{ version: string; air_gapped: boolean } | null>(null)
+  const [kasus, setKasus] = useState<Kasus[]>([])
+  const [diperbarui, setDiperbarui] = useState<Date | null>(null)
+  const [menuBuka, setMenuBuka] = useState(false)
+  const [admin, setAdmin] = useState('')
+  const [, setHealth] = useState<{ version: string; air_gapped: boolean } | null>(null)
   const [err, setErr] = useState('')
   const [offline, setOffline] = useState(isOffline())
   const [locked, setLocked] = useState(!hasKey())
@@ -88,15 +73,22 @@ export default function App() {
   const [bukaDash, setBukaDash] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
 
+  const muatKasus = useCallback(async () => {
+    if (isOffline()) { setKasus([]); return }
+    try { setKasus(await api.cases()) } catch { setKasus([]) }
+  }, [])
+
   const refresh = useCallback(async () => {
     try {
       setDevices(await api.devices())
       api.metrics().then(setMetrics).catch(() => setMetrics(null))
+      void muatKasus()
+      setDiperbarui(new Date())
       setErr('')
     } catch (e) {
       setErr(String(e instanceof Error ? e.message : e))
     }
-  }, [])
+  }, [muatKasus])
 
   useEffect(() => {
     const kembali = () => setRoute(jalurSekarang())
@@ -276,72 +268,58 @@ export default function App() {
     <>
     {tirai}
     {locked && !muat && !bukaDash && <Login onOpen={bukaKunci} onClose={keluar} />}
-    <div className={`halaman shell${locked ? ' locked' : ''}`} aria-hidden={locked}>
-      {/* Dua baris yang benar-benar sejajar.
-          Baris atas: lambang dan OWL di kiri, tombol operasi di kanan.
-          Baris bawah: tagline, menu, dan keadaan sambungan. Tagline dan
-          menu duduk di garis yang sama, begitu pula lambang dan tombol. */}
-      <header className="topbar">
-        <button className="brand" onClick={() => pindah('/')} title={t('land.home')}>
-          <Logo />
-          <span className="word">OWL</span>
-        </button>
-
-        <div className="sudut-baris">
-          {/* Unduh agent di bilah atas: terlihat di semua tab, tanpa mencari. */}
-          {UNDUH_AGENT && (
-            <a className="btn unduh-atas" href={UNDUH_AGENT} download title={t('top.apkHint')}>
-              {t('top.apk')}
-            </a>
+    <AdminContext.Provider value={{ admin, setAdmin, minta: () => dispatchEvent(new Event('owl:admin')) }}>
+    <div className={`app${locked ? ' locked' : ''}`} aria-hidden={locked}>
+      <Sidebar
+        page={nav.page}
+        onPindah={(p) => nav.go(p)}
+        hitung={{
+          perangkat: devices.length,
+          awas: devices.filter((d) => d.level === 'tinggi' || d.level === 'kritis').length,
+          kasusBuka: kasus.filter((k) => k.status === 'baru' || k.status === 'diperiksa').length,
+        }}
+        buka={menuBuka}
+        onTutup={() => setMenuBuka(false)}
+        onBeranda={() => pindah('/')}
+        onKeluar={keluar}
+      />
+      <div className="app-isi">
+        <BilahAtas
+          offline={offline}
+          diperbarui={diperbarui}
+          onSegar={() => void refresh()}
+          onMenu={() => setMenuBuka(true)}
+          kabar={kabar}
+          judul={LABEL[nav.page][lang]}
+        />
+        <main className="app-main" id="utama" key={nav.page}>
+          {nav.page !== 'ikhtisar' && (
+            <KepalaHalaman judul={LABEL[nav.page][lang]} tujuan={TUJUAN[nav.page][lang]} />
           )}
-          <button className="btn ghost" onClick={() => void refresh()}>{t('top.refresh')}</button>
-          <button className="btn ghost" onClick={keluar}>{t('top.logout')}</button>
-          <Notifikasi kabar={kabar} />
-          <LangToggle />
-        </div>
-
-        <div className="brand-sub">ON DEVICE WATCH LAYER</div>
-
-        <nav className="tabs">
-          {TABS.map((tb) => (
-            <button key={tb.id} aria-current={tab === tb.id} onClick={() => setTab(tb.id)}>
-              {t(tb.label)}
-            </button>
-          ))}
-        </nav>
-
-        <StatusKoneksi offline={offline} />
-      </header>
-
-      <div className="tabisi" key={tab}>
-        {tab === 'ikhtisar' && <Gelaran devices={devices} catalog={catalog} />}
-        {tab === 'perangkat' && <Perangkat devices={devices} />}
-        {tab === 'operasi' && (
-          <>
-            <Gerbang
-              devices={devices}
-              catalog={catalog}
-              metrics={metrics}
-              onRefresh={() => void refresh()}
-            />
-            <h2 className="seksi">{t('tab.soc')}</h2>
-            <Soc devices={devices} />
-            <h2 className="seksi">{t('ops.kicker')}</h2>
-            <Operasi devices={devices} offline={offline} onRefresh={() => void refresh()} />
-          </>
-        )}
+          {nav.page === 'ikhtisar' && <Gelaran devices={devices} catalog={catalog} />}
+          {nav.page === 'perangkat' && (
+            <Perangkat devices={devices} catalog={catalog} terpilih={nav.arg} onPindah={nav.go} />
+          )}
+          {nav.page === 'gerbang' && (
+            <Gerbang devices={devices} catalog={catalog} metrics={metrics}
+                     onRefresh={() => void refresh()} onPindah={nav.go} />
+          )}
+          {nav.page === 'penanganan' && (
+            <Penanganan devices={devices} kasus={kasus} offline={offline} awal={nav.arg}
+                        onRefresh={() => void refresh()} onKasus={muatKasus} onPindah={nav.go} />
+          )}
+          {nav.page === 'pendaftaran' && (
+            <Pendaftaran devices={devices} catalog={catalog} offline={offline} awal={nav.arg}
+                         onRefresh={() => void refresh()} onPindah={nav.go} />
+          )}
+          {nav.page === 'aturan' && <Aturan catalog={catalog} />}
+          {nav.page === 'sistem' && (
+            <Sistem offline={offline} metrics={metrics} onRefresh={() => void refresh()} />
+          )}
+        </main>
       </div>
     </div>
-    {!locked && !muat && (
-      <>
-        <PanelAturan catalog={catalog} buka={panel} onToggle={setPanel} />
-        <Versi
-          version={health?.version ?? null}
-          airGapped={health?.air_gapped ?? true}
-          offline={offline}
-        />
-      </>
-    )}
+    </AdminContext.Provider>
     </>
   )
 }

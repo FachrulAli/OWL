@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { Cip, Ikon } from '../components/Ui'
 import { useT } from '../lib/i18n'
 import type { Catalog } from '../lib/types'
 
@@ -9,13 +11,23 @@ import type { Catalog } from '../lib/types'
  * melihat seluruh aturan beserta bobot dan tingkat keyakinannya di sini.
  */
 export function Aturan({ catalog }: { catalog: Catalog | null }) {
-  const { t, category, word, ruleTitle, ruleDetail } = useT()
+  const { t, lang, category, word, ruleTitle, ruleDetail } = useT()
+  const [q, setQ] = useState('')
+  const [kat, setKat] = useState<string>('semua')
+  const [penentu, setPenentu] = useState(false)
   if (!catalog) return <div className="card"><p className="empty">{t('rules.loading')}</p></div>
 
+  const cari = q.trim().toLowerCase()
+  const lolos = (r: (typeof catalog.rules)[number]) =>
+    (kat === 'semua' || r.category === kat)
+    && (!penentu || r.decisive)
+    && (!cari || [r.id, r.title, r.detail, r.mitre, ruleTitle(r.id, r.title)].some((v) => (v ?? '').toLowerCase().includes(cari)))
   const byCat = new Map<string, typeof catalog.rules>()
-  for (const r of catalog.rules) {
+  for (const r of catalog.rules.filter(lolos)) {
     byCat.set(r.category, [...(byCat.get(r.category) ?? []), r])
   }
+  const semuaKat = [...new Set(catalog.rules.map((r) => r.category))]
+  const jumlah = [...byCat.values()].reduce((a, b) => a + b.length, 0)
 
   return (
     <>
@@ -53,6 +65,24 @@ export function Aturan({ catalog }: { catalog: Catalog | null }) {
           <p className="muted">{t('rules.th4', { n: catalog.thresholds.critical })}</p>
         </div>
       </div>
+
+      <div className="bar-alat bar-saring">
+        <div className="cari-kotak lebar">
+          <Ikon nama="cari" size={16} />
+          <input type="search" value={q} onChange={(e) => setQ(e.target.value)}
+                 placeholder={lang === 'id' ? 'Cari kode aturan, judul, atau teknik MITRE' : 'Search rule code, title, or MITRE technique'}
+                 aria-label={lang === 'id' ? 'Cari aturan' : 'Search rules'} />
+        </div>
+        <div className="cip-baris" role="group" aria-label={lang === 'id' ? 'Kategori' : 'Category'}>
+          <Cip aktif={kat === 'semua'} onKlik={() => setKat('semua')} n={catalog.rules.length}>{lang === 'id' ? 'Semua' : 'All'}</Cip>
+          {semuaKat.map((c) => (
+            <Cip key={c} aktif={kat === c} onKlik={() => setKat(kat === c ? 'semua' : c)}
+                 n={catalog.rules.filter((r) => r.category === c).length}>{category(c)}</Cip>
+          ))}
+          <Cip aktif={penentu} nada="merah" onKlik={() => setPenentu(!penentu)}>{lang === 'id' ? 'Aturan penentu' : 'Decisive rules'}</Cip>
+        </div>
+      </div>
+      {jumlah === 0 && <div className="card"><p className="empty">{lang === 'id' ? 'Tidak ada aturan yang cocok.' : 'No rule matches.'}</p></div>}
 
       {[...byCat.entries()].map(([cat, rs]) => (
         <div key={cat} className="card" style={{ marginBottom: 14, padding: 0, overflow: 'hidden' }}>
