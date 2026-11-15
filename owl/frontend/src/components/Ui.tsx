@@ -27,6 +27,8 @@ const IKON: Record<string, ReactNode> = {
   cari: <><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></>,
   centang: <><path d="M5 12.5l4.5 4.5L19 7.5" /></>,
   panah: <><path d="M9 6l6 6-6 6" /></>,
+  kiri: <><path d="M11 6l-6 6 6 6M19 6l-6 6 6 6" /></>,
+  kanan: <><path d="M13 6l6 6-6 6M5 6l6 6-6 6" /></>,
   keluar: <><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" /><path d="M10 8l-4 4 4 4M6 12h10" /></>,
 }
 

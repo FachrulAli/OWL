@@ -273,16 +273,6 @@ export function PetaKomando({
     setPandang(batas({ k: ZOOM_PIN, tx: CX - ZOOM_PIN * p.x, ty: CY - ZOOM_PIN * p.y }))
   }, [fokus, titik, batas])
 
-  // Panel satuan berada di bawah peta. Saat satuan dipilih, bawa panelnya
-  // ke layar tanpa menggulung lebih jauh dari yang perlu.
-  useEffect(() => {
-    if (!fokus) return
-    const el = document.querySelector('.kmd-sisi')
-    if (el && 'scrollIntoView' in el) {
-      (el as HTMLElement).scrollIntoView({ block: 'nearest', behavior: tenang ? 'auto' : 'smooth' })
-    }
-  }, [fokus, tenang])
-
   const pilih = useCallback((p: Titik) => {
     onFokus(p.s.id === fokus ? null : p.s.id)
   }, [fokus, onFokus])
@@ -627,7 +617,7 @@ export function PetaKomando({
       {/* Peta di puncak dengan lebar penuh. Ringkasan dan panel satuan berada
           di bawahnya, bukan di atas atau di sisinya: tidak ada yang menutupi
           peta dan tidak ada yang mengurangi lebarnya. */}
-      {ringkas && <div className="kmd-strip">{ringkas}</div>}
+      {ringkas && <div className={`kmd-strip${fokus ? ' fokus' : ''}`} aria-live="polite">{ringkas}</div>}
       <aside className="kmd-sisi" aria-label={t('map.detail')}>
         <div className="kmd-isi">
           <KeteranganSatuan
@@ -667,7 +657,7 @@ const TEKS_SISI = {
  * daftar itu, bukan untuk paragraf penjelasan.
  */
 function KeteranganSatuan({
-  titik, fokus, onPilih, onTutup,
+  titik, fokus, onPilih,
 }: {
   titik: Titik[]
   fokus: string | null
@@ -731,25 +721,11 @@ function KeteranganSatuan({
     )
   }
 
-  const { s, milik, lepas } = aktif
+  const { milik, lepas } = aktif
   const urut = [...milik].sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
 
   return (
     <>
-      <button className="kmd-balik" onClick={onTutup}>{L.kembali}</button>
-      <div className="kicker" style={{ marginBottom: 6 }}>
-        {s.pusat ? t('map.center') : t('map.command')}
-        {s.baru && <span className="peta-tag">{t('map.new')}</span>}
-      </div>
-
-      <h4>{s.nama}</h4>
-      <dl>
-        <div><dt>{t('map.hq')}</dt><dd>{s.markas}</dd></div>
-        <div><dt>{t('map.area')}</dt><dd>{s.wilayah}</dd></div>
-      </dl>
-
-      <div className="peta-sisi-garis" />
-
       <div className="kicker" style={{ marginBottom: 10 }}>
         {t('map.deviceList', { n: milik.length })}
       </div>
@@ -759,7 +735,11 @@ function KeteranganSatuan({
       ) : (
         <ul className="peta-sisi-daftar">
           {urut.map((d) => (
-            <li key={d.device_id}>
+            <li
+              key={d.device_id} className="bisa-buka" tabIndex={0} role="link"
+              onClick={() => { location.hash = '/perangkat/' + encodeURIComponent(d.device_id) }}
+              onKeyDown={(e) => { if (e.key === 'Enter') location.hash = '/perangkat/' + encodeURIComponent(d.device_id) }}
+            >
               <span
                 className="skor"
                 style={{ color: d.score === null ? 'var(--slate)' : scoreColor(d.score) }}

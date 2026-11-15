@@ -371,3 +371,49 @@
 .kmd-badan .peta-bungkus { order: 0; }
 .kmd-badan .kmd-strip { order: 1; }
 .kmd-badan .kmd-sisi { order: 2; }
+
+/* ——— sidebar yang dapat diciutkan (hanya pada layar lebar) ——— */
+.app { transition: grid-template-columns .25s cubic-bezier(.22, .8, .2, 1); }
+@media (min-width: 961px) {
+  .app.kecil { grid-template-columns: 76px minmax(0, 1fr); }
+  .sb.kecil { padding-inline: 12px; }
+  .sb.kecil .sb-merek { justify-content: center; padding: 6px 0 14px; }
+  .sb.kecil .sb-merek span, .sb.kecil .sb-judul, .sb.kecil .sb-item span, .sb.kecil .sb-keluar span { display: none; }
+  .sb.kecil .sb-item, .sb.kecil .sb-keluar { justify-content: center; padding: 11px 0; }
+  .sb.kecil .sb-item i { position: absolute; top: 3px; right: 3px; min-width: 18px; padding: 0 5px; font-size: 10.5px; }
+  .sb.kecil .sb-grup + .sb-grup { border-top: 1px solid var(--line); padding-top: 12px; }
+  .sb.kecil .sb-item[aria-current='page']::before { left: -12px; }
+  .sb-ciut .ikon { transition: transform .2s ease; }
+}
+@media (max-width: 960px) { .sb-ciut { display: none; } }
+
+/* ——— ringkasan satuan di atas peta, berubah menurut satuan yang dipilih ——— */
+.kmd-badan .kmd-strip { order: 0; }
+.kmd-badan .peta-bungkus { order: 1; }
+.kmd-badan .kmd-sisi { order: 2; }
+.kmd-strip { padding: 12px 18px; gap: 14px 28px; transition: border-color .25s ease, background .25s ease; min-height: 84px; }
+.kmd-strip.fokus { border-color: var(--gold); background: rgba(201, 162, 39, .09); }
+.kmd-strip .kmd-nama { font-family: var(--display); font-size: 19px; font-weight: 600; margin: 0 0 2px; color: var(--off); }
+.kmd-strip .kmd-judul .muted { font-size: 13px; }
+.kmd-balik { margin: 0 0 6px; padding: 4px 10px; font-size: 12.5px; cursor: pointer; color: var(--gold-soft); background: transparent; border: 1px solid var(--line); border-radius: 999px; }
+.kmd-balik:hover { border-color: var(--gold-soft); color: var(--off); }
+.kmd-lihat { margin-left: auto; white-space: nowrap; }
+.kmd-kosong { color: var(--slate-2); font-size: 13.5px; }
+.kmd-awas { flex: 0 1 auto !important; margin: 0; padding: 6px 12px; border-radius: 8px; background: rgba(232, 163, 61, .1); font-size: 13px !important; }
+
+/* ——— donat sebaran risiko ——— */
+.wk-donat { display: block; width: 156px; height: 156px; margin: 8px auto 14px; }
+.wk-donat-n { font: 700 30px var(--display); fill: var(--off); }
+.wk-donat-l { font: 12.5px var(--display); fill: var(--slate-2); }
+
+/* ——— tidak ada kartu yang meregang jadi kosong ——— */
+.kisi-3, .kisi-2 { align-items: start; }
+@media (min-width: 1281px) {
+  .dua-kolom.gerbang > aside.kolom { position: sticky; top: 76px; align-self: start; }
+}
+
+.kmd-sisi .peta-sisi-daftar li.bisa-buka { cursor: pointer; border-radius: 8px; padding-left: 8px; padding-right: 8px; transition: background .15s ease; }
+.kmd-sisi .peta-sisi-daftar li.bisa-buka:hover, .kmd-sisi .peta-sisi-daftar li.bisa-buka:focus-visible { background: rgba(201, 162, 39, .1); }
+
+.dua-sistem { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+@media (max-width: 1100px) { .dua-sistem { grid-template-columns: minmax(0, 1fr); } }

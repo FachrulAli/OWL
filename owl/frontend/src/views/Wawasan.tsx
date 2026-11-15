@@ -69,6 +69,40 @@ const TEKS = {
   },
 } as const
 
+/** Donat sebaran tingkat risiko: angka total di tengah, irisan menurut tingkat. */
+function Donat({
+  data, total, label, satuan,
+}: {
+  data: { nilai: number; warna: string }[]
+  total: number
+  label: string
+  satuan: string
+}) {
+  const R = 54
+  const C = 2 * Math.PI * R
+  let geser = 0
+  return (
+    <svg className="wk-donat" viewBox="0 0 140 140" role="img" aria-label={`${label}: ${total} ${satuan}`}>
+      <circle cx="70" cy="70" r={R} fill="none" stroke="rgba(255,255,255,.06)" strokeWidth="16" />
+      {data.map((d, i) => {
+        if (d.nilai <= 0 || total <= 0) return null
+        const panjang = (d.nilai / total) * C
+        const el = (
+          <circle
+            key={i} cx="70" cy="70" r={R} fill="none" stroke={d.warna} strokeWidth="16"
+            strokeDasharray={`${Math.max(0, panjang - 2)} ${C - Math.max(0, panjang - 2)}`}
+            strokeDashoffset={-geser} transform="rotate(-90 70 70)"
+          />
+        )
+        geser += panjang
+        return el
+      })}
+      <text x="70" y="72" textAnchor="middle" className="wk-donat-n">{total}</text>
+      <text x="70" y="92" textAnchor="middle" className="wk-donat-l">{satuan}</text>
+    </svg>
+  )
+}
+
 function satuanDari(unit: string): string {
   const u = unit.split('·')[0].trim()
   return u || '-'
@@ -123,7 +157,7 @@ export function Wawasan({ devices, catalog }: { devices: DeviceRow[]; catalog: C
       rata,
       kategori: Object.entries(kategori).sort((a, b) => b[1] - a[1]),
       temuan: [...aturan.values()].sort((a, b) => b.n - a.n).slice(0, 5),
-      satuan: satuan.slice(0, 6),
+      satuan: satuan.slice(0, 8),
       prioritas: [...dinilai].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).slice(0, 8),
       menit,
     }
@@ -169,11 +203,7 @@ export function Wawasan({ devices, catalog }: { devices: DeviceRow[]; catalog: C
       <div className="wk-baris">
         <div className="card">
           <h3>{L.sebaran}</h3>
-          <div className="wk-tumpuk" role="img" aria-label={L.sebaran}>
-            {LEVEL.map((l) => (r.sebaran[l] ?? 0) > 0 && (
-              <i key={l} style={{ flexGrow: r.sebaran[l], background: WARNA[l] }} title={`${word(l)}: ${r.sebaran[l]}`} />
-            ))}
-          </div>
+          <Donat data={LEVEL.map((l) => ({ nilai: r.sebaran[l] ?? 0, warna: WARNA[l] }))} total={r.dinilai} label={L.sebaran} satuan={L.perangkat} />
           <ul className="wk-legenda">
             {LEVEL.map((l) => (
               <li key={l}>

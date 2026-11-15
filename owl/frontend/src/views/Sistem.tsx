@@ -134,81 +134,82 @@ export function Sistem({
         <p className="catatan-atas">{L.butuhAdmin} <button className="tautan" onClick={minta}>{L.isiKunci}</button></p>
       )}
 
-      <div className="kisi-3">
+      {(perhatian || ditolak.length > 0) && (
         <section className="card">
-          <h2>{L.inti}</h2>
-          <dl className="dl-baris">
-            {baris(L.versi, sehat?.version ? `v${sehat.version}` : '—')}
-            {baris(L.mode, sehat?.air_gapped ? L.airgap : L.daring)}
-            {baris(L.attest, sehat?.attestation === 'verify' ? L.verify : L.claim, sehat?.attestation === 'verify' ? '' : 'jingga')}
-            {baris(L.enroll, sehat?.enroll === 'token' ? L.token : L.shared, sehat?.enroll === 'token' ? '' : 'jingga')}
-            {baris(L.signer, sehat?.agent_signers && sehat.agent_signers !== 'kosong' ? L.aktif : L.kosong, sehat?.agent_signers && sehat.agent_signers !== 'kosong' ? '' : 'jingga')}
-            {baris(L.auth, sehat?.api_auth === 'terbuka' ? L.terbuka : L.terkunci, sehat?.api_auth === 'terbuka' ? 'jingga' : '')}
-            {baris(L.enf, L.rekomendasi)}
-            {sehat?.retention_days !== undefined && baris(L.retensi, L.hari(sehat.retention_days))}
-          </dl>
-        </section>
-
-        <section className="card">
-          <h2>{L.rev}</h2>
-          <p className="bantu">{L.revB}</p>
-          <div className="rev-angka">
-            <span className={`lencana ${nadaCabut}`}>{labelCabut}</span>
-            <div><b>{cabut?.entries ?? 0}</b><small>{L.revIsi}</small></div>
-            {cabut?.age_days !== undefined && <div><b>{cabut.age_days}</b><small>{L.revUmur}</small></div>}
-          </div>
-          <label className="berkas">
-            <span>{L.impor}</span>
-            <input type="file" accept=".json" disabled={sibuk || !adaAdmin}
-                   onChange={(e) => void impor(e.target.files?.[0], '/api/attestation/revocations', 'POST')} />
-          </label>
-        </section>
-
-        <section className="card">
-          <h2>{L.lists}</h2>
-          <p className="bantu">{L.listsB}</p>
-          <label className="berkas">
-            <span>{L.blok}</span>
-            <input type="file" accept=".json" disabled={sibuk || !adaAdmin}
-                   onChange={(e) => void impor(e.target.files?.[0], '/api/blocklist/import', 'POST')} />
-          </label>
-          <label className="berkas">
-            <span>{L.pabrik}</span>
-            <input type="file" accept=".json" disabled={sibuk || !adaAdmin}
-                   onChange={(e) => void impor(e.target.files?.[0], '/api/factory-allowlist', 'PUT')} />
-          </label>
-        </section>
-      </div>
-
-      <div className="kisi-2">
-        <section className="card">
-          <h2>{L.perhatian}</h2>
-          {!perhatian && ditolak.length === 0 ? (
-            <p className="bantu">{L.bersih}</p>
-          ) : (
-            <ul className="daftar-perhatian">
-              {cabut?.status !== 'terkini' && <li className="jingga">{labelCabut}: {L.rev}</li>}
-              {belumCek > 0 && <li className="jingga">{L.belumCek(belumCek)}</li>}
-            </ul>
-          )}
-          {ditolak.length > 0 && (
-            <>
-              <h3>{L.ditolak}</h3>
-              <ul className="daftar-tolak">
-                {ditolak.map(([alasan, n]) => <li key={alasan}><b>{n}</b><span>{alasan}</span></li>)}
+            <h2>{L.perhatian}</h2>
+            {!perhatian && ditolak.length === 0 ? (
+              <p className="bantu">{L.bersih}</p>
+            ) : (
+              <ul className="daftar-perhatian">
+                {cabut?.status !== 'terkini' && <li className="jingga">{labelCabut}: {L.rev}</li>}
+                {belumCek > 0 && <li className="jingga">{L.belumCek(belumCek)}</li>}
               </ul>
-            </>
-          )}
-        </section>
+            )}
+            {ditolak.length > 0 && (
+              <>
+                <h3>{L.ditolak}</h3>
+                <ul className="daftar-tolak">
+                  {ditolak.map(([alasan, n]) => <li key={alasan}><b>{n}</b><span>{alasan}</span></li>)}
+                </ul>
+              </>
+            )}
+          </section>
+      )}
 
-        <section className="card">
-          <h2>{L.alarm}</h2>
-          <p className="bantu">{L.alarmB}</p>
-          <button className="btn ghost" disabled={sibuk || !adaAdmin}
-                  onClick={() => void jalankan(() => api.scanAlarms(admin).then(() => undefined), L.diperiksa)}>
-            {L.jalan}
-          </button>
-        </section>
+      <div className="dua-sistem">
+        <div className="kolom">
+          <section className="card">
+              <h2>{L.inti}</h2>
+              <dl className="dl-baris">
+                {baris(L.versi, sehat?.version ? `v${sehat.version}` : '—')}
+                {baris(L.mode, sehat?.air_gapped ? L.airgap : L.daring)}
+                {baris(L.attest, sehat?.attestation === 'verify' ? L.verify : L.claim, sehat?.attestation === 'verify' ? '' : 'jingga')}
+                {baris(L.enroll, sehat?.enroll === 'token' ? L.token : L.shared, sehat?.enroll === 'token' ? '' : 'jingga')}
+                {baris(L.signer, sehat?.agent_signers && sehat.agent_signers !== 'kosong' ? L.aktif : L.kosong, sehat?.agent_signers && sehat.agent_signers !== 'kosong' ? '' : 'jingga')}
+                {baris(L.auth, sehat?.api_auth === 'terbuka' ? L.terbuka : L.terkunci, sehat?.api_auth === 'terbuka' ? 'jingga' : '')}
+                {baris(L.enf, L.rekomendasi)}
+                {sehat?.retention_days !== undefined && baris(L.retensi, L.hari(sehat.retention_days))}
+              </dl>
+            </section>
+          <section className="card">
+              <h2>{L.alarm}</h2>
+              <p className="bantu">{L.alarmB}</p>
+              <button className="btn ghost" disabled={sibuk || !adaAdmin}
+                      onClick={() => void jalankan(() => api.scanAlarms(admin).then(() => undefined), L.diperiksa)}>
+                {L.jalan}
+              </button>
+            </section>
+        </div>
+        <div className="kolom">
+          <section className="card">
+              <h2>{L.rev}</h2>
+              <p className="bantu">{L.revB}</p>
+              <div className="rev-angka">
+                <span className={`lencana ${nadaCabut}`}>{labelCabut}</span>
+                <div><b>{cabut?.entries ?? 0}</b><small>{L.revIsi}</small></div>
+                {cabut?.age_days !== undefined && <div><b>{cabut.age_days}</b><small>{L.revUmur}</small></div>}
+              </div>
+              <label className="berkas">
+                <span>{L.impor}</span>
+                <input type="file" accept=".json" disabled={sibuk || !adaAdmin}
+                       onChange={(e) => void impor(e.target.files?.[0], '/api/attestation/revocations', 'POST')} />
+              </label>
+            </section>
+          <section className="card">
+              <h2>{L.lists}</h2>
+              <p className="bantu">{L.listsB}</p>
+              <label className="berkas">
+                <span>{L.blok}</span>
+                <input type="file" accept=".json" disabled={sibuk || !adaAdmin}
+                       onChange={(e) => void impor(e.target.files?.[0], '/api/blocklist/import', 'POST')} />
+              </label>
+              <label className="berkas">
+                <span>{L.pabrik}</span>
+                <input type="file" accept=".json" disabled={sibuk || !adaAdmin}
+                       onChange={(e) => void impor(e.target.files?.[0], '/api/factory-allowlist', 'PUT')} />
+              </label>
+            </section>
+        </div>
       </div>
 
       {(pesan || salah) && <p className={`pesan${salah ? ' salah' : ''}`} role="status">{salah || pesan}</p>}

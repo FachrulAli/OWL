@@ -25,8 +25,10 @@ export interface Hitung {
 }
 
 export function Sidebar({
-  page, onPindah, hitung, buka, onTutup, onBeranda, onKeluar,
+  page, onPindah, hitung, buka, onTutup, onBeranda, onKeluar, kecil, onKecil,
 }: {
+  kecil: boolean
+  onKecil: () => void
   page: Page
   onPindah: (p: Page) => void
   hitung: Hitung
@@ -47,7 +49,7 @@ export function Sidebar({
   return (
     <>
       {buka && <div className="sb-tirai" onClick={onTutup} aria-hidden="true" />}
-      <aside className={`sb${buka ? ' buka' : ''}`} aria-label={lang === 'id' ? 'Navigasi utama' : 'Main navigation'}>
+      <aside className={`sb${buka ? ' buka' : ''}${kecil ? ' kecil' : ''}`} aria-label={lang === 'id' ? 'Navigasi utama' : 'Main navigation'}>
         <button className="sb-merek" onClick={onBeranda} title={lang === 'id' ? 'Kembali ke halaman depan' : 'Back to the landing page'}>
           <Logo />
           <span>
@@ -65,6 +67,8 @@ export function Sidebar({
                 return (
                   <button
                     key={p} className="sb-item" aria-current={page === p ? 'page' : undefined}
+                    title={kecil ? LABEL[p][lang] : undefined}
+                    aria-label={LABEL[p][lang]}
                     onClick={() => { onPindah(p); onTutup() }}
                   >
                     <Ikon nama={p} />
@@ -78,7 +82,14 @@ export function Sidebar({
         </nav>
 
         <div className="sb-kaki">
-          <button className="sb-keluar" onClick={onKeluar}>
+          <button
+            className="sb-keluar sb-ciut" onClick={onKecil} aria-pressed={kecil}
+            title={kecil ? (lang === 'id' ? 'Perlebar menu' : 'Expand menu') : (lang === 'id' ? 'Ciutkan menu' : 'Collapse menu')}
+          >
+            <Ikon nama={kecil ? 'kanan' : 'kiri'} />
+            <span>{lang === 'id' ? 'Ciutkan menu' : 'Collapse menu'}</span>
+          </button>
+          <button className="sb-keluar" onClick={onKeluar} title={kecil ? (lang === 'id' ? 'Keluar' : 'Log out') : undefined}>
             <Ikon nama="keluar" />
             <span>{lang === 'id' ? 'Keluar' : 'Log out'}</span>
           </button>

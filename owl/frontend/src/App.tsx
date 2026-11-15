@@ -63,6 +63,15 @@ export default function App() {
   const [kasus, setKasus] = useState<Kasus[]>([])
   const [diperbarui, setDiperbarui] = useState<Date | null>(null)
   const [menuBuka, setMenuBuka] = useState(false)
+  const [kecil, setKecil] = useState(() => {
+    try { return localStorage.getItem('owl.sb') === 'kecil' } catch { return false }
+  })
+  const ubahKecil = useCallback(() => {
+    setKecil((k) => {
+      try { localStorage.setItem('owl.sb', k ? 'lebar' : 'kecil') } catch { /* jendela privat */ }
+      return !k
+    })
+  }, [])
   const [admin, setAdmin] = useState('')
   const [, setHealth] = useState<{ version: string; air_gapped: boolean } | null>(null)
   const [err, setErr] = useState('')
@@ -269,8 +278,10 @@ export default function App() {
     {tirai}
     {locked && !muat && !bukaDash && <Login onOpen={bukaKunci} onClose={keluar} />}
     <AdminContext.Provider value={{ admin, setAdmin, minta: () => dispatchEvent(new Event('owl:admin')) }}>
-    <div className={`app${locked ? ' locked' : ''}`} aria-hidden={locked}>
+    <div className={`app${locked ? ' locked' : ''}${kecil ? ' kecil' : ''}`} aria-hidden={locked}>
       <Sidebar
+        kecil={kecil}
+        onKecil={ubahKecil}
         page={nav.page}
         onPindah={(p) => nav.go(p)}
         hitung={{
