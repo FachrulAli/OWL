@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { AGENT_INFO, UNDUH_AGENT } from '../lib/agent'
 import { api } from '../lib/api'
 import { useT } from '../lib/i18n'
 import type { DeviceRow, Kasus, Pencabutan, StatusKasus } from '../lib/types'
@@ -225,6 +226,10 @@ export function Operasi({ devices, offline, onRefresh }: {
           >
             {t('ops.token')}
           </button>
+          {/* Unduh agent berdiri tepat di sebelah penerbitan token, sebab
+              keduanya dipakai dalam menit yang sama: token diterbitkan,
+              agent dipasang di ponsel, lalu perangkatnya mendaftar. */}
+          <UnduhAgent />
           <button
             className="btn amber"
             disabled={sibuk || !adaAdmin || !adaPerangkat || !catatanCukup}
@@ -355,4 +360,42 @@ function labelCabut(status: string, t: (k: never) => string): string {
   if (status === 'terkini') return t('ops.revFresh' as never)
   if (status === 'basi') return t('ops.revStale' as never)
   return t('ops.revMissing' as never)
+}
+
+/**
+ * Tombol unduh APK agent.
+ *
+ * Selama tautannya belum ada, tombolnya tetap ditampilkan tetapi mati dan
+ * menyebutkan bahwa tautannya menyusul. Tombol yang menghilang membuat
+ * orang mengira fiturnya tidak ada; tombol mati yang menerangkan dirinya
+ * menyebutkan apa yang sedang ditunggu.
+ */
+function UnduhAgent() {
+  const { t } = useT()
+  const ikon = (
+    <svg viewBox="0 0 16 16" aria-hidden="true" className="ops-unduh-ikon">
+      <path d="M8 2v8M4.5 7.5 8 11l3.5-3.5" fill="none" stroke="currentColor"
+            strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2.5 13h11" fill="none" stroke="currentColor"
+            strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+
+  if (!UNDUH_AGENT) {
+    return (
+      <span className="ops-unduh-mati" title={t('ops.apkSoon')}>
+        {ikon}
+        {t('ops.apk')}
+        <i>{t('ops.apkSoon')}</i>
+      </span>
+    )
+  }
+
+  return (
+    <a className="btn ops-unduh" href={UNDUH_AGENT} download>
+      {ikon}
+      {t('ops.apk')}
+      {AGENT_INFO && <i>{AGENT_INFO}</i>}
+    </a>
+  )
 }

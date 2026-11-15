@@ -517,6 +517,8 @@ const S = {
     en: 'recorded in the audit trail, at least 3 characters',
   },
   'ops.token': { id: 'Terbitkan token pendaftaran', en: 'Issue enrolment token' },
+  'ops.apk': { id: 'Unduh untuk Android', en: 'Download for Android' },
+  'ops.apkSoon': { id: 'tautan menyusul', en: 'link to follow' },
   'ops.tokenIssued': { id: 'Token pendaftaran diterbitkan.', en: 'Enrolment token issued.' },
   'ops.revoke': { id: 'Cabut perangkat', en: 'Revoke device' },
   'ops.revokeDone': { id: 'Perangkat dicabut.', en: 'Device revoked.' },

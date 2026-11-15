@@ -54,32 +54,44 @@ a { color: var(--gold-soft); }
 /* ——— kerangka ——— */
 .shell { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 24px 20px 64px; }
 
-/* Bilah atas satu baris.
+/* Bilah atas: dua baris yang benar-benar sejajar.
  *
- * Menu naik sejajar dengan tulisan ON DEVICE WATCH LAYER, bukan berdiri
- * sebagai baris tersendiri di bawahnya. Yang didapat bukan kerapian saja:
- * satu baris penuh, sekitar lima puluh piksel, kembali ke peta dan tabel,
- * dan itulah bagian layar yang benar-benar dibaca orang.
+ * Baris atas memuat lambang dan kata OWL di kiri, tombol operasi di kanan.
+ * Baris bawah memuat tagline, menu, dan keadaan sambungan. Pembagiannya
+ * bukan selera: lambang setinggi tombol membuat kedua ujung bilah punya
+ * berat yang sama, dan tagline sebaris menu membuat baris bawah terbaca
+ * sebagai satu garis, bukan sebagai tiga benda yang kebetulan berdekatan.
  *
- * `align-items: end` menempelkan menu pada garis dasar blok lambang, yaitu
- * garis tempat taglinenya duduk. */
+ * Satu angka mengatur dua hal sekaligus lewat `--logo`: ukuran lambang,
+ * dan seberapa jauh tagline menjorok supaya ia rata dengan kata OWL, bukan
+ * rata dengan lambangnya. */
 .topbar {
-  display: grid; grid-template-columns: 1fr auto 1fr;
-  align-items: end; gap: 16px;
+  --logo: 38px;
+  --logo-sela: 12px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 16px; row-gap: 7px;
   margin-bottom: 22px; padding-bottom: 10px;
   border-bottom: 1px solid var(--line);
 }
-.brand { display: flex; align-items: center; gap: 12px; }
-/* Pembetulan optis, bukan pembetulan geometris.
- *
- * Berkas lambangnya sendiri sudah terpusat rapi: isinya 13 piksel dari tepi
- * atas dan 12 dari tepi bawah pada kanvas 510x625, sudah diperiksa. Yang
- * membuatnya tampak turun adalah `align-items: center`, yang menyejajarkan
- * perisai dengan titik tengah SELURUH blok teks, yaitu kata OWL ditambah
- * taglinenya. Mata membaca kata OWL sebagai jangkarnya, dan pusat kata itu
- * berada beberapa piksel di atas pusat blok. Jadi lambangnya dinaikkan
- * sedikit, mengejar yang dilihat mata, bukan yang dihitung kotak. */
-.brand .logo-mark { position: relative; top: -4px; }
+.topbar .brand { grid-area: 1 / 1; align-self: center; }
+.topbar .sudut-baris { grid-area: 1 / 3; justify-self: end; align-self: center; }
+.topbar .brand-sub { grid-area: 2 / 1; align-self: center; }
+.topbar .tabs { grid-area: 2 / 2; align-self: center; }
+.topbar .status-koneksi { grid-area: 2 / 3; justify-self: end; align-self: center; }
+
+.topbar .brand .logo-mark { width: var(--logo); height: var(--logo); }
+.brand-sub {
+  padding-left: calc(var(--logo) + var(--logo-sela));
+  font-family: var(--mono); font-size: 10px; letter-spacing: .14em;
+  color: var(--gold-soft); white-space: nowrap;
+}
+
+.brand { display: flex; align-items: center; gap: var(--logo-sela, 12px); }
+/* Lambang kini duduk pada barisnya sendiri, sebaris dengan kata OWL dan
+   dengan tombol di ujung kanan, jadi pembetulan optis yang dulu dipakai
+   untuk melawan `align-items: center` tidak diperlukan lagi. */
 .brand .word { font-family: var(--display); font-weight: 700; font-size: 28px; letter-spacing: .04em; }
 .brand .sub { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: var(--gold-soft); }
 
@@ -94,9 +106,11 @@ a { color: var(--gold-soft); }
 
 @media (max-width: 1100px) {
   /* Tiga kolom tidak muat; menu turun menjadi barisnya sendiri lagi. */
-  .topbar { grid-template-columns: auto auto; justify-content: space-between; }
-  .topbar > .sudut { justify-self: auto; }
-  .topbar .tabs { grid-column: 1 / -1; justify-content: flex-start; padding-top: 6px; }
+  .topbar { grid-template-columns: 1fr auto; }
+  .topbar .tabs {
+    grid-area: 3 / 1 / 4 / 3;
+    justify-content: flex-start; padding-top: 4px;
+  }
 }
 
 /* ——— pemilih bahasa, di pojok bilah atas ——— */
@@ -916,7 +930,6 @@ pre {
    penuh di bawahnya: ia keterangan, bukan tombol, dan tidak pantas sejajar
    dengan yang ditekan orang. */
 .sudut { display: flex; flex-direction: column; align-items: flex-end; gap: 13px; }
-.topbar > .sudut { justify-self: end; }
 .sudut-baris { display: flex; align-items: center; gap: 8px; }
 .topbar { gap: 10px; }
 
@@ -1972,3 +1985,28 @@ tbody tr.terpilih td:first-child { box-shadow: inset 2px 0 0 var(--gold); }
   content: ''; flex: 1; height: 1px;
   background: linear-gradient(90deg, rgba(201, 162, 39, .28), rgba(201, 162, 39, 0));
 }
+
+/* ——— tombol unduh agent ——— */
+
+.ops-unduh, .ops-unduh-mati {
+  display: inline-flex; align-items: center; gap: 8px;
+  text-decoration: none; white-space: nowrap;
+}
+.ops-unduh-ikon { width: 15px; height: 15px; flex: 0 0 auto; }
+
+/* Keadaan menunggu: terlihat, terbaca, tetapi jelas belum dapat ditekan.
+   Dibedakan dari tombol mati biasa oleh garis putus-putus, supaya tidak
+   tertukar dengan tombol yang mati karena syaratnya belum dipenuhi. */
+.ops-unduh-mati {
+  font-family: var(--display); font-size: 12.5px; font-weight: 600;
+  color: var(--slate); cursor: default;
+  border: 1px dashed var(--line); border-radius: 999px; padding: 9px 14px;
+}
+.ops-unduh-mati i,
+.ops-unduh i {
+  font-style: normal; font-family: var(--mono); font-size: 10px;
+  letter-spacing: .08em; color: var(--slate);
+  padding-left: 8px; border-left: 1px solid var(--line);
+}
+.ops-unduh i { color: #000; border-left-color: rgba(0, 0, 0, .25); }
+.ops-unduh:not(:hover) i { color: var(--gold-dim); border-left-color: var(--line); }

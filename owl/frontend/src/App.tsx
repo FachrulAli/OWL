@@ -275,14 +275,25 @@ export default function App() {
     {tirai}
     {locked && !muat && !bukaDash && <Login onOpen={bukaKunci} onClose={keluar} />}
     <div className={`halaman shell${locked ? ' locked' : ''}`} aria-hidden={locked}>
+      {/* Dua baris yang benar-benar sejajar.
+          Baris atas: lambang dan OWL di kiri, tombol operasi di kanan.
+          Baris bawah: tagline, menu, dan keadaan sambungan. Tagline dan
+          menu duduk di garis yang sama, begitu pula lambang dan tombol. */}
       <header className="topbar">
         <button className="brand" onClick={() => pindah('/')} title={t('land.home')}>
           <Logo />
-          <div>
-            <div className="word">OWL</div>
-            <div className="sub">ON DEVICE WATCH LAYER</div>
-          </div>
+          <span className="word">OWL</span>
         </button>
+
+        <div className="sudut-baris">
+          <button className="btn ghost" onClick={() => void refresh()}>{t('top.refresh')}</button>
+          <button className="btn ghost" onClick={keluar}>{t('top.logout')}</button>
+          <Notifikasi kabar={kabar} />
+          <LangToggle />
+        </div>
+
+        <div className="brand-sub">ON DEVICE WATCH LAYER</div>
+
         <nav className="tabs">
           {TABS.map((tb) => (
             <button key={tb.id} aria-current={tab === tb.id} onClick={() => setTab(tb.id)}>
@@ -291,15 +302,7 @@ export default function App() {
           ))}
         </nav>
 
-        <div className="sudut">
-          <div className="sudut-baris">
-            <button className="btn ghost" onClick={() => void refresh()}>{t('top.refresh')}</button>
-            <button className="btn ghost" onClick={keluar}>{t('top.logout')}</button>
-            <Notifikasi kabar={kabar} />
-            <LangToggle />
-          </div>
-          <StatusKoneksi offline={offline} />
-        </div>
+        <StatusKoneksi offline={offline} />
       </header>
 
       <div className="tabisi" key={tab}>
