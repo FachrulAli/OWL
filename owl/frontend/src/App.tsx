@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Latar } from './components/Latar'
 import { Logo } from './components/Logo'
 import { Login } from './components/Login'
+import { Notifikasi } from './components/Notifikasi'
+import type { Kabar } from './components/Notifikasi'
 import { PanelAturan } from './components/PanelAturan'
 import { StatusKoneksi, Versi } from './components/Status'
 import { api, clearKey, hasKey, isOffline, onOfflineChange, onUnauthorized, snapshotGeneratedAt } from './lib/api'
@@ -189,6 +191,30 @@ export default function App() {
     return () => { ws?.close(); wsRef.current = null }
   }, [refresh, locked, route])
 
+  /**
+   * Isi lonceng pemberitahuan.
+   *
+   * Keadaan yang sama yang dulu memasang spanduk selebar halaman di atas
+   * setiap tab. Lampu dan tulisan "mode luring" tetap menyala di bilah atas,
+   * jadi yang pindah ke sini adalah uraian panjangnya, bukan pengakuannya.
+   */
+  const kabar = useMemo<Kabar[]>(() => {
+    const out: Kabar[] = []
+    if (offline) {
+      out.push({
+        id: 'luring',
+        nada: 'warn',
+        judul: t('offline.title'),
+        isi: `${t('offline.body', { time: new Date(snapshotGeneratedAt).toLocaleString(locale) })}`
+          + ` make backend ${t('offline.body2')} owl/ ${t('offline.body3')}`,
+      })
+    }
+    if (err && !offline) {
+      out.push({ id: 'gagal', nada: 'err', judul: t('err.title'), isi: err })
+    }
+    return out
+  }, [offline, err, t, locale])
+
   const tirai = (
     <>
       <Latar redup={route === '/dashboard'} />
@@ -225,7 +251,10 @@ export default function App() {
             {t('land.toDashboard')}
           </button>
           <div className="sudut">
-            <LangToggle />
+            <div className="sudut-baris">
+              <Notifikasi kabar={kabar} />
+              <LangToggle />
+            </div>
             <StatusKoneksi offline={offline} />
           </div>
         </header>
@@ -250,10 +279,13 @@ export default function App() {
           </div>
         </button>
         <div className="spacer" />
-        <button className="btn ghost" onClick={() => void refresh()}>{t('top.refresh')}</button>
-        <button className="btn ghost" onClick={keluar}>{t('top.logout')}</button>
         <div className="sudut">
-          <LangToggle />
+          <div className="sudut-baris">
+            <button className="btn ghost" onClick={() => void refresh()}>{t('top.refresh')}</button>
+            <button className="btn ghost" onClick={keluar}>{t('top.logout')}</button>
+            <Notifikasi kabar={kabar} />
+            <LangToggle />
+          </div>
           <StatusKoneksi offline={offline} />
         </div>
       </header>
@@ -265,23 +297,6 @@ export default function App() {
           </button>
         ))}
       </nav>
-
-      {offline && (
-        <div className="card" style={{ marginBottom: 16, borderColor: 'rgba(245,158,11,.45)' }}>
-          <h3>{t('offline.title')}</h3>
-          <p className="muted">
-            {t('offline.body', { time: new Date(snapshotGeneratedAt).toLocaleString(locale) })}{' '}
-            <code>make backend</code> {t('offline.body2')} <code>owl/</code>{' '}
-            {t('offline.body3')}
-          </p>
-        </div>
-      )}
-      {err && !offline && (
-        <div className="card err" style={{ marginBottom: 16 }}>
-          <h3>{t('err.title')}</h3>
-          <p className="muted">{err}</p>
-        </div>
-      )}
 
       <div className="tabisi" key={tab}>
         {tab === 'ikhtisar' && (

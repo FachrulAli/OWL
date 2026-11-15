@@ -398,6 +398,45 @@ const S = {
   'map.devices': { id: 'Perangkat', en: 'Devices' },
   'map.deviceN': { id: '{n} terdaftar', en: '{n} enrolled' },
   'map.deviceNone': { id: 'belum ada yang terdaftar', en: 'none enrolled yet' },
+  /* ——— lonceng pemberitahuan ——— */
+
+  'notif.title': { id: 'Pemberitahuan', en: 'Notifications' },
+  'notif.open': { id: 'Buka pemberitahuan', en: 'Open notifications' },
+  'notif.openN': {
+    id: 'Buka pemberitahuan, {n} belum dibaca',
+    en: 'Open notifications, {n} unread',
+  },
+  'notif.empty': {
+    id: 'Tidak ada yang perlu diperhatikan. OWL Core terjangkau dan data di layar '
+      + 'ini hasil penilaian baru.',
+    en: 'Nothing needs attention. OWL Core is reachable and what is on screen is a '
+      + 'fresh assessment.',
+  },
+
+  /* ——— kendali peta ——— */
+
+  'map.zoomIn': { id: 'Perbesar peta', en: 'Zoom in' },
+  'map.zoomOut': { id: 'Perkecil peta', en: 'Zoom out' },
+  'map.reset': { id: 'Kembalikan pandangan peta', en: 'Reset the view' },
+  'map.hide': { id: 'Sembunyikan panel', en: 'Hide the panel' },
+  'map.show': { id: 'Tampilkan panel', en: 'Show the panel' },
+  'map.dragHint': {
+    id: 'seret untuk menggeser · roda untuk zoom',
+    en: 'drag to pan · wheel to zoom',
+  },
+  'map.unmapped': {
+    id: '{n} di antaranya belum dipetakan ke Kodam mana pun, dan dikumpulkan di '
+      + 'markas besar sampai kolom satuannya diisi. Perangkat terdaftar yang tidak '
+      + 'muncul di mana-mana lebih berbahaya daripada perangkat yang ditaruh di '
+      + 'sini sambil dinyatakan belum terpetakan.',
+    en: '{n} of these are not mapped to any area command yet, and are gathered at '
+      + 'headquarters until their unit field is filled in. An enrolled device that '
+      + 'appears nowhere is more dangerous than one parked here and openly marked '
+      + 'as unmapped.',
+  },
+
+  'gate.results': { id: 'Jawaban gerbang', en: 'Gate answers' },
+
   'map.pick': {
     id: 'Tekan satu pin untuk membuka keterangan satuan beserta perangkat yang '
       + 'terdaftar di bawahnya.',
