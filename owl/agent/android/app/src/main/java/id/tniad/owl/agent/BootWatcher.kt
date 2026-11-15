@@ -3,17 +3,20 @@ package id.tniad.owl.agent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 
-/** Menghidupkan kembali layanan sesudah perangkat dinyalakan ulang. */
+/**
+ * Menjadwalkan ulang pelaporan sesudah perangkat dinyalakan.
+ *
+ * Penerima ini TIDAK memulai foreground service: pada Android 15 service
+ * bertipe `dataSync` dilarang dimulai dari BOOT_COMPLETED. Ia hanya
+ * mendaftarkan pekerjaan ke WorkManager, yang diizinkan, dan hanya bila
+ * pemilik perangkat sudah menyalakan pemantauan.
+ */
 class BootWatcher : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
-        val svc = Intent(ctx, PostureService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            ctx.startForegroundService(svc)
-        } else {
-            ctx.startService(svc)
-        }
+        val enabled = ctx.getSharedPreferences("monitoring", Context.MODE_PRIVATE)
+            .getBoolean("enabled", false)
+        if (enabled) PostureSchedule.start(ctx)
     }
 }

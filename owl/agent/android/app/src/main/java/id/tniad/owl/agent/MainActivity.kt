@@ -1,6 +1,7 @@
 package id.tniad.owl.agent
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
 import android.os.Build
@@ -12,6 +13,10 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Layar satu halaman untuk prajurit pemilik perangkat.
@@ -34,6 +39,23 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (intent.action == Intent.ACTION_VIEW &&
+            EnrollmentLink.parse(intent.data?.toString() ?: "", BuildConfig.DEBUG) != null) {
+            val uri = intent.data!!
+            AlertDialog.Builder(this).setTitle("Daftarkan perangkat?")
+                .setMessage("Server: ${uri.getQueryParameter("base")}\nPerangkat: ${uri.getQueryParameter("device")}\nGunakan hanya tautan dari admin satuan.")
+                .setNegativeButton("Batal", null)
+                .setPositiveButton("Daftarkan") { _, _ ->
+                    val ctx = applicationContext
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val accepted = AgentState.lock.withLock { Provisioning.accept(ctx, uri) }
+                        if (accepted) PostureSchedule.start(ctx)
+                        runOnUiThread {
+                            android.widget.Toast.makeText(ctx, if (accepted) "Pendaftaran dijadwalkan" else "Tautan tidak valid", android.widget.Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }.show()
+        }
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(48, 64, 48, 64)
@@ -52,7 +74,7 @@ class MainActivity : Activity() {
         root.addView(title("OWL Agent"))
         root.addView(body("Perangkat: ${Config.deviceId(this)}\n" +
             "${Build.MANUFACTURER} ${Build.MODEL} · Android ${Build.VERSION.RELEASE}\n" +
-            "OWL Core: ${Config.baseUrl}"))
+            "OWL Core: ${Provisioning.base(this)}"))
 
         root.addView(title("Yang dibaca"))
         root.addView(body(
@@ -61,7 +83,7 @@ class MainActivity : Activity() {
             "3. Sertifikat CA yang dipasang pengguna dan profil VPN aktif\n" +
             "4. Sumber pemasangan tiap aplikasi\n" +
             "5. Status integritas perangkat dan tingkat patch keamanan\n" +
-            "6. Volume data keluar 24 jam, sebagai angka total"))
+            "6. Volume data keluar per aplikasi dan waktu pemakaian selama 24 jam"))
 
         root.addView(title("Yang tidak dibaca"))
         root.addView(body(
@@ -77,11 +99,34 @@ class MainActivity : Activity() {
         })
 
         root.addView(Button(this).apply {
+            text = "Uji akses sistem satuan"
+            setOnClickListener {
+                val ctx = applicationContext
+                isEnabled = false
+                CoroutineScope(Dispatchers.IO).launch {
+                    val result = AgentState.lock.withLock {
+                        Attestation.initialize(ctx)
+                        Uploader.checkAccess(ctx)
+                    }
+                    runOnUiThread {
+                        text = if (result.ok) "Akses diterima" else "Akses ditolak / gagal (${result.code})"
+                        isEnabled = true
+                    }
+                }
+            }
+        })
+
+        root.addView(Button(this).apply {
+            text = "Lihat status laporan"
+            setOnClickListener {
+                text = getSharedPreferences("monitoring", MODE_PRIVATE).getString("status", "Belum ada laporan")
+            }
+        })
+
+        root.addView(Button(this).apply {
             text = "Mulai pemantauan"
             setOnClickListener {
-                val svc = Intent(this@MainActivity, PostureService::class.java)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                    startForegroundService(svc) else startService(svc)
+                PostureSchedule.start(this@MainActivity)
                 text = "Pemantauan berjalan"
                 isEnabled = false
             }

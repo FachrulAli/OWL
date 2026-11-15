@@ -110,6 +110,7 @@ a { color: var(--gold-soft); }
   border: 1px solid rgba(231, 200, 120, .42);
   transition: color .25s ease, border-color .25s ease, background .25s ease;
 }
+a.btn { display: inline-block; text-decoration: none; line-height: normal; }
 .btn::before {
   content: ''; position: absolute; inset: 0; z-index: -1;
   background: linear-gradient(90deg, var(--gold), var(--gold-soft));

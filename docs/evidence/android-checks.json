@@ -1,0 +1,26 @@
+﻿{
+    "physical_devices":  [
+
+                         ],
+    "debug_tests":  {
+                        "errors":  0,
+                        "tests":  12,
+                        "failures":  0
+                    },
+    "release_lint":  {
+                         "errors":  0,
+                         "warnings":  14
+                     },
+    "debug_lint":  {
+                       "errors":  0,
+                       "warnings":  15
+                   },
+    "scope":  "Build, lint and JVM unit tests; no Android runtime device connected",
+    "release_with_http":  "rejected as expected",
+    "release_tests":  {
+                          "errors":  0,
+                          "tests":  12,
+                          "failures":  0
+                      },
+    "release_without_ca":  "rejected as expected"
+}

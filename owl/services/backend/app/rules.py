@@ -16,6 +16,13 @@ from .models import Finding, Telemetry
 
 _CATALOG: dict = {}
 _RULES: dict[str, dict] = {}
+_DYNAMIC: dict = {"packages": [], "signers": []}
+_FACTORY: list[dict] = []
+
+
+def set_dynamic(blocklist: dict, factory: list[dict]):
+    global _DYNAMIC, _FACTORY
+    _DYNAMIC, _FACTORY = blocklist, factory
 
 RULES_PATH = Path(__file__).resolve().parent.parent / "rules" / "rules.yaml"
 
@@ -88,7 +95,7 @@ def _allow(name: str) -> list[str]:
 
 
 def _block(name: str) -> list[str]:
-    return catalog().get("blocklists", {}).get(name) or []
+    return list(set(catalog().get("blocklists", {}).get(name) or []) | set(_DYNAMIC.get(name, [])))
 
 
 def is_decisive(rule_id: str) -> bool:
@@ -141,6 +148,11 @@ def _untrusted_apps(t: Telemetry) -> list:
     """
     stores = set(_allow("installers"))
     exempt = set(_allow("packages"))
+    for entry in _FACTORY:
+        if entry["manufacturer"].casefold() == t.manufacturer.casefold():
+            for a in t.apps:
+                if a.package == entry["package"] and a.signer_sha256.lower() == entry["signer_sha256"]:
+                    exempt.add(a.package)
     return [a for a in t.apps
             if a.installer not in stores
             and a.package not in exempt
@@ -237,6 +249,10 @@ def _d02(t: Telemetry) -> Finding | None:
 def _n01(t: Telemetry) -> Finding | None:
     n = t.network
     limit = _p("egress_idle_mb", 50.0)
+    if n.apps is not None:
+        hits = [f"{a.package} (uid {a.uid}): unggahan {a.egress_mb_24h:.1f} MB, tanpa waktu di latar depan"
+                for a in n.apps if a.egress_mb_24h >= limit and a.foreground_ms_24h == 0]
+        return _mk("OWL-N01", hits) if hits else None
     # Hanya dihitung jika perangkat memang nyaris tidak disentuh. Unggahan
     # besar sambil dipakai adalah hal biasa dan bukan urusan aturan ini.
     if n.egress_mb_24h < limit or n.screen_on_ratio_24h > 0.15:
@@ -244,7 +260,7 @@ def _n01(t: Telemetry) -> Finding | None:
     return _mk("OWL-N01", [
         f"unggahan {n.egress_mb_24h:.1f} MB dalam 24 jam",
         f"layar menyala {n.screen_on_ratio_24h * 100:.0f} persen dari waktu itu",
-    ])
+    ], severity="low")
 
 
 def _n02(t: Telemetry) -> Finding | None:

@@ -1,0 +1,8 @@
+{
+  "new_report_received": true,
+  "pid_before": "9608",
+  "pid_after_kill": "",
+  "pid_after_request": "10088",
+  "key_reused": true,
+  "scope": "Android 12 process restart and on-demand WorkManager reporting with launcher visible. Early forced periodic job was deferred by WorkManager timing; no autonomous 15-minute or Android 15 six-hour claim."
+}

@@ -147,6 +147,9 @@ async function withFallback<T>(live: () => Promise<T>, recorded: () => T): Promi
 }
 
 export const api = {
+  operations: <T,>(path: string, method = 'GET', body?: unknown, admin = '') =>
+    req<T>(path, { method, body: body === undefined ? undefined : JSON.stringify(body),
+      headers: admin ? { 'X-OWL-Admin': admin } : {} }),
   health: () =>
     withFallback(
       () => req<{ service: string; version: string; air_gapped: boolean }>('/health'),

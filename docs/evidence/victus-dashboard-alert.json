@@ -1,0 +1,13 @@
+{
+  "machine": "Victus",
+  "browser": "Chrome headless",
+  "soc_transition_visible": true,
+  "old_and_new_decisions_visible": true,
+  "live_refresh_received": true,
+  "baseline_event_id": 30,
+  "latest_event_id": 40,
+  "soc_response_batches": 18,
+  "page_errors": [],
+  "screenshot": "dashboard-alert.png",
+  "scope": "Dashboard tab SOC displays stored events and refreshes after real phone reports; no cross-tab toast asserted; browser bypasses test TLS warning, Android pinning tested separately"
+}

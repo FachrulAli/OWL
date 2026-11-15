@@ -20,7 +20,7 @@ object Config {
      */
     @Suppress("HardwareIds")
     fun deviceId(ctx: Context): String {
-        val fixed = BuildConfig.DEVICE_ID
+        val fixed = Provisioning.device(ctx) ?: BuildConfig.DEVICE_ID
         if (fixed.isNotBlank()) return fixed
         val aid = Settings.Secure.getString(ctx.contentResolver, Settings.Secure.ANDROID_ID)
         return "AND-" + (aid ?: "unknown").take(12).uppercase()

@@ -12,8 +12,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from . import db, policy, retention, rules
+from . import db, policy, retention, rules, operations
 from .api import router
+from .workflow_api import router as workflow_router
 from .applog import setup as setup_log
 from .config import settings
 
@@ -23,6 +24,8 @@ async def lifespan(app: FastAPI):
     log = setup_log()
     await db.init()
     cat = rules.load()
+    app.state.operation_lock = asyncio.Lock()
+    await operations.restore_rules()
     dipulihkan = policy.restore(await db.policy_latest())
     log.info("owl core menyala", extra={
         "aturan": len(cat["rules"]),
@@ -36,10 +39,16 @@ async def lifespan(app: FastAPI):
     # Penyapuan pertama saat mulai, lalu berkala. Data lampau tidak menunggu
     # jadwal berikutnya hanya karena layanan baru dinyalakan.
     await retention.sweep()
-    sweeper = asyncio.create_task(retention.loop())
+    sweeper = asyncio.create_task(retention.loop(app.state.operation_lock))
+    monitor = asyncio.create_task(operations.loop(app.state.operation_lock))
     try:
         yield
     finally:
+        monitor.cancel()
+        try:
+            await monitor
+        except asyncio.CancelledError:
+            pass
         sweeper.cancel()
         try:
             await sweeper
@@ -59,6 +68,15 @@ app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
 )
 app.include_router(router)
+app.include_router(workflow_router)
+
+
+@app.middleware("http")
+async def serialize_state(request: Request, call_next):
+    # Satu proses OWL Core memiliki satu koneksi SQLite. Antrikan operasi
+    # agar cek token, anti replay, dan pembaruan tidak saling menyela.
+    async with request.app.state.operation_lock:
+        return await call_next(request)
 
 
 @app.exception_handler(RequestValidationError)

@@ -40,10 +40,28 @@ import java.security.Signature
 object Attestation {
 
     private const val ALIAS = "owl-agent-key"
+    private var selected = ALIAS
+    private var active = ALIAS
+    fun initialize(ctx: Context) {
+        active = ctx.getSharedPreferences("enrollment", Context.MODE_PRIVATE).getString("active_alias", ALIAS)!!
+        selected = active
+    }
+    fun selectPending(ctx: Context): Boolean {
+        val pending = ctx.getSharedPreferences("enrollment", Context.MODE_PRIVATE).getString("pending_alias", null)
+        if (pending == null) return false
+        selected = pending
+        return hasKey()
+    }
+    fun selectActive() { selected = active }
+    fun activate(ctx: Context) {
+        check(ctx.getSharedPreferences("enrollment", Context.MODE_PRIVATE).edit()
+            .putString("active_alias", selected).remove("pending_alias").commit())
+        active = selected
+    }
     private const val KEYSTORE = "AndroidKeyStore"
 
     private fun spec(challenge: ByteArray, strongBox: Boolean): KeyGenParameterSpec =
-        KeyGenParameterSpec.Builder(ALIAS, KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY)
+        KeyGenParameterSpec.Builder(selected, KeyProperties.PURPOSE_SIGN or KeyProperties.PURPOSE_VERIFY)
             .setAlgorithmParameterSpec(java.security.spec.ECGenParameterSpec("secp256r1"))
             .setDigests(KeyProperties.DIGEST_SHA256)
             .setAttestationChallenge(challenge)
@@ -55,9 +73,12 @@ object Attestation {
      * StrongBox dicoba lebih dahulu; tidak semua perangkat memilikinya, jadi
      * kegagalannya diturunkan ke TEE, bukan dianggap fatal.
      */
-    fun createKey(challenge: ByteArray): Boolean {
+    fun createKey(ctx: Context, challenge: ByteArray): Boolean {
+        selected = if (active == ALIAS) "owl-agent-key-next" else ALIAS
+        if (!ctx.getSharedPreferences("enrollment", Context.MODE_PRIVATE).edit()
+            .putString("pending_alias", selected).commit()) return false
         try {
-            KeyStore.getInstance(KEYSTORE).apply { load(null) }.deleteEntry(ALIAS)
+            KeyStore.getInstance(KEYSTORE).apply { load(null) }.deleteEntry(selected)
         } catch (_: Exception) { }
         for (strongBox in listOf(true, false)) {
             try {
@@ -71,7 +92,7 @@ object Attestation {
     }
 
     fun hasKey(): Boolean = try {
-        KeyStore.getInstance(KEYSTORE).apply { load(null) }.containsAlias(ALIAS)
+        KeyStore.getInstance(KEYSTORE).apply { load(null) }.containsAlias(selected)
     } catch (_: Exception) { false }
 
     /** Rantai sertifikat attestation, DER berbasis64, daun lebih dahulu. */
@@ -79,7 +100,7 @@ object Attestation {
         val out = JSONArray()
         try {
             val ks = KeyStore.getInstance(KEYSTORE).apply { load(null) }
-            for (c in ks.getCertificateChain(ALIAS) ?: emptyArray()) {
+            for (c in ks.getCertificateChain(selected) ?: emptyArray()) {
                 out.put(Base64.encodeToString(c.encoded, Base64.NO_WRAP))
             }
         } catch (_: Exception) { }
@@ -89,7 +110,7 @@ object Attestation {
     /** Sidik rantai, hanya untuk ditampilkan; OWL Core menghitungnya sendiri. */
     fun chainSha256(): String = try {
         val ks = KeyStore.getInstance(KEYSTORE).apply { load(null) }
-        val chain = ks.getCertificateChain(ALIAS) ?: return ""
+        val chain = ks.getCertificateChain(selected) ?: return ""
         val md = java.security.MessageDigest.getInstance("SHA-256")
         for (c in chain) md.update(c.encoded)
         md.digest().joinToString("") { "%02x".format(it) }
@@ -101,7 +122,7 @@ object Attestation {
      */
     fun sign(body: ByteArray): String = try {
         val ks = KeyStore.getInstance(KEYSTORE).apply { load(null) }
-        val key = ks.getKey(ALIAS, null) as PrivateKey
+        val key = ks.getKey(selected, null) as PrivateKey
         val s = Signature.getInstance("SHA256withECDSA")
         s.initSign(key)
         s.update(body)

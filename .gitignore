@@ -24,8 +24,19 @@ local.properties
 # sistem dan editor
 .DS_Store
 *.log
+*.db-wal
+*.db-shm
+*.keystore
+*.p12
+*.key
+owl/infra/tls/*.pem
 .idea/
+.tools/
+.local/
 *.iml
 
 # catatan kerja pribadi, tidak ikut repositori
 docs/ROADMAP-TEKNIS.md
+
+# APK hasil build, diunduh dari dashboard; dibuat ulang tiap rilis
+owl/frontend/public/downloads/*.apk

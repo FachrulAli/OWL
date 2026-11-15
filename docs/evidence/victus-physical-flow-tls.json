@@ -1,0 +1,73 @@
+{
+  "agent_version": "1.1.0",
+  "device_model": "Infinix X6515",
+  "android": "12",
+  "attestation": {
+    "verified": true,
+    "hardware_backed": true,
+    "security_level": "tee",
+    "boot_state": "verified",
+    "device_locked": true,
+    "chain_serials": [
+      "1",
+      "8de3f7b88397356f2cb6ae7b1cc58376",
+      "dc0c8fc764ffbde97e424f6dca7a34de",
+      "f1c172a699eaf51d"
+    ]
+  },
+  "gate_with_original_payload": {
+    "device_id": "INFINIX-NOTE30",
+    "resource": "standard",
+    "decision": "deny",
+    "score": 34.0,
+    "reason": "Deny / Quarantine. Aturan penentu menyala, skor tidak ditimbang: OWL-A03 aplikasi pada daftar larangan.",
+    "quarantine": true,
+    "top_contributors": [
+      "OWL-A03 aplikasi pada daftar larangan (penentu)"
+    ]
+  },
+  "used_token_rejected": 401,
+  "forged_report_status": 401,
+  "revocation_unchecked_devices": [],
+  "device_access_with_payload": 403,
+  "payload_backup_sha256": "c468bd598425e9e6c595b9bffd5b8a99f7a5c26b9e9113510e034f011bbdb806",
+  "gate_without_payload": {
+    "device_id": "INFINIX-NOTE30",
+    "resource": "standard",
+    "decision": "allow",
+    "score": 19.0,
+    "reason": "Allow. Skor di bawah ambang, akses penuh direkomendasikan.",
+    "quarantine": false,
+    "top_contributors": [
+      "OWL-A01 aplikasi dipasang dari luar toko resmi (+10)",
+      "OWL-D02 patch keamanan tertinggal (+9)"
+    ]
+  },
+  "device_access_without_payload": 200,
+  "network_observation": {
+    "per_app_entries": 39,
+    "availability": {
+      "status": "ok",
+      "reason": "",
+      "source": "agent",
+      "checked_at": "2026-11-15T10:19:11.762000Z"
+    },
+    "n01_active": false
+  },
+  "device_access_while_revoked": 403,
+  "device_access_after_unrevoke": 200,
+  "gate_after_restore": {
+    "device_id": "INFINIX-NOTE30",
+    "resource": "standard",
+    "decision": "deny",
+    "score": 34.0,
+    "reason": "Deny / Quarantine. Aturan penentu menyala, skor tidak ditimbang: OWL-A03 aplikasi pada daftar larangan.",
+    "quarantine": true,
+    "top_contributors": [
+      "OWL-A03 aplikasi pada daftar larangan (penentu)"
+    ]
+  },
+  "device_access_after_restore": 403,
+  "payload_final_state": "installed as originally found; app not launched by test",
+  "scope": "Physical Infinix Android 12; release-mode agent; hardware attestation; signed requests through HTTPS nginx over USB adb reverse"
+}

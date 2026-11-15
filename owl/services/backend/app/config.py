@@ -110,6 +110,7 @@ class Settings:
     # shared: cukup token penggelaran bersama. Hanya untuk emulator dan uji.
     ENROLL_MODE: str = _s("OWL_ENROLL", "token").lower()
     ENROLL_TOKEN_TTL_MINUTES: float = _f("OWL_ENROLL_TTL", 60.0)
+    PUBLIC_BASE_URL: str = _s("OWL_PUBLIC_BASE_URL", "")
     # Identitas aplikasi yang boleh memegang kunci agent. Sidik penanda tangan
     # dipisah koma; dibiarkan kosong berarti hanya nama paket yang diperiksa,
     # dan itu HANYA sah selama agent masih build debug.
