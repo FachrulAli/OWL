@@ -15,6 +15,7 @@ import { Landing } from './views/Landing'
 import { Gerbang } from './views/Gerbang'
 import { Perangkat } from './views/Perangkat'
 import { Operasi } from './views/Operasi'
+import { UNDUH_AGENT } from './lib/agent'
 import { Soc } from './views/Soc'
 
 type Tab = 'ikhtisar' | 'operasi' | 'perangkat'
@@ -287,6 +288,12 @@ export default function App() {
         </button>
 
         <div className="sudut-baris">
+          {/* Unduh agent di bilah atas: terlihat di semua tab, tanpa mencari. */}
+          {UNDUH_AGENT && (
+            <a className="btn unduh-atas" href={UNDUH_AGENT} download title={t('top.apkHint')}>
+              {t('top.apk')}
+            </a>
+          )}
           <button className="btn ghost" onClick={() => void refresh()}>{t('top.refresh')}</button>
           <button className="btn ghost" onClick={keluar}>{t('top.logout')}</button>
           <Notifikasi kabar={kabar} />

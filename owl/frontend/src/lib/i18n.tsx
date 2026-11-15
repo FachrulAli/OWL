@@ -445,6 +445,8 @@ const S = {
   /* ——— operasi perangkat ——— */
 
   'tab.operasi': { id: 'Operasi', en: 'Operations' },
+  'top.apk': { id: 'Unduh APK', en: 'Get the APK' },
+  'top.apkHint': { id: 'Agent OWL untuk Android', en: 'OWL agent for Android' },
   'ops.kicker': { id: 'Operasi perangkat', en: 'Device operations' },
   'ops.offlineTitle': {
     id: 'Operasi menuntut OWL Core yang berjalan',

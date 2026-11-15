@@ -2020,3 +2020,6 @@ tbody tr.terpilih td:first-child { box-shadow: inset 2px 0 0 var(--gold); }
   line-height: 1.4; color: var(--amber); max-width: 30ch;
 }
 .ops-unduh-mati[title] { cursor: help; }
+
+a.unduh-atas { display: inline-flex; align-items: center; text-decoration: none; white-space: nowrap; background: linear-gradient(90deg, var(--gold), var(--gold-soft)); color: #000; border-color: var(--gold-soft); }
+a.unduh-atas:hover { filter: brightness(1.08); }

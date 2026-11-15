@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Lockup } from '../components/Logo'
 import { useT } from '../lib/i18n'
+import { UNDUH_AGENT } from '../lib/agent'
 import { useCountUp, useReveal, useScrollProgress } from '../lib/motion'
 
 /**
@@ -30,6 +31,7 @@ interface Copy {
   lead: string
   ctaDashboard: string
   ctaRepo: string
+  ctaApk: string
   gulir: string
   batasKlaim: string
 
@@ -91,6 +93,7 @@ const ID: Copy = {
     + 'rekomendasi keputusan akses. On-prem, siap air-gapped.',
   ctaDashboard: 'Buka dashboard',
   ctaRepo: 'Kode di GitHub',
+  ctaApk: 'Unduh agent Android',
   gulir: 'gulir',
   batasKlaim: 'OWL menilai indikator risiko dan potensi kompromi. OWL tidak '
     + 'mengklaim memastikan seluruh bentuk penyadapan, mendeteksi semua spyware, '
@@ -198,6 +201,7 @@ const EN: Copy = {
     + 'recommendation. On-premise, air-gapped ready.',
   ctaDashboard: 'Open the dashboard',
   ctaRepo: 'Code on GitHub',
+  ctaApk: 'Download the Android agent',
   gulir: 'scroll',
   batasKlaim: 'OWL assesses risk indicators and signs of possible compromise. It '
     + 'does not claim to catch every form of interception, to detect all spyware, or '
@@ -396,6 +400,11 @@ export function Landing({ onOpenDashboard }: { onOpenDashboard: () => void }) {
             <button className="ld-btn utama" onClick={onOpenDashboard}>
               <span>{c.ctaDashboard}</span>
             </button>
+            {UNDUH_AGENT && (
+              <a className="ld-btn" href={UNDUH_AGENT} download>
+                <span>{c.ctaApk}</span>
+              </a>
+            )}
             <a className="ld-btn" href={REPO} target="_blank" rel="noreferrer">
               <span>{c.ctaRepo}</span>
             </a>
