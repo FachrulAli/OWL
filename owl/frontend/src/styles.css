@@ -2023,3 +2023,46 @@ tbody tr.terpilih td:first-child { box-shadow: inset 2px 0 0 var(--gold); }
 
 a.unduh-atas { display: inline-flex; align-items: center; text-decoration: none; white-space: nowrap; background: linear-gradient(90deg, var(--gold), var(--gold-soft)); color: #000; border-color: var(--gold-soft); }
 a.unduh-atas:hover { filter: brightness(1.08); }
+
+/* ——— Wawasan armada (di bawah peta Ikhtisar) ——— */
+.wk { margin-top: 28px; display: grid; gap: 18px; }
+.wk-sorot { list-style: none; display: grid; gap: 8px; }
+.wk-sorot li { padding: 10px 14px; border-left: 2px solid var(--gold); background: rgba(201,162,39,.06); color: var(--off); font-size: 14px; line-height: 1.5; }
+.wk-kpi { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.wk-k { display: grid; gap: 4px; padding: 16px; border: 1px solid var(--line); background: var(--card); border-radius: 12px; }
+.wk-k .l { font-family: var(--display); font-size: 12px; color: var(--slate-2); text-transform: uppercase; letter-spacing: .06em; }
+.wk-k .n { font-family: var(--display); font-size: 34px; font-weight: 600; color: var(--gold-soft); line-height: 1.1; }
+.wk-k .k { font-size: 12px; color: var(--slate); }
+.wk-k.nyala { border-color: rgba(232,163,61,.55); }
+.wk-k.nyala .n { color: var(--amber); }
+.wk-baris { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.wk-baris.dua { grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); }
+.wk-tumpuk { display: flex; height: 16px; border-radius: 8px; overflow: hidden; gap: 2px; margin: 14px 0; }
+.wk-tumpuk i { display: block; min-width: 6px; }
+.wk-legenda { list-style: none; display: grid; gap: 8px; }
+.wk-legenda li { display: grid; grid-template-columns: 12px 1fr auto 44px; align-items: center; gap: 10px; font-size: 13px; color: var(--slate-2); }
+.wk-legenda i { width: 10px; height: 10px; border-radius: 3px; display: block; }
+.wk-legenda b { color: var(--off); font-family: var(--mono); }
+.wk-legenda em { font-style: normal; text-align: right; color: var(--slate); font-family: var(--mono); font-size: 12px; }
+.wk-bar { list-style: none; display: grid; gap: 10px; margin-top: 12px; }
+.wk-bar li { display: grid; grid-template-columns: minmax(90px, 1.1fr) 2fr 34px; align-items: center; gap: 10px; font-size: 13px; color: var(--slate-2); }
+.wk-bar small { display: block; font-size: 11px; color: var(--slate); }
+.wk-bar div { height: 8px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; }
+.wk-bar div i { display: block; height: 100%; background: var(--gold); border-radius: 4px; }
+.wk-bar b { text-align: right; color: var(--off); font-family: var(--mono); }
+.wk-temuan { list-style: none; display: grid; gap: 12px; margin-top: 12px; }
+.wk-temuan li { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; font-size: 13px; color: var(--off); }
+.wk-temuan small { display: block; font-size: 11px; color: var(--slate); font-family: var(--mono); margin-top: 2px; }
+.wk-temuan b { white-space: nowrap; color: var(--gold-soft); font-family: var(--mono); font-size: 12px; }
+.wk-tabel { overflow-x: auto; margin-top: 10px; }
+.wk-tabel table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.wk-tabel th { text-align: left; font-family: var(--display); font-size: 11px; font-weight: 500; color: var(--slate); text-transform: uppercase; letter-spacing: .06em; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.wk-tabel td { padding: 9px 10px; border-bottom: 1px solid rgba(201,162,39,.08); color: var(--slate-2); vertical-align: middle; }
+.wk-tabel td b { color: var(--off); font-family: var(--mono); font-weight: 500; }
+.wk-tabel td.lama { color: var(--amber); }
+.wk-skor { display: inline-block; min-width: 34px; text-align: center; padding: 2px 8px; border: 1px solid; border-radius: 999px; font-family: var(--mono); font-size: 12px; }
+@media (max-width: 1100px) {
+  .wk-kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .wk-baris, .wk-baris.dua { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) { .wk-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

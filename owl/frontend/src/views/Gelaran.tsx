@@ -4,6 +4,7 @@ import { Ring } from '../components/Ring'
 import { JUMLAH_KODAM } from '../data/gelaran'
 import { scoreColor } from '../lib/api'
 import { useT } from '../lib/i18n'
+import { Wawasan } from './Wawasan'
 import type { Catalog, DeviceRow } from '../lib/types'
 
 /**
@@ -110,7 +111,12 @@ export function Gelaran({ devices, catalog }: { devices: DeviceRow[]; catalog: C
     </>
   )
 
-  return <PetaKomando titik={titik} fokus={fokus} onFokus={setFokus} ringkas={ringkas} />
+  return (
+    <>
+      <PetaKomando titik={titik} fokus={fokus} onFokus={setFokus} ringkas={ringkas} />
+      <Wawasan devices={devices} catalog={catalog} />
+    </>
+  )
 }
 
 /** Satu baris angka di panel: nama di kiri, angka besar di kanan. */

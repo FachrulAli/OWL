@@ -583,10 +583,16 @@ async def run_retention(days: float | None = Query(default=None, ge=0),
 
 @router.post("/api/demo/seed",
              dependencies=[Depends(require_demo), Depends(require_read)])
-async def demo_seed():
-    """Muat dua perangkat contoh: satu bersih, satu berisiko."""
+async def demo_seed(fleet: bool = False):
+    """Muat dua perangkat contoh: satu bersih, satu berisiko.
+
+    Dengan `?fleet=true`, muat juga armada contoh sekitar enam puluh perangkat
+    di banyak Kodam (lihat `demo_fleet.py`), dinilai mesin yang sama."""
     async def contoh(t: Telemetry):
         return await _assess(t, synthetic=True)
+    if fleet:
+        from . import demo_fleet
+        return await demo_fleet.seed(contoh)
     result = await demo.seed(contoh)
     return result
 

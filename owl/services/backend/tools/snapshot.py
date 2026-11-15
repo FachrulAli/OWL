@@ -12,12 +12,12 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app import cef, demo, pdp, rules, scoring, stix  # noqa: E402
+from app import cef, demo, demo_fleet, pdp, rules, scoring, stix  # noqa: E402
 
 OUT = Path(__file__).resolve().parents[3] / "frontend" / "src" / "data" / "snapshot.json"
 
@@ -26,10 +26,14 @@ def main() -> None:
     rules.load()
     meta = {d["device_id"]: d for d in demo.DEVICES}
     devices, decisions, soc = [], {}, []
+    # Dua perangkat bertanda tangan skor 18 dan 87, lalu armada contoh.
+    semua = [(None, demo.telemetry_bersih(), 0), (None, demo.telemetry_berisiko(), 0)]
+    semua += demo_fleet.armada()
 
-    for t in (demo.telemetry_bersih(), demo.telemetry_berisiko()):
+    for m, t, menit in semua:
         a = scoring.score(t, rules.evaluate(t))
-        d = meta[a.device_id]
+        d = m or meta[a.device_id]
+        a.assessed_at = a.assessed_at - timedelta(minutes=menit)
         row = json.loads(a.model_dump_json())
         devices.append({**d, "enrolled_at": a.assessed_at.isoformat(),
                         "score": a.score, "level": a.level,
@@ -43,6 +47,10 @@ def main() -> None:
             for r in ("standard", "classified")
         }
         dec = pdp.decide(a, "classified")
+        # Peristiwa SOC hanya untuk perangkat yang perlu ditindak; ratusan
+        # muatan STIX hanya membengkakkan berkas ini.
+        if a.level not in ("tinggi", "kritis") or len(soc) >= 20:
+            continue
         soc.append({"id": len(soc) + 1, "device_id": a.device_id,
                     "sent_at": a.assessed_at.isoformat(), "kind": "stix",
                     "delivered": False,
