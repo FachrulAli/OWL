@@ -36,9 +36,10 @@ Dua kartu muncul. Tunjuk cincin skornya: **18** dan **87**.
 Tunjuk daftar kontributor di kartu kanan.
 
 > "Delapan temuan. Layanan aksesibilitas di luar daftar izin, nilainya 19.
-> Aplikasi yang dipasang dari luar toko resmi, 15. Sertifikat CA yang
-> dipasang pengguna, 12. Jumlah seluruhnya 87, persis skornya. Setiap poin
-> dapat ditunjuk asalnya."
+> Aplikasi yang dipasang manual dari berkas, 12,5, dan aplikasi yang sama
+> memegang izin mikrofon dan kamera, 12,5 lagi. Sertifikat CA yang dipasang
+> pengguna, 12. Jumlah seluruhnya 87, persis skornya. Setiap poin dapat
+> ditunjuk asalnya."
 
 Tarik **lidah "Aturan & bobot"** di tepi kiri layar sebentar.
 
@@ -102,6 +103,21 @@ Tunjuk status *tersimpan lokal*.
 
 ---
 
+## Jika ditanya: "bagaimana dengan perangkat yang skornya rendah tetapi jelas berbahaya?"
+
+> "Skor hanya menimbang yang ambigu. Yang pasti tidak ditimbang: aplikasi di
+> daftar larangan, perangkat ber-root, attestation yang gagal, dan laporan
+> yang sudah kedaluwarsa ditolak tanpa melihat skor. Kami menemukan perlunya
+> lapis ini saat OWL dijalankan pada HP sungguhan yang membawa payload uji:
+> skornya hanya 40, dan versi lama meloloskannya dengan MFA."
+
+Buktinya dapat diperlihatkan tanpa browser:
+
+```bash
+curl -s -X POST localhost:8000/api/telemetry -H 'X-OWL-Token: owl-demo-token' \
+     -H 'Content-Type: application/json' -d @samples/perangkat-berisiko.json
+```
+
 ## Jika demonya macet
 
 | Gejala | Tindakan |
@@ -115,7 +131,7 @@ Tunjuk status *tersimpan lokal*.
 
 | Angka | Asal |
 |---|---|
-| 18 | 10 (izin berlebih) + 6 (patch 75 hari) + 2 (tujuan jaringan baru) |
+| 18 | 10 (satu aplikasi bawaan tanpa sumber tercatat) + 6 (patch 75 hari) + 2 (tujuan jaringan baru) |
 | 87 | 30 (runtime, jenuh) + 25 (aplikasi, jenuh) + 20 (konfigurasi, jenuh) + 6 (patch) + 6 (unggahan saat idle) |
 | 70 dan 90 | ambang deny, `app/config.py`, dapat disetel satuan lewat variabel lingkungan |
 

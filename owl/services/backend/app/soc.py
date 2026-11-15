@@ -94,3 +94,29 @@ async def dispatch(a: RiskAssessment, d: AccessDecision | None,
         "cef": {"delivered": ok_cef, "line": cef_line},
         "air_gapped": settings.AIR_GAPPED,
     }
+
+
+async def emit(kind: str, device_id: str, details: dict) -> None:
+    """Satu event workflow, HMAC webhook dan CEF syslog; selalu disimpan."""
+    body = {"event": kind, "device_id": device_id, **details}
+    raw = json.dumps(body, ensure_ascii=False).encode("utf-8")
+    delivered = False
+    if settings.SOC_WEBHOOK_URL:
+        try:
+            async with httpx.AsyncClient(timeout=5) as client:
+                r = await client.post(settings.SOC_WEBHOOK_URL, content=raw,
+                    headers={"Content-Type": "application/json", "X-OWL-Signature": sign(raw)})
+                delivered = r.is_success
+        except Exception:
+            log().exception("event workflow gagal dikirim")
+    if settings.CEF_SYSLOG_HOST:
+        try:
+            # JSON dikodekan agar karakter pemisah dan baris baru tak menyisipkan event CEF.
+            safe = raw.decode().replace("\\", "\\\\").replace("=", "\\=").replace("|", "\\|").replace("\n", "\\n")
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+                sock.sendto(f"<134>CEF:0|OWL|Core|1|{kind}|{kind}|5|msg={safe}".encode(),
+                            (settings.CEF_SYSLOG_HOST, settings.CEF_SYSLOG_PORT))
+            delivered = True
+        except Exception:
+            log().exception("event workflow syslog gagal")
+    await db.save_soc_event(device_id, kind, raw.decode(), delivered)

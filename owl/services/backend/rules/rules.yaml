@@ -12,11 +12,15 @@
 #   corroborate  true  = severitas diturunkan satu tingkat jika aturan ini
 #                        satu-satunya yang menyala. Korelasi multi-sinyal
 #                        (deepdive §7.1 modul C) untuk menekan positif palsu.
+#   decisive   true  = ATURAN PENENTU. Jika menyala pada severitas critical,
+#                        gerbang menolak tanpa melihat skor. Dipakai untuk
+#                        keadaan yang pasti, bukan yang ambigu: skor hanya
+#                        untuk sinyal yang perlu ditimbang.
 #   mitre      teknik ATT&CK Mobile yang dipetakan (deepdive §6.3)
 #   confidence tingkat keyakinan metode, dari §7.5. Ditampilkan apa adanya.
 
-version: 1
-updated: 2026-11-13
+version: 2
+updated: 2026-11-15
 
 allowlists:
   # Diisi oleh satuan saat penggelaran. Kosong pada purwarupa, dan aturan
@@ -24,10 +28,26 @@ allowlists:
   # sebagai "semua diizinkan".
   accessibility_services: []
   vpn_profiles: []
+  # HANYA toko aplikasi. `com.google.android.packageinstaller` sengaja TIDAK
+  # ada di sini: APK yang dipasang manual dari berkas tercatat dipasang oleh
+  # paket itu, jadi mengizinkannya sama dengan mengizinkan sideload. Ditemukan
+  # 2026-11-15 pada HP uji: payload uji lolos dari OWL-A01 karena baris itu.
   installers:
     - com.android.vending          # Google Play
-    - com.google.android.packageinstaller
     - id.tniad.owl.store           # toko aplikasi satuan (rencana)
+  # Paket yang dikecualikan dari OWL-A01 dan OWL-A02. Agent OWL dipasang
+  # satuan lewat adb atau MDM, sehingga sumbernya memang bukan toko. Daftar
+  # berbasis nama paket ini sementara; pengganti yang benar adalah sidik
+  # penanda tangan (`signer_sha256`) setelah seluruh agent melaporkannya.
+  packages:
+    - id.tniad.owl.agent
+
+# Daftar larangan (IOC). Diisi satuan dari feed Kartika CSIRT, lewat berkas,
+# tanpa koneksi keluar. Cocok di salah satu daftar = OWL-A03, aturan penentu.
+blocklists:
+  packages:
+    - com.metasploit.stage         # nama paket bawaan payload msfvenom
+  signers: []                      # SHA-256 sertifikat penanda tangan APK
 
 parameters:
   patch_warn_days: 60              # patch keamanan lebih tua dari ini: medium
@@ -36,6 +56,9 @@ parameters:
   beacon_jitter_pct: 10.0          # interval keluar yang terlalu teratur
   unusual_destination_min: 1
   new_destination_min: 1
+  # Umur maksimum penilaian yang masih boleh dipakai gerbang. Lebih tua dari
+  # ini, perangkat diperlakukan sebagai tidak diketahui dan ditolak. 0 = mati.
+  max_report_age_minutes: 60
 
 rules:
   # ——— 1. Perilaku runtime (bobot kategori 30) ———
@@ -69,23 +92,41 @@ rules:
     severity: high
     title: Aplikasi dipasang dari luar toko resmi
     detail: >-
-      Sumber pemasangan tidak ada di daftar installer yang diizinkan.
-      Sideload adalah vektor masuk utama spyware komersial.
+      Sumber pemasangan bukan toko yang diizinkan. Dipasang manual dari
+      berkas APK bernilai high; sumber yang tidak tercatat sama sekali
+      (bawaan pabrik atau adb, keduanya tidak dapat dibedakan dari sini)
+      bernilai medium.
     mitre: T1478 Install Insecure or Malicious Configuration
     confidence: tinggi
     corroborate: false
 
   - id: OWL-A02
     category: app
-    severity: medium
-    title: Izin mikrofon, kamera, atau lokasi yang berlebihan
+    severity: high
+    title: Aplikasi dari luar toko resmi memegang izin perekaman
     detail: >-
-      Aplikasi memegang gabungan izin perekaman yang tidak sejalan dengan
-      fungsinya. Diukur sebagai gabungan, bukan satu izin, karena satu izin
-      mikrofon pada aplikasi pesan adalah hal yang wajar.
+      Aplikasi yang sumbernya bukan toko yang diizinkan memegang gabungan
+      izin mikrofon, kamera, atau lokasi. Korelasinya per aplikasi: aplikasi
+      toko resmi yang memegang izin serupa (aplikasi pesan, misalnya) tidak
+      dihitung, sebab itu menyala di hampir setiap ponsel dan tidak
+      membedakan apa pun.
     mitre: T1429 Audio Capture / T1512 Video Capture
     confidence: sedang
-    corroborate: true
+    corroborate: false
+
+  - id: OWL-A03
+    category: app
+    severity: critical
+    decisive: true
+    title: Aplikasi pada daftar larangan
+    detail: >-
+      Nama paket atau sidik penanda tangan aplikasi cocok dengan daftar
+      larangan satuan. Ini kecocokan pasti, bukan indikasi: gerbang menolak
+      tanpa melihat skor. Nama paket mudah diganti penyerang; kecocokan
+      penanda tangan lebih kuat dan dipakai bila agent melaporkannya.
+    mitre: T1476 Deliver Malicious App
+    confidence: tinggi
+    corroborate: false
 
   # ——— 3. Konfigurasi: sertifikat dan VPN (bobot kategori 20) ———
   - id: OWL-C01
@@ -114,6 +155,7 @@ rules:
   - id: OWL-D01
     category: device
     severity: critical
+    decisive: true
     title: Integritas perangkat gagal
     detail: >-
       Play Integrity menolak perangkat, atau ditemukan artefak root
@@ -175,6 +217,7 @@ rules:
   - id: OWL-X01
     category: device
     severity: critical
+    decisive: true
     title: Attestation agent tidak sah
     detail: >-
       Laporan datang dari agent yang tidak dapat membuktikan dirinya build

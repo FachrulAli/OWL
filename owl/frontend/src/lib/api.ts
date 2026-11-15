@@ -28,6 +28,14 @@ export function hasKey(): boolean {
   return apiKey !== ''
 }
 
+/**
+ * Kunci untuk WebSocket. Browser tidak dapat menyetel header pada WebSocket,
+ * jadi OWL Core menerimanya lewat parameter kueri `key`.
+ */
+export function wsQuery(): string {
+  return apiKey ? `?key=${encodeURIComponent(apiKey)}` : ''
+}
+
 export function setKey(k: string): void {
   apiKey = k
   try { sessionStorage.setItem(KEY_STORE, k) } catch { /* jendela privat */ }
@@ -139,6 +147,9 @@ async function withFallback<T>(live: () => Promise<T>, recorded: () => T): Promi
 }
 
 export const api = {
+  operations: <T,>(path: string, method = 'GET', body?: unknown, admin = '') =>
+    req<T>(path, { method, body: body === undefined ? undefined : JSON.stringify(body),
+      headers: admin ? { 'X-OWL-Admin': admin } : {} }),
   health: () =>
     withFallback(
       () => req<{ service: string; version: string; air_gapped: boolean }>('/health'),

@@ -53,11 +53,15 @@ def _lupakan_pencatat() -> None:
 def client(tmp_path):
     db_lama = _paksa("DB_PATH", str(tmp_path / "uji.db"))
     log_lama = _paksa("LOG_FILE", str(tmp_path / "owl.log"))
+    mode_lama = _paksa("ATTESTATION_MODE", "claim")
+    enroll_lama = _paksa("ENROLL_MODE", "shared")
     _lupakan_pencatat()
     policy.reset()
     with TestClient(app) as c:
         yield c
     policy.reset()
+    _paksa("ENROLL_MODE", enroll_lama)
+    _paksa("ATTESTATION_MODE", mode_lama)
     _lupakan_pencatat()
     _paksa("DB_PATH", db_lama)
     _paksa("LOG_FILE", log_lama)

@@ -14,6 +14,11 @@
 # dashboard meneruskan apa yang diketik ke sini, jadi yang memutuskan benar
 # atau salah adalah OWL Core. Ganti pada penggelaran satuan.
 OWL_API_KEY ?= adminowl
+# verify: hanya perangkat dengan rantai Key Attestation yang lolos verifikasi
+# yang dipercaya (bawaan). claim: klaim agent dipercaya, untuk emulator dan
+# telemetri contoh lewat curl; jalankan `make backend OWL_ATTESTATION=claim`.
+OWL_ATTESTATION ?= verify
+KEY := -H "X-OWL-Api-Key: $(OWL_API_KEY)"
 PY := services/backend/.venv/bin/python
 PIP := services/backend/.venv/bin/pip
 API ?= http://localhost:8000
@@ -27,7 +32,7 @@ setup:
 	@echo "siap. jalankan: make backend (terminal 1), make frontend (terminal 2)"
 
 backend:
-	cd services/backend && OWL_API_KEY=$(OWL_API_KEY) \
+	cd services/backend && OWL_API_KEY=$(OWL_API_KEY) OWL_ATTESTATION=$(OWL_ATTESTATION) \
 	  .venv/bin/python -m uvicorn app.main:app --reload --port 8000
 
 frontend:
@@ -38,12 +43,12 @@ test:
 
 demo:
 	@echo "== memuat dua perangkat contoh =="
-	@curl -s -X POST $(API)/api/demo/seed | $(PY) -m json.tool
+	@curl -s $(KEY) -X POST $(API)/api/demo/seed | $(PY) -m json.tool
 	@echo "\n== gerbang: sistem terklasifikasi =="
-	@curl -s -X POST "$(API)/api/gate/TACTICAL-07?resource=classified" | $(PY) -m json.tool
-	@curl -s -X POST "$(API)/api/gate/KOMANDO-02?resource=classified" | $(PY) -m json.tool
+	@curl -s $(KEY) -X POST "$(API)/api/gate/TACTICAL-07?resource=classified" | $(PY) -m json.tool
+	@curl -s $(KEY) -X POST "$(API)/api/gate/KOMANDO-02?resource=classified" | $(PY) -m json.tool
 	@echo "\n== baris CEF yang dikirim ke SIEM =="
-	@curl -s "$(API)/api/devices/KOMANDO-02/cef" | $(PY) -c "import json,sys; print(json.load(sys.stdin)['cef'])"
+	@curl -s $(KEY) "$(API)/api/devices/KOMANDO-02/cef" | $(PY) -c "import json,sys; print(json.load(sys.stdin)['cef'])"
 
 snapshot:
 	$(PY) -I services/backend/tools/snapshot.py

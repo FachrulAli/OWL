@@ -32,7 +32,7 @@
   "apps": [
     {
       "package": "com.sys.servicehelper",
-      "installer": "",
+      "installer": "com.google.android.packageinstaller",
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.CAMERA",

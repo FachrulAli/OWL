@@ -1,0 +1,7 @@
+{
+  "apk": "C:\\Users\\BSSN-76B5\\Documents\\produktif\\kartika\\OWL\\owl\\agent\\android\\app\\build\\outputs\\apk\\release\\app-release.apk",
+  "apk_sha256": "4745452796b745c4ffff7878809201be10bb92f70bb7f63a768e6cd0a1652cf0",
+  "signer_sha256": "75a7ea80618bd7f4288269b73e16db09dea5fbc9633ab30a4eb3b6643b599c41",
+  "base_url": "https://localhost:8443",
+  "scope": "local release signer for this workspace; replace with approved unit signer for deployment"
+}

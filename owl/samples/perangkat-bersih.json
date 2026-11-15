@@ -25,6 +25,11 @@
       "package": "com.android.chrome",
       "installer": "com.android.vending",
       "permissions": []
+    },
+    {
+      "package": "com.vendor.catatan",
+      "installer": "",
+      "permissions": []
     }
   ],
   "integrity": {

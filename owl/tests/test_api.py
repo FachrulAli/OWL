@@ -29,11 +29,20 @@ def _paksa(name: str, value):
 @pytest.fixture()
 def client(tmp_path):
     db_lama = _paksa("DB_PATH", str(tmp_path / "uji.db"))
+    # Uji di berkas ini mengirim telemetri tanpa rantai attestation, jadi
+    # memakai mode claim. Mode verify diuji di test_attestation.py.
+    mode_lama = _paksa("ATTESTATION_MODE", "claim")
+    enroll_lama = _paksa("ENROLL_MODE", "shared")
     policy.reset()
     with TestClient(app) as c:
         yield c
     policy.reset()
+    _paksa("ENROLL_MODE", enroll_lama)
+    _paksa("ATTESTATION_MODE", mode_lama)
     _paksa("DB_PATH", db_lama)
+
+
+TOKEN = {"X-OWL-Token": settings.INGEST_TOKEN}
 
 
 def _telemetri(device_id: str = "UJI-01") -> dict:
@@ -52,9 +61,16 @@ def _telemetri(device_id: str = "UJI-01") -> dict:
 # ——————————————————————— FR-01 registrasi ———————————————————————
 
 def test_registrasi_perangkat(client):
-    r = client.post("/api/devices", json={"device_id": "UJI-01", "label": "HP uji"})
+    r = client.post("/api/devices", json={"device_id": "UJI-01", "label": "HP uji"}, headers=TOKEN)
     assert r.status_code == 200 and r.json()["ok"] is True
     assert any(d["device_id"] == "UJI-01" for d in client.get("/api/devices").json())
+
+
+def test_registrasi_tanpa_token_ditolak_dan_dicatat(client):
+    r = client.post("/api/devices", json={"device_id": "PENYUSUP"})
+    assert r.status_code == 401
+    assert not any(d["device_id"] == "PENYUSUP" for d in client.get("/api/devices").json())
+    assert any(x["reason"] == "pendaftaran ditolak" for x in client.get("/api/rejects").json())
 
 
 def test_telemetri_perangkat_belum_terdaftar_ditolak(client):
@@ -91,7 +107,7 @@ def test_token_penggelaran_salah_ditolak_dan_dicatat(client):
 
 def test_indikator_tidak_terbaca_melewati_aturannya(client):
     """Indikator yang tidak dapat diperiksa tidak boleh dianggap lulus."""
-    client.post("/api/devices", json={"device_id": "UJI-01"})
+    client.post("/api/devices", json={"device_id": "UJI-01"}, headers=TOKEN)
     t = _telemetri()
     t["availability"] = {
         "certificates": {"status": "unavailable", "reason": "trust store tidak terbaca"},
@@ -109,7 +125,7 @@ def test_indikator_tidak_terbaca_melewati_aturannya(client):
 
 def test_skor_dapat_direproduksi(client):
     """Input dan aturan yang sama harus menghasilkan skor yang sama."""
-    client.post("/api/devices", json={"device_id": "UJI-01"})
+    client.post("/api/devices", json={"device_id": "UJI-01"}, headers=TOKEN)
     skor = []
     for _ in range(3):
         r = client.post("/api/telemetry", json=_telemetri(),
@@ -164,7 +180,7 @@ def test_empat_tingkat_risiko_terjangkau(client):
     }
     hasil = {}
     for device_id, tambahan in kasus.items():
-        client.post("/api/devices", json={"device_id": device_id})
+        client.post("/api/devices", json={"device_id": device_id}, headers=TOKEN)
         t = _telemetri(device_id) | tambahan
         r = client.post("/api/telemetry", json=t,
                         headers={"X-OWL-Token": settings.INGEST_TOKEN})
@@ -233,3 +249,66 @@ def test_kunci_api_baca_ditegakkan_saat_diisi(client):
         assert client.get("/health").status_code == 200   # kesehatan tetap terbuka
     finally:
         _paksa("API_KEY", lama)
+
+
+def test_gerbang_ekspor_dan_demo_tunduk_pada_kunci_baca(client):
+    """Gerbang, ekspor STIX dan CEF, serta endpoint demo dulu terbuka walau
+    kunci baca diisi. `demo/reset` yang terbuka berarti siapa pun di jaringan
+    dapat mengosongkan basis data."""
+    client.post("/api/demo/seed")
+    lama = _paksa("API_KEY", "rahasia-baca")
+    try:
+        for metode, jalur in [("post", "/api/gate/KOMANDO-02"),
+                              ("get", "/api/devices/KOMANDO-02/stix"),
+                              ("get", "/api/devices/KOMANDO-02/cef"),
+                              ("post", "/api/demo/seed"),
+                              ("post", "/api/demo/reset")]:
+            assert getattr(client, metode)(jalur).status_code == 401, jalur
+        h = {"X-OWL-Api-Key": "rahasia-baca"}
+        assert client.post("/api/gate/KOMANDO-02", headers=h).status_code == 200
+        assert len(client.get("/api/devices", headers=h).json()) == 2   # reset tadi ditolak
+    finally:
+        _paksa("API_KEY", lama)
+
+
+def test_endpoint_demo_hilang_saat_mode_demo_dimatikan(client):
+    lama = _paksa("DEMO_MODE", False)
+    try:
+        assert client.post("/api/demo/seed").status_code == 404
+        assert client.post("/api/demo/reset").status_code == 404
+    finally:
+        _paksa("DEMO_MODE", lama)
+
+
+def test_kebijakan_bertahan_melewati_restart(tmp_path):
+    """Ambang yang diubah administrator dulu hanya hidup di memori, dan
+    kembali diam-diam ke bawaan saat layanan dinyalakan ulang."""
+    db_lama = _paksa("DB_PATH", str(tmp_path / "restart.db"))
+    try:
+        policy.reset()
+        with TestClient(app) as c:
+            r = c.put("/api/policy/threshold", json={"name": "high", "value": 60},
+                      headers={"X-OWL-Admin": settings.ADMIN_TOKEN})
+            assert r.status_code == 200
+        policy.reset()                                   # tiru proses baru
+        with TestClient(app) as c:
+            assert c.get("/api/policy").json()["thresholds"]["high"] == 60.0
+    finally:
+        policy.reset()
+        _paksa("DB_PATH", db_lama)
+
+
+def test_payload_pada_perangkat_ditolak_gerbang(client):
+    """Skenario HP uji: payload dipasang manual, gerbang menolak di kedua
+    tingkat sumber daya walau skornya sendiri hanya sedang."""
+    client.post("/api/devices", json={"device_id": "UJI-PAYLOAD"}, headers=TOKEN)
+    t = _telemetri("UJI-PAYLOAD") | {"apps": [
+        {"package": "com.metasploit.stage",
+         "installer": "com.google.android.packageinstaller",
+         "permissions": ["android.permission.RECORD_AUDIO", "android.permission.CAMERA"]}]}
+    r = client.post("/api/telemetry", json=t, headers=TOKEN)
+    assert r.status_code == 200
+    assert r.json()["decision"]["decision"] == "deny"
+    for resource in ("standard", "classified"):
+        d = client.post(f"/api/gate/UJI-PAYLOAD?resource={resource}").json()
+        assert d["decision"] == "deny" and d["quarantine"] is True

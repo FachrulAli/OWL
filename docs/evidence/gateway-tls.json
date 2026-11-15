@@ -1,0 +1,13 @@
+{
+  "gateway": "nginx auth_request + TLS",
+  "access_sequence": [
+    200,
+    403,
+    200
+  ],
+  "http_status": 308,
+  "unknown_ca_rejected": true,
+  "internal_auth_hidden": true,
+  "unauthenticated_status": 401,
+  "scope": "synthetic attestation chain rooted in temporary test CA, real HTTP/TLS requests"
+}

@@ -50,7 +50,8 @@ object Posture {
     fun apps(ctx: Context): JSONArray {
         val pm = ctx.packageManager
         val out = JSONArray()
-        val pkgs = pm.getInstalledPackages(PackageManager.GET_PERMISSIONS)
+        val pkgs = pm.getInstalledPackages(
+            PackageManager.GET_PERMISSIONS or PackageManager.GET_SIGNING_CERTIFICATES)
         for (p in pkgs) {
             val appInfo = p.applicationInfo ?: continue
             // Aplikasi sistem bawaan dilewati: keduanya memang memegang izin
@@ -72,11 +73,29 @@ object Posture {
             out.put(JSONObject().apply {
                 put("package", p.packageName)
                 put("installer", installerOf(ctx, p.packageName))
+                put("signer_sha256", signerOf(p))
                 put("permissions", JSONArray(granted))
             })
         }
         return out
     }
+
+    /**
+     * SHA-256 sertifikat penanda tangan APK. Nama paket dapat diganti siapa
+     * saja; kunci penanda tangan tidak. OWL Core memakainya untuk daftar
+     * larangan dan, kelak, daftar izin. Kosong berarti tidak terbaca.
+     */
+    private fun signerOf(p: android.content.pm.PackageInfo): String = try {
+        val info = p.signingInfo
+        val sigs = when {
+            info == null -> null
+            info.hasMultipleSigners() -> info.apkContentsSigners
+            else -> info.signingCertificateHistory
+        }
+        // Pada riwayat rotasi, entri TERAKHIR adalah penanda tangan saat ini.
+        val cur = sigs?.lastOrNull()
+        if (cur == null) "" else sha256(cur.toByteArray())
+    } catch (_: Exception) { "" }
 
     /** Sinyal 4: sumber pemasangan. String kosong berarti tidak diketahui. */
     private fun installerOf(ctx: Context, pkg: String): String = try {
@@ -270,8 +289,11 @@ object Posture {
         ) == AppOpsManager.MODE_ALLOWED
     }
 
+    private var networkError: String? = null
+
     fun network(ctx: Context): JSONObject {
         val obj = JSONObject()
+        networkError = null
         var egressMb = 0.0
         var screenRatio = 1.0
 
@@ -286,8 +308,43 @@ object Posture {
                     tx += nsm.querySummaryForDevice(type, null, since, now).txBytes
                 }
                 egressMb = Math.round(tx / 1_048_576.0 * 10) / 10.0
-            } catch (_: Exception) { }
+            } catch (e: Exception) { networkError = e.message ?: "Volume jaringan tidak terbaca" }
             screenRatio = screenOnRatio(ctx, since)
+            try {
+                val nsm = ctx.getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
+                val usm = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+                val usage = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, since, now)
+                    ?: throw IllegalStateException("Statistik penggunaan belum tersedia")
+                val foreground = usage.groupBy { it.packageName }
+                    .mapValues { (_, rows) -> rows.sumOf { it.totalTimeInForeground } }
+                val txByUid = mutableMapOf<Int, Long>()
+                @Suppress("DEPRECATION")
+                for (type in intArrayOf(ConnectivityManager.TYPE_MOBILE, ConnectivityManager.TYPE_WIFI)) {
+                    nsm.querySummary(type, null, since, now).use { stats ->
+                        val bucket = android.app.usage.NetworkStats.Bucket()
+                        while (stats.hasNextBucket()) {
+                            stats.getNextBucket(bucket)
+                            txByUid[bucket.uid] = (txByUid[bucket.uid] ?: 0L) + bucket.txBytes
+                        }
+                    }
+                }
+                val perApp = JSONArray()
+                for ((uid, tx) in txByUid) {
+                    val packages = ctx.packageManager.getPackagesForUid(uid) ?: continue
+                    // UID bersama tidak dapat dipisah; waktu foreground seluruh
+                    // paket dihitung bersama agar tak menuduh paket yang salah.
+                    val used = packages.sumOf { foreground[it] ?: 0L }
+                    perApp.put(JSONObject().apply {
+                        put("uid", uid)
+                        put("package", packages.joinToString(","))
+                        put("egress_mb_24h", tx / 1_048_576.0)
+                        put("foreground_ms_24h", used)
+                    })
+                }
+                obj.put("apps", perApp)
+            } catch (e: Exception) {
+                networkError = e.message ?: "Volume per aplikasi tidak terbaca"
+            }
         }
 
         obj.put("egress_mb_24h", egressMb)
@@ -344,7 +401,7 @@ object Posture {
         put("integrity", st("partial",
             "status bootloader tidak diberikan API publik; dinilai lewat verdict integritas"))
 
-        put("network_volume", if (hasUsageAccess(ctx)) st("ok") else st(
+        put("network_volume", if (networkError != null) st("partial", networkError!!) else if (hasUsageAccess(ctx)) st("ok") else st(
             "unavailable",
             "izin Akses penggunaan belum diberikan, sehingga volume keluar dan rasio layar tidak terbaca"))
 
@@ -356,7 +413,7 @@ object Posture {
             Attestation.chainSha256().isEmpty() ->
                 st("unavailable", "Keystore perangkat keras tidak memberikan rantai attestation")
             playVerdict == "UNAVAILABLE" ->
-                st("partial", "verdict Play Integrity tidak dapat diperoleh; Key Attestation terbukti")
+                st("partial", "rantai Key Attestation dikirim saat pendaftaran; sah tidaknya diputuskan OWL Core")
             else -> st("ok")
         })
     }
@@ -368,6 +425,7 @@ object Posture {
             put("device_id", Config.deviceId(ctx))
             put("collected_at", Iso.now())
             put("agent_version", BuildConfig.VERSION_NAME)
+            put("manufacturer", Build.MANUFACTURER)
             put("attestation", attestation)
             put("accessibility_services", accessibilityServices(ctx))
             put("overlay_packages", overlayPackages(ctx))
@@ -388,7 +446,7 @@ object Posture {
 
 object Iso {
     fun now(): String {
-        val f = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US)
+        val f = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US)
         f.timeZone = java.util.TimeZone.getTimeZone("UTC")
         return f.format(java.util.Date())
     }

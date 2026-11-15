@@ -75,13 +75,17 @@ async def counts() -> dict:
     return out
 
 
-async def loop() -> None:
+async def loop(lock=None) -> None:
     """Penyapuan berkala. Dijalankan sebagai tugas latar selama layanan hidup."""
     jeda = max(0.5, settings.RETENTION_SWEEP_HOURS) * 3600
     while True:
         try:
             await asyncio.sleep(jeda)
-            await sweep()
+            if lock is None:
+                await sweep()
+            else:
+                async with lock:
+                    await sweep()
         except asyncio.CancelledError:
             raise
         except Exception as e:                       # jangan sampai mematikan layanan

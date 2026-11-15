@@ -68,6 +68,36 @@ def _check_order(th: dict[str, float]) -> None:
             f"ambang harus menaik: medium {m} <= high {h} <= critical {c}")
 
 
+def restore(latest: dict[str, str]) -> int:
+    """Pulihkan bobot dan ambang dari jejak audit saat layanan mulai.
+
+    Sebelum ini nilai yang diubah administrator hanya hidup di memori:
+    layanan yang dinyalakan ulang kembali diam-diam ke nilai bawaan, sementara
+    jejak auditnya tetap menyatakan nilai baru. Kebijakan keamanan yang
+    berubah sendiri saat restart lebih buruk daripada yang tidak dapat diubah.
+    """
+    n = 0
+    calon = dict(_thresholds)
+    for field, value in latest.items():
+        kind, _, name = field.partition(".")
+        try:
+            v = float(value)
+        except ValueError:
+            continue
+        if kind == "weight" and name in _weights:
+            _weights[name] = v
+            n += 1
+        elif kind == "threshold" and name in calon:
+            calon[name] = v
+            n += 1
+    try:
+        _check_order(calon)
+        _thresholds.update(calon)
+    except ValueError:
+        pass                      # jejak yang tidak konsisten tidak dipakai
+    return n
+
+
 def reset() -> None:
     """Kembalikan ke nilai dari lingkungan. Dipakai uji."""
     _weights.clear()

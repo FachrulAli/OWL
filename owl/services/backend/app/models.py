@@ -51,6 +51,10 @@ class VpnProfile(BaseModel):
 class InstalledApp(BaseModel):
     package: str
     installer: str = ""           # kosong berarti tidak diketahui, bukan aman
+    # SHA-256 sertifikat penanda tangan APK. Kosong pada agent lama. Lebih
+    # kuat daripada nama paket untuk daftar izin dan daftar larangan, sebab
+    # nama paket dapat diganti siapa saja sedangkan kunci penanda tangan tidak.
+    signer_sha256: str = ""
     permissions: list[str] = Field(default_factory=list)
 
 
@@ -61,12 +65,20 @@ class IntegrityBlock(BaseModel):
     security_patch: str = ""      # format YYYY-MM-DD seperti Build.VERSION
 
 
+class AppNetwork(BaseModel):
+    package: str
+    uid: int
+    egress_mb_24h: float = Field(ge=0)
+    foreground_ms_24h: int = Field(ge=0)
+
+
 class NetworkBlock(BaseModel):
     egress_mb_24h: float = 0.0
     screen_on_ratio_24h: float = 1.0   # 0 berarti perangkat tidak disentuh
     unusual_destinations: list[str] = Field(default_factory=list)
     new_destinations: list[str] = Field(default_factory=list)
     beacon_jitter_pct: float = 100.0   # makin kecil makin teratur
+    apps: list[AppNetwork] | None = None  # None: agent lama, bukan pengukuran bersih
 
 
 class IndicatorStatus(BaseModel):
@@ -96,6 +108,7 @@ class Telemetry(BaseModel):
     device_id: str
     collected_at: datetime
     agent_version: str = ""
+    manufacturer: str = ""
     attestation: Attestation = Field(default_factory=Attestation)
     accessibility_services: list[AccessibilityService] = Field(default_factory=list)
     overlay_packages: list[str] = Field(default_factory=list)
@@ -117,6 +130,9 @@ class Device(BaseModel):
     unit: str = ""
     model: str = ""
     os_version: str = ""
+    # Rantai sertifikat Key Attestation, DER berbasis64, daun lebih dahulu.
+    # Kosong pada agent lama dan pada pendaftaran lewat curl.
+    attestation_chain: list[str] = Field(default_factory=list)
 
 
 # ——————————————————————————— keluaran ———————————————————————————
@@ -132,6 +148,7 @@ class Finding(BaseModel):
     confidence: str = ""
     evidence: list[str] = Field(default_factory=list)
     downgraded: bool = False      # true jika diturunkan karena berdiri sendiri
+    decisive: bool = False        # true jika aturan penentu: gerbang menolak tanpa melihat skor
     points: float = 0.0           # sumbangan ke skor, diisi oleh scoring
 
 
