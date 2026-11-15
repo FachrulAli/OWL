@@ -417,3 +417,17 @@
 
 .dua-sistem { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
 @media (max-width: 1100px) { .dua-sistem { grid-template-columns: minmax(0, 1fr); } }
+
+/* tombol ciut: ikon kecil di sebelah logo, bukan baris berteks di kaki */
+.sb-atas { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+.sb-atas .sb-merek { flex: 1; min-width: 0; }
+.sb-ciut {
+  flex: none; width: 30px; height: 30px; margin-top: 6px; display: grid; place-items: center;
+  border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--slate-2); cursor: pointer;
+}
+.sb-ciut:hover { color: var(--off); border-color: var(--gold-soft); background: rgba(201, 162, 39, .1); }
+@media (min-width: 961px) {
+  .sb.kecil .sb-atas { flex-direction: column; align-items: center; gap: 2px; }
+  .sb.kecil .sb-ciut { margin: 0 0 10px; }
+}
+@media (max-width: 960px) { .sb-ciut { display: none; } }

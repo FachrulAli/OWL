@@ -50,13 +50,22 @@ export function Sidebar({
     <>
       {buka && <div className="sb-tirai" onClick={onTutup} aria-hidden="true" />}
       <aside className={`sb${buka ? ' buka' : ''}${kecil ? ' kecil' : ''}`} aria-label={lang === 'id' ? 'Navigasi utama' : 'Main navigation'}>
-        <button className="sb-merek" onClick={onBeranda} title={lang === 'id' ? 'Kembali ke halaman depan' : 'Back to the landing page'}>
-          <Logo />
-          <span>
-            <b>OWL</b>
-            <small>On Device Watch Layer</small>
-          </span>
-        </button>
+        <div className="sb-atas">
+          <button className="sb-merek" onClick={onBeranda} title={lang === 'id' ? 'Kembali ke halaman depan' : 'Back to the landing page'}>
+            <Logo />
+            <span>
+              <b>OWL</b>
+              <small>On Device Watch Layer</small>
+            </span>
+          </button>
+          <button
+            className="sb-ciut" onClick={onKecil} aria-pressed={kecil}
+            aria-label={kecil ? (lang === 'id' ? 'Perlebar menu' : 'Expand menu') : (lang === 'id' ? 'Ciutkan menu' : 'Collapse menu')}
+            title={kecil ? (lang === 'id' ? 'Perlebar menu' : 'Expand menu') : (lang === 'id' ? 'Ciutkan menu' : 'Collapse menu')}
+          >
+            <Ikon nama={kecil ? 'kanan' : 'kiri'} size={16} />
+          </button>
+        </div>
 
         <nav className="sb-nav">
           {GROUPS.map((g) => (
@@ -82,13 +91,6 @@ export function Sidebar({
         </nav>
 
         <div className="sb-kaki">
-          <button
-            className="sb-keluar sb-ciut" onClick={onKecil} aria-pressed={kecil}
-            title={kecil ? (lang === 'id' ? 'Perlebar menu' : 'Expand menu') : (lang === 'id' ? 'Ciutkan menu' : 'Collapse menu')}
-          >
-            <Ikon nama={kecil ? 'kanan' : 'kiri'} />
-            <span>{lang === 'id' ? 'Ciutkan menu' : 'Collapse menu'}</span>
-          </button>
           <button className="sb-keluar" onClick={onKeluar} title={kecil ? (lang === 'id' ? 'Keluar' : 'Log out') : undefined}>
             <Ikon nama="keluar" />
             <span>{lang === 'id' ? 'Keluar' : 'Log out'}</span>
