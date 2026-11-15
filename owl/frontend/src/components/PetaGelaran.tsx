@@ -78,6 +78,28 @@ for (let lat = 10; lat >= -15; lat -= 5) LINTANG.push(lat)
 /** Nama kota markas baru muncul saat peta cukup dekat untuk memuatnya. */
 const ZOOM_KOTA = 2
 
+/** Gerak dimatikan pada mesin yang memintanya; SMIL tidak mematuhinya sendiri. */
+function diamSaja(): boolean {
+  return typeof matchMedia === 'function'
+    && matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+/**
+ * Juring sapuan radar, dibuat di koordinat lokal pin.
+ *
+ * Diputar dengan `animateTransform` SMIL, bukan transform CSS: pusat putar
+ * SMIL dapat disebut langsung sebagai `0 0`, yaitu titik pin itu sendiri,
+ * sedangkan `transform-origin` CSS pada SVG bersandar pada kotak isi juring
+ * yang pusatnya BUKAN pusat pin.
+ */
+function juring(r: number, derajat: number): string {
+  const a = (-derajat / 2) * (Math.PI / 180)
+  const b = (derajat / 2) * (Math.PI / 180)
+  return `M0 0 L${(r * Math.cos(a)).toFixed(2)} ${(r * Math.sin(a)).toFixed(2)}`
+    + ` A${r.toFixed(2)} ${r.toFixed(2)} 0 0 1`
+    + ` ${(r * Math.cos(b)).toFixed(2)} ${(r * Math.sin(b)).toFixed(2)} Z`
+}
+
 interface Pandang { k: number; tx: number; ty: number }
 
 const AWAL: Pandang = { k: 1, tx: 0, ty: 0 }
@@ -140,6 +162,8 @@ export function PetaKomando({ titik }: { titik: Titik[] }) {
   const [geser, setGeser] = useState(false)
   const [kiriBuka, setKiriBuka] = useState(true)
   const [kananBuka, setKananBuka] = useState(true)
+  const [petunjuk, setPetunjuk] = useState(false)
+  const tenang = diamSaja()
 
   /**
    * Berapa satuan viewBox untuk satu piksel layar.
@@ -212,25 +236,67 @@ export function PetaKomando({ titik }: { titik: Titik[] }) {
     return { x: q.x, y: q.y }
   }
 
-  /**
-   * Zoom roda, berpusat pada kursor.
-   *
-   * Yang dipertahankan adalah titik dunia di bawah kursor: tanpa itu, peta
-   * melompat menjauh dari yang sedang ditunjuk pembaca setiap kali rodanya
-   * diputar, dan zoom terasa seperti melawan tangan.
-   */
-  function roda(e: React.WheelEvent<SVGSVGElement>) {
-    e.preventDefault()
-    const p = diViewBox(e)
-    if (!p) return
+  /** Zoom berpusat pada satu titik: titik itu tidak boleh bergeser. */
+  const zoomKe = useCallback((p: { x: number; y: number }, faktor: number) => {
     setPandang((v) => {
-      const k2 = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, v.k * Math.exp(-e.deltaY * 0.0015)))
+      const k2 = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, v.k * faktor))
       return batas({
         k: k2,
         tx: p.x - (k2 / v.k) * (p.x - v.tx),
         ty: p.y - (k2 / v.k) * (p.y - v.ty),
       })
     })
+  }, [batas])
+
+  /**
+   * Roda dan cubit, mengikuti perilaku peta tersemat Google Maps.
+   *
+   * Cubitan pada touchpad sampai ke browser sebagai peristiwa `wheel`
+   * ber-`ctrlKey`; gulungan dua jari biasa datang sebagai `wheel` polos.
+   * Dulu KEDUANYA dipakai untuk zoom, dan akibatnya menggulung halaman
+   * dengan kursor kebetulan berada di atas peta justru menukikkan peta,
+   * lalu halaman berhenti bergulir. Sekarang hanya cubitan dan Ctrl/Cmd
+   * yang mengubah zoom; gulungan biasa dibiarkan menggulung halaman, dan
+   * satu petunjuk kecil muncul untuk menyebutkan caranya.
+   *
+   * Dipasang sebagai pendengar asli, bukan `onWheel`, sebab React memasang
+   * `wheel` secara pasif dan pendengar pasif tidak boleh membatalkan
+   * gulungan bawaan.
+   */
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    let hilang: ReturnType<typeof setTimeout> | undefined
+
+    const roda = (e: WheelEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) {
+        setPetunjuk(true)
+        clearTimeout(hilang)
+        hilang = setTimeout(() => setPetunjuk(false), 1600)
+        return
+      }
+      e.preventDefault()
+      setPetunjuk(false)
+      const p = diViewBox(e)
+      if (!p) return
+      // Satuan delta berbeda-beda antara piksel, baris, dan halaman, dan
+      // satu kibasan roda tetikus bernilai jauh lebih besar daripada satu
+      // langkah cubitan. Dibatasi supaya keduanya terasa sama.
+      let d = e.deltaY
+      if (e.deltaMode === 1) d *= 16
+      else if (e.deltaMode === 2) d *= 400
+      d = Math.max(-40, Math.min(40, d))
+      zoomKe(p, Math.exp(-d * 0.011))
+    }
+
+    svg.addEventListener('wheel', roda, { passive: false })
+    return () => { svg.removeEventListener('wheel', roda); clearTimeout(hilang) }
+  }, [zoomKe])
+
+  /** Ketuk ganda memperbesar di tempat yang diketuk, seperti peta mana pun. */
+  function ketukGanda(e: React.MouseEvent<SVGSVGElement>) {
+    const p = diViewBox(e)
+    if (p) zoomKe(p, e.shiftKey ? 1 / 1.8 : 1.8)
   }
 
   const tarik = useRef<{ x: number; y: number; tx: number; ty: number; jauh: number } | null>(null)
@@ -262,16 +328,7 @@ export function PetaKomando({ titik }: { titik: Titik[] }) {
     if (a && a.jauh < 5) { setFokus(null); setPandang(AWAL) }
   }
 
-  function zoomTengah(faktor: number) {
-    setPandang((v) => {
-      const k2 = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, v.k * faktor))
-      return batas({
-        k: k2,
-        tx: CX - (k2 / v.k) * (CX - v.tx),
-        ty: CY - (k2 / v.k) * (CY - v.ty),
-      })
-    })
-  }
+  const zoomTengah = (faktor: number) => zoomKe({ x: CX, y: CY }, faktor)
 
   const { k, tx, ty } = pandang
   /** Piksel layar menjadi satuan viewBox, sudah dibagi faktor zoom. */
@@ -286,7 +343,7 @@ export function PetaKomando({ titik }: { titik: Titik[] }) {
           className="peta"
           role="application"
           aria-label={t('map.alt')}
-          onWheel={roda}
+          onDoubleClick={ketukGanda}
           onPointerDown={turun}
           onPointerMove={pindah}
           onPointerUp={naik}
@@ -347,6 +404,31 @@ export function PetaKomando({ titik }: { titik: Titik[] }) {
                     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pilih(p) }
                   }}
                 >
+                  {dipilih && !tenang && (
+                    <g className="radar">
+                      <circle className="jangkau" r={px(34)} />
+                      <g>
+                        <path className="sapu" d={juring(px(34), 62)} />
+                        <animateTransform
+                          attributeName="transform" type="rotate"
+                          from="0 0 0" to="360 0 0" dur="2.8s" repeatCount="indefinite"
+                        />
+                      </g>
+                      <circle className="riak" r={px(5)}>
+                        <animate attributeName="r" values={`${px(5)};${px(34)}`}
+                                 dur="2.8s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0.75;0"
+                                 dur="2.8s" repeatCount="indefinite" />
+                      </circle>
+                      <circle className="riak" r={px(5)}>
+                        <animate attributeName="r" values={`${px(5)};${px(34)}`}
+                                 dur="2.8s" begin="1.4s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0.75;0"
+                                 dur="2.8s" begin="1.4s" repeatCount="indefinite" />
+                      </circle>
+                    </g>
+                  )}
+                  {dipilih && tenang && <circle className="jangkau" r={px(34)} />}
                   <circle className="denyut" r={px(PX_DENYUT)} />
                   <circle className="sasar" r={px(PX_SASAR)} />
                   <circle className="inti" r={px(s.pusat ? PX_INTI_PUSAT : PX_INTI)} />
@@ -362,7 +444,7 @@ export function PetaKomando({ titik }: { titik: Titik[] }) {
                     <text
                       className="kota"
                       x={px(s.dx ?? 0)}
-                      y={px(13)}
+                      y={px((s.dy ?? PX_LABEL_Y) > 0 ? 25 : 13)}
                       style={{ fontSize: `${px(7)}px` }}
                     >
                       {s.markas}
@@ -388,6 +470,10 @@ export function PetaKomando({ titik }: { titik: Titik[] }) {
           </button>
           <span className="kmd-kali">{k.toFixed(1)}×</span>
         </div>
+
+        {petunjuk && (
+          <div className="peta-petunjuk" role="status">{t('map.zoomHint')}</div>
+        )}
 
         <div className="peta-legenda">
           <span><i className="l-pusat" />{t('map.center')}</span>

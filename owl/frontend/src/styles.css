@@ -54,7 +54,21 @@ a { color: var(--gold-soft); }
 /* ——— kerangka ——— */
 .shell { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 24px 20px 64px; }
 
-.topbar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+/* Bilah atas satu baris.
+ *
+ * Menu naik sejajar dengan tulisan ON DEVICE WATCH LAYER, bukan berdiri
+ * sebagai baris tersendiri di bawahnya. Yang didapat bukan kerapian saja:
+ * satu baris penuh, sekitar lima puluh piksel, kembali ke peta dan tabel,
+ * dan itulah bagian layar yang benar-benar dibaca orang.
+ *
+ * `align-items: end` menempelkan menu pada garis dasar blok lambang, yaitu
+ * garis tempat taglinenya duduk. */
+.topbar {
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  align-items: end; gap: 16px;
+  margin-bottom: 22px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
 .brand { display: flex; align-items: center; gap: 12px; }
 .brand .word { font-family: var(--display); font-weight: 700; font-size: 28px; letter-spacing: .04em; }
 .brand .sub { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: var(--gold-soft); }
@@ -67,6 +81,13 @@ a { color: var(--gold-soft); }
 .pill.warn { color: var(--amber); border-color: rgba(232, 163, 61, .45); }
 
 .spacer { flex: 1; }
+
+@media (max-width: 1100px) {
+  /* Tiga kolom tidak muat; menu turun menjadi barisnya sendiri lagi. */
+  .topbar { grid-template-columns: auto auto; justify-content: space-between; }
+  .topbar > .sudut { justify-self: auto; }
+  .topbar .tabs { grid-column: 1 / -1; justify-content: flex-start; padding-top: 6px; }
+}
 
 /* ——— pemilih bahasa, di pojok bilah atas ——— */
 .langswitch {
@@ -84,17 +105,18 @@ a { color: var(--gold-soft); }
 }
 
 .tabs {
-  display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 26px;
-  border-bottom: 1px solid var(--line); padding-bottom: 0;
+  display: flex; gap: 2px; flex-wrap: wrap;
+  justify-content: center; align-self: end;
+  padding-bottom: 2px;
 }
 .tabs button {
-  position: relative; font-family: var(--mono); font-size: 11.5px;
-  letter-spacing: .16em; text-transform: uppercase;
+  position: relative; font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: .14em; text-transform: uppercase;
   background: transparent; color: var(--slate); border: 0;
-  padding: 12px 16px 14px; cursor: pointer; transition: color .2s ease;
+  padding: 7px 13px 8px; cursor: pointer; transition: color .2s ease;
 }
 .tabs button::after {
-  content: ''; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px;
+  content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 2px;
   background: linear-gradient(90deg, var(--gold), var(--gold-soft));
   transform: scaleX(0); transform-origin: 0 50%;
   transition: transform .34s cubic-bezier(.22, .8, .2, 1);
@@ -884,6 +906,7 @@ pre {
    penuh di bawahnya: ia keterangan, bukan tombol, dan tidak pantas sejajar
    dengan yang ditekan orang. */
 .sudut { display: flex; flex-direction: column; align-items: flex-end; gap: 13px; }
+.topbar > .sudut { justify-self: end; }
 .sudut-baris { display: flex; align-items: center; gap: 8px; }
 .topbar { gap: 10px; }
 
@@ -1096,6 +1119,35 @@ pre {
 
 .peta-pin { cursor: pointer; }
 .peta-pin .sasar { fill: transparent; }
+
+/* Cincin fokus bawaan Chrome pada SVG digambar sebagai cakram biru bertepi
+   putih yang menutupi pinnya sendiri. Diganti penanda yang sewarna peta,
+   dan hanya muncul pada navigasi papan tik, bukan pada klik tetikus. */
+.peta-pin:focus { outline: none; }
+.peta-pin:focus-visible .sasar {
+  fill: rgba(201, 162, 39, .14);
+  stroke: var(--gold-soft); stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+/* ——— sapuan radar pada satuan yang sedang dibuka ——— */
+
+.radar { pointer-events: none; }
+.radar .jangkau {
+  fill: rgba(232, 163, 61, .06);
+  stroke: rgba(232, 163, 61, .5); stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+.radar .sapu { fill: var(--amber); opacity: .26; }
+.radar .riak {
+  fill: none; stroke: var(--amber); stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+.peta-pin.dipilih > .jangkau {
+  fill: rgba(232, 163, 61, .05);
+  stroke: rgba(232, 163, 61, .4); stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
 .peta-pin .inti {
   fill: var(--gold);
   transition: fill .3s ease, r .75s cubic-bezier(.22, .8, .2, 1);
@@ -1112,10 +1164,10 @@ pre {
 }
 /* Hanya yang pantas menarik mata yang berdenyut: markas besar, satuan yang
    sudah punya perangkat terdaftar, dan satuan yang sedang dibuka. */
-.peta-pin.pusat .denyut, .peta-pin.isi .denyut, .peta-pin.dipilih .denyut {
+.peta-pin.pusat .denyut, .peta-pin.isi .denyut {
   animation: denyut 3.2s ease-out infinite;
 }
-.peta-pin.dipilih .denyut { stroke: rgba(232, 163, 61, .8); }
+.peta-pin.dipilih .denyut { animation: none; opacity: 0; }
 @keyframes denyut {
   0% { opacity: .85; transform: scale(.45); }
   70% { opacity: 0; transform: scale(1.9); }
@@ -1139,7 +1191,7 @@ pre {
 
 .kmd-panel {
   position: absolute; top: 14px; z-index: 3;
-  width: min(292px, 31%);
+  width: min(318px, 32%);
   max-height: calc(100% - 28px);
   display: flex; flex-direction: column;
   /* Cukup tembus untuk membiarkan garis pantai terbaca di belakangnya,
@@ -1153,7 +1205,7 @@ pre {
 .kmd-panel.kiri { left: 14px; }
 .kmd-panel.kanan { right: 14px; }
 .kmd-isi {
-  overflow-y: auto; padding: 17px; min-height: 0;
+  overflow-y: auto; padding: 19px; min-height: 0;
   transition: opacity .25s ease;
 }
 
@@ -1182,10 +1234,10 @@ pre {
 .kmd-panel.kanan .kmd-lipat { left: -13px; }
 
 .kmd-panel h4 {
-  font-family: var(--display); font-size: 16px; font-weight: 600;
-  color: var(--off); margin-bottom: 10px; line-height: 1.3;
+  font-family: var(--display); font-size: 19px; font-weight: 600;
+  color: var(--off); margin-bottom: 12px; line-height: 1.3;
 }
-.kmd-panel .muted { font-size: 12.5px; }
+.kmd-panel .muted { font-size: 13.5px; line-height: 1.6; }
 .kmd-panel .btn { font-size: 12.5px; padding: 9px 14px; }
 
 /* ——— kendali zoom ——— */
@@ -1213,6 +1265,24 @@ pre {
 .kmd-kali {
   font-family: var(--mono); font-size: 10px; letter-spacing: .08em;
   color: var(--slate); padding: 0 5px 0 2px; min-width: 32px; text-align: right;
+}
+
+/* Petunjuk cara zoom, muncul hanya ketika seseorang menggulung di atas
+   peta dan tidak terjadi apa-apa. Diam pada keadaan lain. */
+.peta-petunjuk {
+  position: absolute; left: 50%; top: 50%; z-index: 5;
+  transform: translate(-50%, -50%);
+  padding: 13px 20px; border-radius: 999px;
+  background: rgba(6, 6, 6, .88); border: 1px solid rgba(231, 200, 120, .35);
+  backdrop-filter: blur(10px);
+  color: var(--off); font-size: 13px; letter-spacing: .01em;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .7);
+  animation: petunjuk-masuk .22s ease both;
+  pointer-events: none; max-width: calc(100% - 40px); text-align: center;
+}
+@keyframes petunjuk-masuk {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(.95); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 .peta-legenda {
@@ -1311,16 +1381,16 @@ pre {
 .kmd-panel dl { display: grid; gap: 8px; }
 .kmd-panel dl > div { display: grid; gap: 2px; }
 .kmd-panel dt {
-  font-family: var(--mono); font-size: 9px; letter-spacing: .14em;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .14em;
   text-transform: uppercase; color: var(--slate);
 }
-.kmd-panel dd { font-size: 12.5px; line-height: 1.5; color: var(--slate-2); }
+.kmd-panel dd { font-size: 14px; line-height: 1.5; color: var(--off); }
 .peta-sisi-garis {
   height: 1px; background: rgba(201, 162, 39, .14); margin: 16px 0 14px;
 }
 .peta-sisi-kosong { font-size: 12px; }
 .peta-sisi-lepas {
-  margin-top: 12px; color: var(--slate); font-size: 11px; line-height: 1.6;
+  margin-top: 12px; color: var(--slate); font-size: 12px; line-height: 1.6;
 }
 
 .peta-sisi-daftar { list-style: none; display: grid; gap: 2px; }
@@ -1331,19 +1401,18 @@ pre {
 }
 .peta-sisi-daftar li:last-child { border-bottom: 0; }
 .peta-sisi-daftar .skor {
-  font-family: var(--display); font-weight: 700; font-size: 17px; text-align: right;
+  font-family: var(--display); font-weight: 700; font-size: 19px; text-align: right;
 }
 .peta-sisi-daftar .isi { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .peta-sisi-daftar .nama {
-  font-size: 12.5px; font-weight: 600;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 14px; font-weight: 600; line-height: 1.3;
 }
 .peta-sisi-daftar .sub {
-  font-family: var(--mono); font-size: 9.5px; color: var(--slate);
+  font-family: var(--mono); font-size: 10.5px; color: var(--slate);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .peta-sisi-daftar .tingkat {
-  font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
   text-transform: uppercase; color: var(--slate-2);
 }
 
@@ -1353,7 +1422,7 @@ pre {
   font-size: 28px; line-height: 1; color: var(--gold-soft);
 }
 .peta-angka .l {
-  font-family: var(--mono); font-size: 8.5px; letter-spacing: .13em;
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .13em;
   text-transform: uppercase; color: var(--slate);
 }
 /* Catatan kaki panel: menjelaskan batas data, jadi ia harus ADA dan harus
@@ -1361,7 +1430,7 @@ pre {
 .peta-kaki {
   margin-top: 14px; padding-top: 13px;
   border-top: 1px solid rgba(201, 162, 39, .12);
-  color: var(--slate); font-size: 11px; line-height: 1.6;
+  color: var(--slate); font-size: 12px; line-height: 1.65;
 }
 /* Pintasan ke satuan yang benar-benar punya perangkat. Panel yang hanya
    berisi ajakan menyuruh orang berburu pin sendiri di peta selebar 46
@@ -1369,10 +1438,10 @@ pre {
 .peta-pintas { list-style: none; display: grid; gap: 2px; }
 .peta-pintas button {
   width: 100%; display: flex; align-items: center; justify-content: space-between;
-  gap: 10px; padding: 9px 10px; cursor: pointer; text-align: left;
+  gap: 10px; padding: 10px 11px; cursor: pointer; text-align: left;
   background: transparent; color: var(--slate-2);
   border: 1px solid transparent; border-radius: 9px;
-  font: inherit; font-size: 12.5px;
+  font: inherit; font-size: 13.5px;
   transition: background .18s ease, border-color .18s ease, color .18s ease;
 }
 .peta-pintas button:hover {
@@ -1387,9 +1456,9 @@ pre {
 }
 
 .peta-ajak {
-  margin-top: 13px; padding: 10px 12px;
+  margin-top: 13px; padding: 11px 13px;
   border: 1px dashed rgba(201, 162, 39, .32); border-radius: 11px;
-  color: var(--gold-soft); font-size: 12px; line-height: 1.5;
+  color: var(--gold-soft); font-size: 13px; line-height: 1.55;
 }
 .peta-tag {
   margin-left: 8px; padding: 2px 7px; border-radius: 5px;

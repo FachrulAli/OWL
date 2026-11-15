@@ -421,8 +421,12 @@ const S = {
   'map.hide': { id: 'Sembunyikan panel', en: 'Hide the panel' },
   'map.show': { id: 'Tampilkan panel', en: 'Show the panel' },
   'map.dragHint': {
-    id: 'seret untuk menggeser · roda untuk zoom',
-    en: 'drag to pan · wheel to zoom',
+    id: 'seret untuk menggeser · cubit untuk zoom · ketuk ganda untuk mendekat',
+    en: 'drag to pan · pinch to zoom · double-click to zoom in',
+  },
+  'map.zoomHint': {
+    id: 'Cubit touchpad, atau tahan Ctrl / ⌘ sambil menggulung, untuk mengubah zoom peta.',
+    en: 'Pinch the touchpad, or hold Ctrl / ⌘ while scrolling, to zoom the map.',
   },
   'map.unmapped': {
     id: '{n} di antaranya belum dipetakan ke Kodam mana pun, dan dikumpulkan di '

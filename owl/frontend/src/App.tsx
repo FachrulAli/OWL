@@ -282,7 +282,14 @@ export default function App() {
             <div className="sub">ON DEVICE WATCH LAYER</div>
           </div>
         </button>
-        <div className="spacer" />
+        <nav className="tabs">
+          {TABS.map((tb) => (
+            <button key={tb.id} aria-current={tab === tb.id} onClick={() => setTab(tb.id)}>
+              {t(tb.label)}
+            </button>
+          ))}
+        </nav>
+
         <div className="sudut">
           <div className="sudut-baris">
             <button className="btn ghost" onClick={() => void refresh()}>{t('top.refresh')}</button>
@@ -293,14 +300,6 @@ export default function App() {
           <StatusKoneksi offline={offline} />
         </div>
       </header>
-
-      <nav className="tabs">
-        {TABS.map((tb) => (
-          <button key={tb.id} aria-current={tab === tb.id} onClick={() => setTab(tb.id)}>
-            {t(tb.label)}
-          </button>
-        ))}
-      </nav>
 
       <div className="tabisi" key={tab}>
         {tab === 'ikhtisar' && <Gelaran devices={devices} />}
