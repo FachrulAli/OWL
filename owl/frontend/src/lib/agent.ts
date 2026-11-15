@@ -26,10 +26,10 @@
  * Keduanya tidak dapat saling menimpa saat dipasang, sebab Android
  * menolak pembaruan yang kunci penanda tangannya berbeda.
  */
-export const UNDUH_AGENT = ''
+export const UNDUH_AGENT = '/owl-agent.apk'
 
 /** Keterangan singkat pada tombol: versi dan ukuran, bila diketahui. */
-export const AGENT_INFO = ''
+export const AGENT_INFO = 'v1.2.1 · 6,2 MB'
 
 /**
  * Agent iOS belum ada, dan tombolnya mengatakan itu.
