@@ -39,9 +39,42 @@ Buka aplikasinya, lalu:
    bergantung padanya.
 2. Tekan **Mulai pemantauan**.
 
-Notifikasi tetap akan muncul selama agent berjalan. Itu disengaja: pemantauan
-yang disembunyikan dari pemilik perangkatnya sendiri adalah hal yang sedang
-dilawan produk ini.
+Pelaporan dijadwalkan dengan WorkManager setiap minimal 15 menit, dengan
+retry saat jaringan putus. Android dapat menunda jadwal ketika menghemat
+daya. Tombol **Lihat status laporan** menampilkan hasil terakhir; tombol
+**Uji akses sistem satuan** meminta sesi berbukti kunci perangkat, lalu
+mengakses aplikasi uji melalui gateway.
+
+## Enrollment per perangkat dan build rilis
+
+Admin menerbitkan token dari tab SOC, lalu pemilik HP membuka tautan
+`owl://enroll?base=...&device=...&token=...` dan mengonfirmasi server serta ID.
+Token dibawa di header `X-OWL-Enroll` pada tantangan dan pendaftaran saja.
+Token ingest harus tetap sesuai dengan backend (`-PowlToken=...`, atau
+variabel `ORG_GRADLE_PROJECT_owlToken` saat build).
+
+Kunci aktif tidak dihapus saat mulai. Pendaftaran ulang membuat kunci
+cadangan; kunci lama dipertahankan sampai backend menerima kunci baru.
+Jika respons hilang setelah token digunakan, agent mencoba laporan dengan
+kunci cadangan untuk memulihkan pendaftaran. Untuk build lama gunakan
+`OWL_ENROLL=shared` hanya selama migrasi.
+
+Build rilis membutuhkan HTTPS dan CA satuan:
+
+```powershell
+services/backend/.venv/Scripts/python.exe services/backend/tools/build_agent_release.py `
+  --base https://owl.satuan:8443 --ca infra/tls/ca.pem `
+  --out ../docs/evidence/release-build.json
+```
+
+Jalankan dari `owl/` setelah mengisi `JAVA_HOME` dan `ANDROID_HOME`.
+Helper membuat kunci penanda tangan lokal di `.local/` (diabaikan Git).
+Gunakan kunci resmi satuan untuk penggelaran; sidik sertifikat harus dimasukkan
+ke `OWL_AGENT_SIGNERS`. HTTPS rilis hanya mempercayai CA yang disematkan,
+menolak cleartext, dan tidak mengikuti redirect. APK debug tetap mendukung
+HTTP untuk pengembangan. APK rilis dengan penanda tangan berbeda tidak bisa
+dipasang sebagai pembaruan APK debug; migrasi ke rilis perlu direncanakan
+agar identitas dan enrollment perangkat tidak hilang.
 
 ## Enam sinyal dan API yang dipakai
 

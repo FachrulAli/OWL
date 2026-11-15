@@ -24,8 +24,22 @@ local.properties
 # sistem dan editor
 .DS_Store
 *.log
+*.db-wal
+*.db-shm
+*.keystore
+*.p12
+*.key
+owl/infra/tls/*.pem
 .idea/
+.tools/
+.local/
 *.iml
 
 # catatan kerja pribadi, tidak ikut repositori
 docs/ROADMAP-TEKNIS.md
+
+# Berkas runtime khusus Victus
+owl/backend.out
+owl/frontend.out
+owl/run-backend.cmd
+owl/run-frontend.cmd

@@ -29,6 +29,8 @@ services:
       # verify: hanya perangkat dengan rantai Key Attestation yang lolos
       # verifikasi yang dipercaya. claim hanya untuk emulator dan curl.
       OWL_ATTESTATION: ${OWL_ATTESTATION:-verify}
+      OWL_ENROLL: ${OWL_ENROLL:-token}
+      OWL_AGENT_SIGNERS: ${OWL_AGENT_SIGNERS:-}
       # Isi "false" pada penggelaran satuan: /api/demo/reset mengosongkan data.
       OWL_DEMO: ${OWL_DEMO:-true}
       # Isi kedua nilai di bawah pada penggelaran satuan. Dibiarkan kosong,
@@ -38,7 +40,7 @@ services:
     volumes:
       - owl-data:/data
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://localhost:8000/health')\""]
       interval: 10s

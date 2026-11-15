@@ -1,0 +1,16 @@
+{
+  "devices": 100,
+  "concurrency": 20,
+  "reports": 300,
+  "failures": 0,
+  "elapsed_seconds": 2.64,
+  "reports_per_second": 113.78,
+  "latency_ms": {
+    "median": 168.63,
+    "p95": 185.66,
+    "max": 206.34
+  },
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.14.3",
+  "scope": "ASGI TestClient, single process, SQLite WAL; signature verification included; enrollment and network excluded"
+}

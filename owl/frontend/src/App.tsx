@@ -11,6 +11,7 @@ import { Landing } from './views/Landing'
 import { Gerbang } from './views/Gerbang'
 import { Perangkat } from './views/Perangkat'
 import { Soc } from './views/Soc'
+import { Operations } from './components/Operations'
 
 type Tab = 'gerbang' | 'perangkat' | 'aturan' | 'soc'
 
@@ -267,6 +268,7 @@ export default function App() {
         {tab === 'perangkat' && <Perangkat devices={devices} />}
         {tab === 'aturan' && <Aturan catalog={catalog} />}
         {tab === 'soc' && <Soc devices={devices} />}
+        {tab === 'soc' && !offline && <Operations />}
       </div>
     </div>
     </>

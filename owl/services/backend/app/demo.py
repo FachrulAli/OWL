@@ -171,6 +171,8 @@ def telemetry_berisiko() -> Telemetry:
         },
         network={
             "egress_mb_24h": 318.7,
+            "apps": [{"package": "com.spy.recorder", "uid": 10123,
+                      "egress_mb_24h": 318.7, "foreground_ms_24h": 0}],
             "screen_on_ratio_24h": 0.02,
             "unusual_destinations": [],
             "new_destinations": [],

@@ -1,0 +1,19 @@
+# Jalankan bersama docker-compose.yml. CA dibuat lewat tools/create_tls.py.
+services:
+  backend:
+    environment:
+      OWL_INGEST_TOKEN: ${OWL_INGEST_TOKEN:?Isi token ingest satuan}
+      OWL_ADMIN_TOKEN: ${OWL_ADMIN_TOKEN:?Isi token admin satuan}
+      OWL_API_KEY: ${OWL_API_KEY:?Isi kunci baca satuan}
+      OWL_ENROLL: token
+      OWL_AGENT_SIGNERS: ${OWL_AGENT_SIGNERS:?Isi sidik penanda tangan APK rilis}
+      OWL_DEMO: "false"
+      OWL_ATTESTATION: verify
+      OWL_PUBLIC_BASE_URL: ${OWL_PUBLIC_BASE_URL:?Isi URL HTTPS yang dapat dijangkau HP}
+  frontend:
+    ports:
+      - "8443:443"
+    volumes:
+      - ./infra/nginx-secure.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./infra/tls:/etc/owl/tls:ro
+      - ./infra/system.html:/etc/owl/demo/system.html:ro

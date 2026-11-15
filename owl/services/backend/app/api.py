@@ -10,7 +10,7 @@ from fastapi import (APIRouter, Depends, Header, HTTPException, Query, Request,
                      WebSocket, WebSocketDisconnect)
 from pydantic import BaseModel, Field
 
-from . import attest, db, demo, pdp, policy, retention, rules, scoring, soc
+from . import attest, db, demo, pdp, policy, retention, rules, scoring, soc, operations
 from . import cef as cef_mod
 from . import stix as stix_mod
 from .applog import log
@@ -79,6 +79,11 @@ def _revocation_state(meta: dict) -> dict:
     if not meta["imported_at"]:
         return {"status": "belum diimpor", "entries": 0}
     umur = (datetime.now(timezone.utc) - datetime.fromisoformat(meta["imported_at"])).total_seconds() / 86400
+    if meta.get("source_date"):
+        source = datetime.fromisoformat(meta["source_date"])
+        if source.tzinfo is None:
+            source = source.replace(tzinfo=timezone.utc)
+        umur = max(umur, (datetime.now(timezone.utc) - source).total_seconds() / 86400)
     return {"status": "basi" if umur > settings.REVOCATION_MAX_AGE_DAYS else "terkini",
             "entries": meta["entries"], "age_days": round(umur, 1),
             "imported_at": meta["imported_at"], "source_date": meta["source_date"]}
@@ -308,7 +313,9 @@ async def _assess(t: Telemetry, synthetic: bool = False) -> tuple[RiskAssessment
     d = pdp.decide(a, resource="standard")
 
     await db.save_assessment(json.loads(a.model_dump_json()), json.loads(t.model_dump_json()))
+    d = await operations.current(t.device_id)
     await db.save_decision(d.model_dump())
+    await operations.record_transition(d)
     out = await soc.dispatch(a, d, device_label=dev.get("label", ""), unit=dev.get("unit", ""))
 
     await hub.broadcast("assessment", json.loads(a.model_dump_json()))
@@ -378,8 +385,7 @@ async def gate(device_id: str, resource: Sensitivity = Query("classified")):
                            "categories", "attestation_ok", "availability",
                            "skipped_rules")})
     dev = await db.get_device(device_id) or {}
-    d = pdp.decide(a, resource=resource,
-                   revoked=(dev.get("revoked_reason") or "") if dev.get("revoked") else None)
+    d = await operations.current(device_id, resource)
     await db.save_decision(d.model_dump())
     await hub.broadcast("gate", d.model_dump())
     return d
@@ -397,7 +403,7 @@ async def export_stix(device_id: str, resource: Sensitivity = Query("classified"
                           ("device_id", "assessed_at", "score", "level", "findings",
                            "categories", "attestation_ok", "availability",
                            "skipped_rules")})
-    d = pdp.decide(a, resource=resource)
+    d = await operations.current(device_id, resource)
     return stix_mod.bundle(a, d, device_label=dev.get("label", ""), unit=dev.get("unit", ""))
 
 
@@ -411,7 +417,7 @@ async def export_cef(device_id: str, resource: Sensitivity = Query("classified")
                           ("device_id", "assessed_at", "score", "level", "findings",
                            "categories", "attestation_ok", "availability",
                            "skipped_rules")})
-    d = pdp.decide(a, resource=resource)
+    d = await operations.current(device_id, resource)
     return {"cef": cef_mod.line(a, d, device_label=dev.get("label", ""), unit=dev.get("unit", ""))}
 
 
@@ -476,6 +482,11 @@ async def import_revocations(body: dict, actor: str = Depends(require_admin),
     https://android.googleapis.com/attestation/status, yang diunduh di mesin
     terhubung dan dibawa lewat media: OWL Core tidak pernah mengunduhnya."""
     entries = body.get("entries")
+    if source_date:
+        try:
+            datetime.fromisoformat(source_date)
+        except ValueError:
+            raise HTTPException(400, "source_date harus tanggal ISO")
     if not isinstance(entries, dict) or not entries:
         raise HTTPException(400, "berkas tidak memuat `entries`")
     bersih = {}
@@ -537,7 +548,7 @@ async def issue_enroll_token(b: EnrollTokenBody, request: Request,
     ttl = b.ttl_minutes or settings.ENROLL_TOKEN_TTL_MINUTES
     token, expires = await db.create_enroll_token(b.device_id, ttl, actor)
     await db.save_policy_change(actor, f"enroll.token:{b.device_id}", "-", f"terbit, berlaku sampai {expires}")
-    base = str(request.base_url).rstrip("/")
+    base = (settings.PUBLIC_BASE_URL or str(request.base_url)).rstrip("/")
     from urllib.parse import quote
     return {"device_id": b.device_id, "token": token, "expires_at": expires,
             "provision_url": f"owl://enroll?base={quote(base, safe='')}&device={quote(b.device_id, safe='')}&token={token}"}

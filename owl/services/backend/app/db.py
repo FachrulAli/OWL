@@ -129,6 +129,8 @@ async def init() -> None:
     Path(settings.DB_PATH).parent.mkdir(parents=True, exist_ok=True)
     _db = await aiosqlite.connect(settings.DB_PATH)
     _db.row_factory = aiosqlite.Row
+    await _db.execute("PRAGMA journal_mode=WAL")
+    await _db.execute("PRAGMA busy_timeout=5000")
     await _db.executescript(SCHEMA)
     # Kolom yang ditambahkan sesudah skema pertama. Basis data lama tetap
     # dapat dibuka: kolomnya ditambahkan di tempat, bukan dibuat ulang.
@@ -447,4 +449,18 @@ async def reset() -> None:
     for t in ("soc_events", "decisions", "assessments", "devices", "rejects",
               "enroll_challenges", "enroll_tokens"):
         await conn().execute(f"DELETE FROM {t}")
+    for prefix in ("access_session:", "access_challenge:", "case:", "decision_state:", "silent:"):
+        await conn().execute("DELETE FROM kv WHERE key LIKE ?", (prefix + "%",))
+    await conn().commit()
+
+
+async def get_value(key: str, default=None):
+    cur = await conn().execute("SELECT value FROM kv WHERE key=?", (key,))
+    row = await cur.fetchone()
+    return json.loads(row["value"]) if row else default
+
+
+async def put_value(key: str, value) -> None:
+    await conn().execute("INSERT OR REPLACE INTO kv (key,value) VALUES (?,?)",
+                         (key, json.dumps(value, ensure_ascii=False)))
     await conn().commit()
