@@ -86,8 +86,8 @@ interface Copy {
 
 const ID: Copy = {
   kicker: 'Kartika Cyber Hackathon 2026 · Defensive Shield · TNI AD',
-  judul1: 'Gerbang risiko',
-  judul2: 'perangkat.',
+  judul1: 'Personal Device\nIntelligence &',
+  judul2: 'Anti-Surveillance',
   lead: 'OWL membaca enam sinyal keamanan yang sudah ada di perangkat, mengubahnya '
     + 'menjadi satu skor risiko yang dapat ditelusuri, lalu memakainya sebagai '
     + 'rekomendasi keputusan akses. On-prem, siap air-gapped.',
@@ -194,8 +194,8 @@ const ID: Copy = {
 
 const EN: Copy = {
   kicker: 'Kartika Cyber Hackathon 2026 · Defensive Shield · Indonesian Army',
-  judul1: 'A device',
-  judul2: 'risk gate.',
+  judul1: 'Personal Device\nIntelligence &',
+  judul2: 'Anti-Surveillance',
   lead: 'OWL reads six security signals already on the device, turns them into one '
     + 'traceable risk score, and uses that score as an access decision '
     + 'recommendation. On-premise, air-gapped ready.',
@@ -394,7 +394,7 @@ export function Landing({ onOpenDashboard }: { onOpenDashboard: () => void }) {
       <section className="ld-hero">
         <div className="ld-hero-copy">
           <div className="ld-kicker ld-kicker-top">{c.kicker}</div>
-          <h1 className="ld-h1"><Baris teks={`${c.judul1}\n${c.judul2}`} /></h1>
+          <h1 className="ld-h1 panjang"><Baris teks={`${c.judul1}\n${c.judul2}`} /></h1>
           <p className="ld-lead">{c.lead}</p>
           <div className="ld-cta">
             <button className="ld-btn utama" onClick={onOpenDashboard}>
