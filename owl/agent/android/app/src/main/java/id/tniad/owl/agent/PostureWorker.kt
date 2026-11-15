@@ -18,8 +18,19 @@ class PostureWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ct
         AgentState.lock.withLock {
             val ctx = applicationContext
             Attestation.initialize(ctx)
-            fun status(message: String) {
-                ctx.getSharedPreferences("monitoring", Context.MODE_PRIVATE).edit().putString("status", message).apply()
+            fun status(message: String, response: Uploader.Result? = null) {
+                val edit = ctx.getSharedPreferences("monitoring", Context.MODE_PRIVATE).edit()
+                    .putString("status", message).putLong("status_updated_at", System.currentTimeMillis())
+                if (response?.ok == true) {
+                    try {
+                        val decision = JSONObject(response.body).getJSONObject("decision")
+                        edit.putString("last_decision", decision.getString("decision"))
+                            .putInt("last_score", decision.getDouble("score").toInt().coerceIn(0, 100))
+                            .putString("last_reason", decision.getString("reason"))
+                            .putLong("last_report_at", System.currentTimeMillis())
+                    } catch (_: Exception) { /* A successful upload need not contain a decision. */ }
+                }
+                edit.apply()
             }
             fun send(): Uploader.Result {
                 val verdict = Attestation.playVerdict(ctx)
@@ -43,7 +54,7 @@ class PostureWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ct
                     if (recovered.ok && JSONObject(recovered.body).getJSONObject("assessment").optBoolean("attestation_ok")) {
                         Attestation.activate(ctx)
                         Provisioning.consumed(ctx)
-                        status("Laporan terkirim; pendaftaran dipulihkan")
+                        status("Laporan terkirim; pendaftaran dipulihkan", recovered)
                         return@withLock Result.success()
                     }
                     if (recovered.code == -1 || recovered.code >= 500) return@withLock Result.retry()
@@ -59,7 +70,7 @@ class PostureWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ct
                 }
                 var res = send()
                 if (res.code in listOf(401, 404) && enroll()) res = send()
-                status(if (res.ok) "Laporan terkirim" else "Laporan gagal (${res.code}); periksa token atau server")
+                status(if (res.ok) "Laporan terkirim" else "Laporan gagal (${res.code}); periksa token atau server", res)
                 if (res.ok) Result.success() else Result.retry()
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e

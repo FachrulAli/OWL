@@ -1,5 +1,7 @@
 # Laporan pengerjaan dan pengujian roadmap OWL
 
+Pembaruan pengujian HP: lihat [HASIL-UJI-VICTUS-2026-11-15.md](HASIL-UJI-VICTUS-2026-11-15.md). Pengujian fisik, HTTPS, dan alert SOC sudah dilakukan setelah laporan awal di bawah.
+
 Tanggal: 15 November 2026. Pengerjaan dilakukan pada workspace Windows lokal.
 Implementasi perangkat lunak untuk seluruh butir yang belum ada sudah
 ditambahkan. Roadmap **belum selesai secara penerimaan lapangan** karena

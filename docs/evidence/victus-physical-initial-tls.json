@@ -1,0 +1,32 @@
+{
+  "agent_version": "1.1.0",
+  "device_model": "Infinix X6515",
+  "android": "12",
+  "attestation": {
+    "verified": true,
+    "hardware_backed": true,
+    "security_level": "tee",
+    "boot_state": "verified",
+    "device_locked": true,
+    "chain_serials": [
+      "1",
+      "8de3f7b88397356f2cb6ae7b1cc58376",
+      "dc0c8fc764ffbde97e424f6dca7a34de",
+      "f1c172a699eaf51d"
+    ]
+  },
+  "gate_with_original_payload": {
+    "device_id": "INFINIX-NOTE30",
+    "resource": "standard",
+    "decision": "deny",
+    "score": 34.0,
+    "reason": "Deny / Quarantine. Aturan penentu menyala, skor tidak ditimbang: OWL-A03 aplikasi pada daftar larangan.",
+    "quarantine": true,
+    "top_contributors": [
+      "OWL-A03 aplikasi pada daftar larangan (penentu)"
+    ]
+  },
+  "used_token_rejected": 401,
+  "forged_report_status": 401,
+  "revocation_unchecked_devices": []
+}
