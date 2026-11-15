@@ -1,0 +1,12 @@
+<resources>
+    <style name="Theme.Owl.Starting" parent="Theme.Owl">
+        <item name="android:windowSplashScreenBackground">@color/owl_icon_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/owl_emblem</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/owl_icon_background</item>
+        <item name="android:windowSplashScreenAnimationDuration">200</item>
+        <item name="android:statusBarColor">@color/owl_icon_background</item>
+        <item name="android:navigationBarColor">@color/owl_icon_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>

@@ -1,0 +1,11 @@
+{
+  "server_decision_rendered": "deny",
+  "details_dialog": true,
+  "privacy_dialog": true,
+  "access_request_denied_as_expected": true,
+  "hardware_identity_preserved": true,
+  "apk_bytes": 6207974,
+  "apk_before_bytes": 6120978,
+  "new_runtime_dependencies": 0,
+  "native_single_screen": true
+}

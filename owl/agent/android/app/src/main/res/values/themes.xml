@@ -1,0 +1,20 @@
+<resources>
+    <style name="Theme.Owl" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">@color/owl_ink</item>
+        <item name="android:windowBackground">@color/owl_paper</item>
+        <item name="android:statusBarColor">@color/owl_paper</item>
+        <item name="android:navigationBarColor">@color/owl_paper</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:forceDarkAllowed">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+    <style name="Theme.Owl.Starting" parent="Theme.Owl">
+        <item name="android:windowBackground">@drawable/owl_splash_background</item>
+        <item name="android:statusBarColor">@color/owl_icon_background</item>
+        <item name="android:navigationBarColor">@color/owl_icon_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>

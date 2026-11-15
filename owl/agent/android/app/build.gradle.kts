@@ -14,8 +14,8 @@ android {
         // yang terpasang tetapi tidak dapat membuktikan apa pun.
         minSdk = 29
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 4
+        versionName = "1.2.1"
 
         // Diisi saat build:
         //   ./gradlew assembleDebug -PowlBase=https://owl.satuan.mil.id -PowlToken=…

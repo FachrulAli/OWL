@@ -37,12 +37,12 @@ Buka aplikasinya, lalu:
    Tanpa izin ini sinyal keenam (volume keluar dan rasio layar menyala)
    dikirim kosong, dan OWL Core tidak akan menyalakan aturan yang
    bergantung padanya.
-2. Tekan **Mulai pemantauan**.
+2. Tekan **Periksa sekarang**.
 
 Pelaporan dijadwalkan dengan WorkManager setiap minimal 15 menit, dengan
 retry saat jaringan putus. Android dapat menunda jadwal ketika menghemat
-daya. Tombol **Lihat status laporan** menampilkan hasil terakhir; tombol
-**Uji akses sistem satuan** meminta sesi berbukti kunci perangkat, lalu
+daya. Panel **Hasil terakhir** diperbarui ketika laporan diterima; tombol
+**Uji akses** meminta sesi berbukti kunci perangkat, lalu
 mengakses aplikasi uji melalui gateway.
 
 ## Enrollment per perangkat dan build rilis
@@ -107,3 +107,7 @@ Versi presisi dari nomor 1 dan 2 menuntut agent dipasang sebagai system app
 atau Device Owner pada perangkat dinas yang di-provision satuan. Itu sah
 secara teknis untuk armada milik organisasi, dan tercatat sebagai roadmap
 fase 5, bukan diklaim sudah ada.
+
+## Tampilan minimal versi 1.2.0
+
+Satu layar native menampilkan hasil keputusan OWL Core, skor, waktu laporan, dan tombol Periksa sekarang. Rincian perangkat, pengujian akses, dan penjelasan privasi dibuka lewat dialog. Ikon adaptif dan monokrom disiapkan dari logo OWL.jpg asli; starting theme menangani splash Android 12+ dan starting window Android 10/11. Tidak ada framework UI, font unduhan, polling tampilan, atau dependency runtime baru. Data keputusan lokal merupakan hasil laporan terakhir, sedangkan tombol Uji akses meminta keputusan server saat ini.
