@@ -220,8 +220,6 @@ export function PetaKomando({
   const [lebar, setLebar] = useState(VB_W)
   const [pandang, setPandang] = useState<Pandang>(AWAL)
   const [geser, setGeser] = useState(false)
-  const [kiriBuka, setKiriBuka] = useState(true)
-  const [kananBuka, setKananBuka] = useState(true)
   const [petunjuk, setPetunjuk] = useState(false)
   const tenang = diamSaja()
 
@@ -272,7 +270,6 @@ export function PetaKomando({
   useEffect(() => {
     const p = titik.find((x) => x.s.id === fokus)
     if (!p) { setPandang(AWAL); return }
-    setKananBuka(true)
     setPandang(batas({ k: ZOOM_PIN, tx: CX - ZOOM_PIN * p.x, ty: CY - ZOOM_PIN * p.y }))
   }, [fokus, titik, batas])
 
@@ -410,6 +407,8 @@ export function PetaKomando({
 
   return (
     <div className="komando">
+      {ringkas && <div className="kmd-strip">{ringkas}</div>}
+      <div className="kmd-badan">
       <div className={`peta-bungkus${geser ? ' geser' : ''}`} ref={bungkus}>
         <svg
           ref={svgRef}
@@ -616,29 +615,9 @@ export function PetaKomando({
         </div>
       </div>
 
-      {/* ——— panel kiri: ringkasan gelaran ——— */}
-      <div className={`kmd-panel kiri${kiriBuka ? '' : ' tutup'}`}>
-        <button
-          className="kmd-lipat"
-          onClick={() => setKiriBuka((b) => !b)}
-          aria-expanded={kiriBuka}
-          title={kiriBuka ? t('map.hide') : t('map.show')}
-        >
-          {kiriBuka ? '‹' : '›'}
-        </button>
-        <div className="kmd-isi">{ringkas}</div>
-      </div>
-
-      {/* ——— panel kanan: keterangan satuan ——— */}
-      <div className={`kmd-panel kanan${kananBuka ? '' : ' tutup'}`}>
-        <button
-          className="kmd-lipat"
-          onClick={() => setKananBuka((b) => !b)}
-          aria-expanded={kananBuka}
-          title={kananBuka ? t('map.hide') : t('map.show')}
-        >
-          {kananBuka ? '›' : '‹'}
-        </button>
+      {/* Panel satuan menempel di sisi peta, bukan mengambang di atasnya:
+          peta tidak pernah tertutup, dan daftar bisa dicari dan digulung. */}
+      <aside className="kmd-sisi" aria-label={t('map.detail')}>
         <div className="kmd-isi">
           <KeteranganSatuan
             titik={titik}
@@ -647,19 +626,34 @@ export function PetaKomando({
             onTutup={() => onFokus(null)}
           />
         </div>
+      </aside>
       </div>
-
     </div>
   )
 }
 
+const TEKS_SISI = {
+  id: {
+    semua: 'Satuan dengan perangkat', cari: 'Cari satuan atau kota', kembali: '‹ Semua satuan',
+    kosongCari: 'Tidak ada satuan yang cocok.', skor: 'rata-rata', awas: 'perlu tindakan',
+    urut: 'Urut dari yang paling berisiko', petunjuk: 'Tekan pin di peta atau satuan di daftar ini.',
+    perangkat: 'perangkat',
+  },
+  en: {
+    semua: 'Commands with devices', cari: 'Search command or city', kembali: '‹ All commands',
+    kosongCari: 'No command matches.', skor: 'average', awas: 'need action',
+    urut: 'Riskiest first', petunjuk: 'Press a pin on the map or a command in this list.',
+    perangkat: 'devices',
+  },
+} as const
+
 /**
- * Keterangan satuan yang sedang ditunjuk, beserta perangkat di bawahnya.
+ * Panel satuan di sisi peta: daftar yang dapat dicari, lalu rincian satu satuan.
  *
- * Selama belum ada pin yang ditekan, panel ini tidak dibiarkan kosong: ia
- * memakai ruangnya untuk menyatakan apa yang sebenarnya ditunjukkan peta di
- * belakangnya, sebab membaca peta komando sebagai peta pelacakan adalah
- * salah paham yang paling mahal di layar ini.
+ * Daftarnya diurut dari yang paling berisiko, sebab pembacanya datang
+ * untuk menemukan satuan mana yang perlu perhatian, bukan menghafal urutan
+ * nomor Kodam. Selama belum ada pin yang ditekan, ruang ini dipakai untuk
+ * daftar itu, bukan untuk paragraf penjelasan.
  */
 function KeteranganSatuan({
   titik, fokus, onPilih, onTutup,
@@ -669,46 +663,65 @@ function KeteranganSatuan({
   onPilih: (p: Titik) => void
   onTutup: () => void
 }) {
-  const { t, word } = useT()
+  const { t, word, lang } = useT()
+  const L = TEKS_SISI[lang]
+  const [kata, setKata] = useState('')
   const aktif = titik.find((p) => p.s.id === fokus) ?? null
 
   if (!aktif) {
-    const berisi = titik.filter((p) => p.milik.length > 0)
+    const q = kata.trim().toLowerCase()
+    const berisi = titik
+      .filter((p) => p.milik.length > 0)
+      .filter((p) => !q || `${p.s.nama} ${p.s.markas} ${p.s.wilayah}`.toLowerCase().includes(q))
+      .sort((a, b) => (b.skor ?? -1) - (a.skor ?? -1))
     return (
       <>
-        <div className="kicker">{t('map.detail')}</div>
-        <p className="peta-ajak">{t('map.pick')}</p>
-        {berisi.length > 0 && (
-          <>
-            <div className="kicker" style={{ marginTop: 18, marginBottom: 8 }}>
-              {t('map.withDevices')}
-            </div>
-            <ul className="peta-pintas">
-              {berisi.map((p) => (
-                <li key={p.s.id}>
-                  <button onClick={() => onPilih(p)}>
-                    <span className="nama">{p.s.nama}</span>
-                    <span className="n">{p.milik.length}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </>
+        <div className="kicker">{L.semua}</div>
+        <input
+          className="kmd-cari"
+          type="search"
+          value={kata}
+          onChange={(e) => setKata(e.target.value)}
+          placeholder={L.cari}
+          aria-label={L.cari}
+        />
+        <p className="kmd-ket">{L.urut}</p>
+        {berisi.length === 0 ? (
+          <p className="muted">{L.kosongCari}</p>
+        ) : (
+          <ul className="peta-pintas">
+            {berisi.map((p) => (
+              <li key={p.s.id}>
+                <button onClick={() => onPilih(p)}>
+                  <span className="nama">
+                    {p.s.nama}
+                    <small>{p.milik.length} {L.perangkat}{p.awas > 0 ? ` · ${p.awas} ${L.awas}` : ''}</small>
+                  </span>
+                  <span className="bar" aria-hidden="true">
+                    <i style={{ width: `${Math.min(100, p.skor ?? 0)}%`, background: p.skor === null ? 'var(--slate)' : scoreColor(p.skor) }} />
+                  </span>
+                  <span className="n" style={{ color: p.skor === null ? 'var(--slate)' : scoreColor(p.skor) }}>
+                    {p.skor === null ? '—' : Math.round(p.skor)}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
         )}
+        <p className="kmd-ket" style={{ marginTop: 14 }}>{L.petunjuk}</p>
       </>
     )
   }
 
   const { s, milik, lepas } = aktif
+  const urut = [...milik].sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
 
   return (
     <>
-      <div className="peta-sisi-kepala">
-        <div className="kicker" style={{ marginBottom: 0 }}>
-          {s.pusat ? t('map.center') : t('map.command')}
-          {s.baru && <span className="peta-tag">{t('map.new')}</span>}
-        </div>
-        <button className="peta-sisi-tutup" onClick={onTutup} aria-label={t('map.close')}>×</button>
+      <button className="kmd-balik" onClick={onTutup}>{L.kembali}</button>
+      <div className="kicker" style={{ marginBottom: 6 }}>
+        {s.pusat ? t('map.center') : t('map.command')}
+        {s.baru && <span className="peta-tag">{t('map.new')}</span>}
       </div>
 
       <h4>{s.nama}</h4>
@@ -727,7 +740,7 @@ function KeteranganSatuan({
         <p className="muted peta-sisi-kosong">{t('map.deviceNoneLong')}</p>
       ) : (
         <ul className="peta-sisi-daftar">
-          {milik.map((d) => (
+          {urut.map((d) => (
             <li key={d.device_id}>
               <span
                 className="skor"

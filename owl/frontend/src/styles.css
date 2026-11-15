@@ -2066,3 +2066,63 @@ a.unduh-atas:hover { filter: brightness(1.08); }
   .wk-baris, .wk-baris.dua { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 560px) { .wk-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ——— Peta komando: ringkasan di atas, panel satuan menempel di sisi peta ———
+   Menggantikan dua panel mengambang yang menutupi peta. */
+.kmd-strip {
+  display: flex; align-items: center; gap: 28px; flex-wrap: wrap;
+  padding: 14px 20px; margin-bottom: 12px;
+  border: 1px solid var(--line); border-radius: 14px; background: var(--card);
+}
+.kmd-judul { flex: 1 1 260px; min-width: 220px; }
+.kmd-judul .kicker { margin-bottom: 4px; }
+.kmd-judul .muted { font-size: 12.5px; line-height: 1.5; }
+.kmd-stat { display: flex; gap: 28px; }
+.kmd-stat > div { display: grid; gap: 2px; }
+.kmd-stat .n { font-family: var(--display); font-size: 28px; font-weight: 600; color: var(--gold-soft); line-height: 1.1; }
+.kmd-stat .l { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--slate); }
+.kmd-stat .nyala .n { color: var(--amber); }
+.kmd-postur { display: flex; align-items: center; gap: 12px; }
+.kmd-postur .l { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--slate); }
+.kmd-postur .kata { display: block; font-family: var(--display); font-size: 18px; font-weight: 600; }
+.kmd-awas { flex: 1 1 100%; font-family: var(--mono); font-size: 11.5px; color: var(--amber); line-height: 1.5; }
+
+.kmd-badan { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 12px; align-items: stretch; }
+.kmd-sisi {
+  position: relative; min-height: 380px;
+  border: 1px solid var(--line); border-radius: 18px; background: var(--card);
+}
+.kmd-sisi .kmd-isi { position: absolute; inset: 0; overflow-y: auto; padding: 18px; }
+.kmd-sisi h4 { font-family: var(--display); font-size: 19px; font-weight: 600; color: var(--off); margin-bottom: 12px; line-height: 1.3; }
+.kmd-sisi dl { display: grid; gap: 8px; }
+.kmd-sisi dl > div { display: grid; gap: 2px; }
+.kmd-sisi dt { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--slate); }
+.kmd-sisi dd { font-size: 14px; line-height: 1.5; color: var(--off); }
+.kmd-cari {
+  width: 100%; margin: 8px 0 6px; padding: 10px 12px; font-size: 13px;
+  color: var(--off); background: rgba(255,255,255,.04);
+  border: 1px solid var(--line); border-radius: 10px; outline: none;
+}
+.kmd-cari:focus { border-color: var(--gold-soft); }
+.kmd-ket { font-size: 11.5px; color: var(--slate); margin-bottom: 8px; line-height: 1.5; }
+.kmd-balik {
+  margin-bottom: 14px; padding: 6px 10px; font-size: 12.5px; cursor: pointer;
+  color: var(--gold-soft); background: transparent; border: 1px solid var(--line); border-radius: 999px;
+}
+.kmd-balik:hover { border-color: var(--gold-soft); color: var(--off); }
+.kmd-sisi .peta-pintas button {
+  display: grid; grid-template-columns: minmax(0, 1fr) 54px 30px; align-items: center; gap: 10px;
+  width: 100%; padding: 9px 8px; text-align: left; cursor: pointer;
+  background: transparent; border: 0; border-radius: 8px; color: var(--slate-2); font-size: 13px;
+}
+.kmd-sisi .peta-pintas button:hover { background: rgba(201,162,39,.1); color: var(--off); }
+.kmd-sisi .peta-pintas .nama { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kmd-sisi .peta-pintas small { display: block; font-size: 11px; color: var(--slate); }
+.kmd-sisi .peta-pintas .bar { height: 6px; background: rgba(255,255,255,.07); border-radius: 3px; overflow: hidden; }
+.kmd-sisi .peta-pintas .bar i { display: block; height: 100%; border-radius: 3px; }
+.kmd-sisi .peta-pintas .n { text-align: right; font-family: var(--mono); font-size: 12.5px; }
+@media (max-width: 1000px) {
+  .kmd-badan { grid-template-columns: minmax(0, 1fr); }
+  .kmd-sisi { min-height: 0; height: 420px; order: 2; } /* peta lebih dulu, daftar di bawahnya */
+  .kmd-stat { gap: 20px; }
+}

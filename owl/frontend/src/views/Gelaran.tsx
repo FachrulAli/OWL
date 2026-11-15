@@ -49,64 +49,38 @@ export function Gelaran({ devices, catalog }: { devices: DeviceRow[]; catalog: C
 
   const ringkas = (
     <>
-      <div className="kicker" title={t('map.note')}>{t('map.kicker')}</div>
-      <div className="peta-angka">
-        <div>
-          <span className="n">{JUMLAH_KODAM}</span>
-          <span className="l">{t('map.kodam')}</span>
-        </div>
-        <div>
-          <span className="n">{r.terpeta}</span>
-          <span className="l">{t('map.mapped')}</span>
-        </div>
+      <div className="kmd-judul">
+        <div className="kicker" title={t('map.note')}>{t('map.kicker')}</div>
+        <p className="muted">{t('map.note')}</p>
+      </div>
+
+      <div className="kmd-stat">
+        <div><span className="n">{JUMLAH_KODAM}</span><span className="l">{t('map.kodam')}</span></div>
+        <div><span className="n">{r.terpeta}</span><span className="l">{t('map.mapped')}</span></div>
+        {r.total > 0 && (
+          <div className={r.awas > 0 ? 'nyala' : undefined}>
+            <span className="n">{r.awas}</span><span className="l">{t('ov.atRisk')}</span>
+          </div>
+        )}
       </div>
 
       {r.total > 0 && (
-        <>
-          <div className="peta-sisi-garis" />
-
-          <div className="kicker" style={{ marginBottom: 10 }}>{t('ov.posture')}</div>
-          <div className="gl-postur">
-            <Ring score={rataBulat} size={74} />
-            <div>
-              <div
-                className="kata"
-                style={{ color: rataBulat === null ? 'var(--slate)' : scoreColor(rataBulat) }}
-              >
-                {rataBulat === null ? t('dev.notAssessed') : word(tingkatDari(rataBulat, catalog))}
-              </div>
-              <p className="muted">{t('ov.postureNote', { n: r.dinilai })}</p>
-            </div>
+        <div className="kmd-postur" title={t('ov.postureNote', { n: r.dinilai })}>
+          <Ring score={rataBulat} size={52} />
+          <div>
+            <span className="l">{t('ov.posture')}</span>
+            <span
+              className="kata"
+              style={{ color: rataBulat === null ? 'var(--slate)' : scoreColor(rataBulat) }}
+            >
+              {rataBulat === null ? t('dev.notAssessed') : word(tingkatDari(rataBulat, catalog))}
+            </span>
           </div>
+        </div>
+      )}
 
-          <div className="peta-sisi-garis" />
-
-          <ul className="gl-ringkas">
-            <Baris
-              label={t('ov.devices')}
-              nilai={r.total}
-              catatan={t('ov.devicesNote', { n: r.belum })}
-            />
-            <Baris
-              label={t('ov.atRisk')}
-              nilai={r.awas}
-              catatan={t('ov.atRiskNote')}
-              nyala={r.awas > 0}
-            />
-            <Baris
-              label={t('ov.blind')}
-              nilai={r.dilewati}
-              catatan={t('ov.blindNote')}
-              nyala={r.dilewati > 0}
-            />
-          </ul>
-
-          {r.attestasiGagal > 0 && (
-            <p className="flag" style={{ marginTop: 12 }}>
-              {t('ov.attestation', { n: r.attestasiGagal })}
-            </p>
-          )}
-        </>
+      {r.attestasiGagal > 0 && (
+        <p className="kmd-awas">{t('ov.attestation', { n: r.attestasiGagal })}</p>
       )}
     </>
   )
@@ -116,26 +90,6 @@ export function Gelaran({ devices, catalog }: { devices: DeviceRow[]; catalog: C
       <PetaKomando titik={titik} fokus={fokus} onFokus={setFokus} ringkas={ringkas} />
       <Wawasan devices={devices} catalog={catalog} />
     </>
-  )
-}
-
-/** Satu baris angka di panel: nama di kiri, angka besar di kanan. */
-function Baris({
-  label, nilai, catatan, nyala,
-}: {
-  label: string
-  nilai: number
-  catatan: string
-  nyala?: boolean
-}) {
-  return (
-    <li className={nyala ? 'nyala' : undefined}>
-      <div className="atas">
-        <span className="l">{label}</span>
-        <span className="n">{nilai}</span>
-      </div>
-      <p className="k">{catatan}</p>
-    </li>
   )
 }
 
