@@ -375,7 +375,7 @@ object Posture {
             Attestation.chainSha256().isEmpty() ->
                 st("unavailable", "Keystore perangkat keras tidak memberikan rantai attestation")
             playVerdict == "UNAVAILABLE" ->
-                st("partial", "verdict Play Integrity tidak dapat diperoleh; Key Attestation terbukti")
+                st("partial", "rantai Key Attestation dikirim saat pendaftaran; sah tidaknya diputuskan OWL Core")
             else -> st("ok")
         })
     }

@@ -286,10 +286,12 @@ def _x01(t: Telemetry) -> Finding | None:
     """
     a = t.attestation
     if not a.key_attestation:
-        return _mk("OWL-X01", [
-            "kunci agent tidak terbukti berada di Keystore perangkat keras",
-            f"verdict Play Integrity: {a.play_integrity}",
-        ])
+        ev = ["kunci agent tidak terbukti berada di Keystore perangkat keras"]
+        st = t.availability.get("attestation")
+        if st is not None and st.source == "server" and st.reason:
+            ev.append(f"hasil verifikasi OWL Core: {st.reason}")
+        ev.append(f"verdict Play Integrity: {a.play_integrity}")
+        return _mk("OWL-X01", ev)
     if a.play_integrity == "FAILED":
         return _mk("OWL-X01", ["Play Integrity menyatakan agent bukan build asli: FAILED"])
     if a.play_integrity in ("MEETS_STRONG_INTEGRITY", "MEETS_DEVICE_INTEGRITY",

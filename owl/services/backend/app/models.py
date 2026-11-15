@@ -121,6 +121,9 @@ class Device(BaseModel):
     unit: str = ""
     model: str = ""
     os_version: str = ""
+    # Rantai sertifikat Key Attestation, DER berbasis64, daun lebih dahulu.
+    # Kosong pada agent lama dan pada pendaftaran lewat curl.
+    attestation_chain: list[str] = Field(default_factory=list)
 
 
 # ——————————————————————————— keluaran ———————————————————————————

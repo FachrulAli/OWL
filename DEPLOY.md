@@ -31,6 +31,8 @@ Variabel lingkungan yang diisi saat penggelaran satuan:
 | `OWL_SOC_SECRET` | kunci HMAC-SHA256 untuk tanda tangan payload | `owl-demo-secret` |
 | `OWL_SYSLOG_HOST` | kolektor Syslog SIEM | kosong |
 | `OWL_AIR_GAPPED` | menyatakan mode penggelaran di API dan dashboard | `true` |
+| `OWL_ATTESTATION` | `verify`: hanya perangkat dengan rantai Key Attestation yang lolos verifikasi yang dipercaya. `claim`: klaim agent dipercaya, **hanya** untuk emulator dan uji | `verify` |
+| `OWL_AGENT_SIGNERS` | SHA-256 sertifikat penanda tangan agent yang diizinkan, dipisah koma. **Isi pada penggelaran satuan**; kosong berarti hanya nama paket yang diperiksa | kosong |
 | `OWL_DEMO` | menyalakan `/api/demo/seed` dan `/api/demo/reset`; **isi `false` pada penggelaran satuan**, sebab `reset` mengosongkan basis data | `true` |
 | `OWL_T_HIGH`, `OWL_T_CRITICAL` | ambang keputusan akses | 70, 90 |
 

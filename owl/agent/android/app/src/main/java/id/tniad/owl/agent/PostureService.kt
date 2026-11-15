@@ -34,13 +34,22 @@ class PostureService : Service() {
     override fun onCreate() {
         super.onCreate()
         startForeground(Config.NOTIF_ID, buildNotification(getString(R.string.svc_text)))
-        Attestation.ensureKey()
         scope.launch { loop() }
     }
 
-    private fun enroll(): Boolean = Uploader.enroll(
-        Config.deviceId(this), "${Build.MANUFACTURER} ${Build.MODEL}",
-        Build.MODEL, "Android ${Build.VERSION.RELEASE}").ok
+    /**
+     * Pendaftaran dengan bukti: minta tantangan, buat kunci perangkat keras
+     * untuk tantangan itu, lalu kirim rantai attestation-nya. Kunci dibuat
+     * BARU pada setiap pendaftaran, sebab rantainya hanya sah untuk tantangan
+     * yang baru saja diberikan OWL Core.
+     */
+    private fun enroll(): Boolean {
+        val id = Config.deviceId(this)
+        val challenge = Uploader.challenge(id) ?: return false
+        if (!Attestation.createKey(challenge)) return false
+        return Uploader.enroll(id, "${Build.MANUFACTURER} ${Build.MODEL}",
+            Build.MODEL, "Android ${Build.VERSION.RELEASE}").ok
+    }
 
     /**
      * Pendaftaran TIDAK lagi dicoba sekali saja. Versi pertama mendaftar satu
@@ -63,10 +72,16 @@ class PostureService : Service() {
                     val verdict = Attestation.playVerdict(this)
                     val report = Posture.report(this, Attestation.block(verdict), verdict)
                     var res = withContext(Dispatchers.IO) { Uploader.send(report) }
-                    if (res.code == 404) {
-                        // Perangkat tidak dikenal OWL Core: daftar ulang, kirim sekali lagi.
+                    if (res.code == 404 || res.code == 401) {
+                        // 404: perangkat tidak dikenal OWL Core. 401: kunci
+                        // yang dipegang OWL Core bukan kunci ini. Keduanya
+                        // diperbaiki dengan mendaftar ulang; laporannya
+                        // disusun ulang supaya memuat sidik rantai yang baru.
                         enrolled = enroll()
-                        if (enrolled) res = withContext(Dispatchers.IO) { Uploader.send(report) }
+                        if (enrolled) {
+                            val ulang = Posture.report(this, Attestation.block(verdict), verdict)
+                            res = withContext(Dispatchers.IO) { Uploader.send(ulang) }
+                        }
                     }
                     retrySoon = !res.ok
                     notify(

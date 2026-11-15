@@ -29,10 +29,14 @@ def _paksa(name: str, value):
 @pytest.fixture()
 def client(tmp_path):
     db_lama = _paksa("DB_PATH", str(tmp_path / "uji.db"))
+    # Uji di berkas ini mengirim telemetri tanpa rantai attestation, jadi
+    # memakai mode claim. Mode verify diuji di test_attestation.py.
+    mode_lama = _paksa("ATTESTATION_MODE", "claim")
     policy.reset()
     with TestClient(app) as c:
         yield c
     policy.reset()
+    _paksa("ATTESTATION_MODE", mode_lama)
     _paksa("DB_PATH", db_lama)
 
 

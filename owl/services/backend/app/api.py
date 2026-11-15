@@ -1,19 +1,22 @@
 """REST API OWL Core."""
 from __future__ import annotations
 
+import base64
 import json
+import secrets
 from datetime import datetime
 
 from fastapi import (APIRouter, Depends, Header, HTTPException, Query, Request,
                      WebSocket, WebSocketDisconnect)
 from pydantic import BaseModel, Field
 
-from . import db, demo, pdp, policy, retention, rules, scoring, soc
+from . import attest, db, demo, pdp, policy, retention, rules, scoring, soc
 from . import cef as cef_mod
 from . import stix as stix_mod
 from .applog import log
 from .config import settings
-from .models import AccessDecision, Device, RiskAssessment, Sensitivity, Telemetry
+from .models import (AccessDecision, Device, IndicatorStatus, RiskAssessment,
+                     Sensitivity, Telemetry)
 from .ws import hub
 
 router = APIRouter()
@@ -63,6 +66,7 @@ async def health():
             "api_auth": "aktif" if settings.API_KEY else "terbuka",
             "retention_days": settings.RETENTION_DAYS,
             "log_file": settings.LOG_FILE or "(hanya keluaran standar)",
+            "attestation": settings.ATTESTATION_MODE,
             "enforcement": "rekomendasi"}
 
 
@@ -97,9 +101,70 @@ async def enroll(d: Device, request: Request,
         await db.save_reject(d.device_id, "pendaftaran ditolak", "token tidak sah",
                              request.client.host if request.client else "")
         raise
-    await db.upsert_device(d.model_dump())
-    await hub.broadcast("device_enrolled", d.model_dump())
-    return {"ok": True, "device_id": d.device_id}
+    ip = request.client.host if request.client else ""
+    att = None
+    if d.attestation_chain:
+        ch = await db.take_challenge(d.device_id, settings.CHALLENGE_TTL_SECONDS)
+        if ch is None:
+            att = attest.AttestationResult(
+                reason="tantangan pendaftaran tidak ada atau sudah kedaluwarsa")
+        else:
+            att = attest.verify_chain(d.attestation_chain, base64.b64decode(ch))
+            _check_app_identity(att)
+
+    # Kunci yang sudah terbukti tidak boleh ditimpa pendaftaran yang tidak
+    # terbukti. Tanpa ini, siapa pun yang memegang token dapat mengambil alih
+    # identitas perangkat dengan mendaftar ulang tanpa rantai.
+    lama = await db.get_device(d.device_id)
+    lama_tepercaya = bool(lama and lama.get("public_key") and (lama.get("attestation") or {}).get("verified")
+                          and (lama.get("attestation") or {}).get("hardware_backed"))
+    if lama_tepercaya and not (att and att.trusted):
+        await db.save_reject(d.device_id, "pendaftaran ulang ditolak",
+                             "perangkat sudah punya kunci terverifikasi; "
+                             + (att.reason if att else "pendaftaran baru tidak membawa rantai attestation"), ip)
+        log().warning("pendaftaran ulang tanpa attestation sah ditolak",
+                      extra={"device_id": d.device_id})
+        raise HTTPException(status_code=409,
+                            detail="perangkat sudah terdaftar dengan kunci terverifikasi")
+
+    meta = d.model_dump(exclude={"attestation_chain"})
+    await db.upsert_device(meta)
+    if att is not None:
+        await db.set_device_attestation(d.device_id, att.public_key_b64, att.to_dict())
+        log().info("pendaftaran dengan attestation", extra={
+            "device_id": d.device_id, "terverifikasi": att.verified,
+            "tingkat": att.security_level, "boot": att.boot_state, "sebab": att.reason})
+    await hub.broadcast("device_enrolled", meta)
+    return {"ok": True, "device_id": d.device_id,
+            "attested": bool(att and att.trusted),
+            "attestation": att.to_dict() | {"public_key_b64": ""} if att else None}
+
+
+def _check_app_identity(att: "attest.AttestationResult") -> None:
+    """Kunci harus diminta oleh agent OWL, bukan aplikasi lain di perangkat itu."""
+    if not att.verified:
+        return
+    if settings.AGENT_PACKAGE and att.app_package != settings.AGENT_PACKAGE:
+        att.verified = False
+        att.reason = (f"kunci diminta oleh paket {att.app_package or 'tidak dikenal'}, "
+                      f"bukan {settings.AGENT_PACKAGE}")
+        return
+    wajib = {s.strip().lower() for s in settings.AGENT_SIGNERS.split(",") if s.strip()}
+    if wajib and not wajib & {s.lower() for s in att.app_signers}:
+        att.verified = False
+        att.reason = "penanda tangan agent tidak ada di daftar yang diizinkan"
+
+
+@router.get("/api/enroll/challenge")
+async def enroll_challenge(device_id: str = Query(min_length=1, max_length=64),
+                           x_owl_token: str | None = Header(default=None)):
+    """Tantangan sekali pakai untuk Key Attestation. Agent membuat kuncinya
+    DENGAN tantangan ini, sehingga rantai yang dihasilkan membuktikan kunci
+    itu dibuat sekarang, untuk pendaftaran ini."""
+    _check_token(x_owl_token)
+    ch = base64.b64encode(secrets.token_bytes(32)).decode("ascii")
+    await db.save_challenge(device_id, ch)
+    return {"challenge": ch, "expires_in": settings.CHALLENGE_TTL_SECONDS}
 
 
 @router.get("/api/devices", dependencies=[Depends(require_read)])
@@ -118,10 +183,56 @@ async def device_detail(device_id: str):
 
 # ——————————————————————————— telemetri ———————————————————————————
 
-async def _assess(t: Telemetry) -> tuple[RiskAssessment, AccessDecision, dict]:
+def _apply_server_trust(t: Telemetry, dev: dict, synthetic: bool) -> None:
+    """Ganti KLAIM agent tentang dirinya dengan hasil verifikasi OWL Core.
+
+    Sebelum ini `key_attestation` adalah boolean yang dikirim agent, dan agent
+    yang dikuasai penyerang cukup mengirim `true`. Sekarang:
+
+      perangkat punya catatan attestation   hasil verifikasinya yang berlaku,
+                                            apa pun mode dan apa pun klaimnya.
+      tidak punya, mode verify              tidak dipercaya, OWL-X01 menyala.
+      tidak punya, mode claim               klaim agent dipakai (emulator, curl).
+
+    Telemetri contoh dari tombol demo ditandai `synthetic` dan dilewati: ia
+    tidak pernah datang dari perangkat, dan dashboard menyebutnya contoh.
+    """
+    if synthetic:
+        return
+    now = datetime.now().astimezone()
+    att = dev.get("attestation")
+    if att:
+        trusted = bool(att.get("verified") and att.get("hardware_backed"))
+        t.attestation.key_attestation = trusted
+        t.attestation.certificate_chain_sha256 = att.get("chain_sha256", "")
+        if trusted:
+            boot_ok = att.get("boot_state") == "verified" and att.get("device_locked") is True
+            if not boot_ok:
+                # Perangkat keras sendiri menyatakan boot tidak terverifikasi
+                # atau bootloader terbuka. Ini bukan tebakan agent.
+                t.integrity.bootloader_unlocked = True
+            reason = (f"terverifikasi OWL Core: kunci di {att.get('security_level')}, "
+                      f"boot {att.get('boot_state') or 'tidak dilaporkan'}, "
+                      f"bootloader {'terkunci' if att.get('device_locked') else 'TERBUKA'}")
+            t.availability["integrity"] = IndicatorStatus(
+                status="ok", source="server", checked_at=now,
+                reason="keadaan boot dibaca dari attestation perangkat keras")
+        else:
+            reason = att.get("reason") or "rantai attestation tidak lolos verifikasi"
+        t.availability["attestation"] = IndicatorStatus(
+            status="ok", source="server", checked_at=now, reason=reason)
+    elif settings.ATTESTATION_MODE != "claim":
+        t.attestation.key_attestation = False
+        t.availability["attestation"] = IndicatorStatus(
+            status="ok", source="server", checked_at=now,
+            reason="perangkat belum pernah mengirim rantai attestation")
+
+
+async def _assess(t: Telemetry, synthetic: bool = False) -> tuple[RiskAssessment, AccessDecision, dict]:
     dev = await db.get_device(t.device_id)
     if not dev:
         raise HTTPException(404, "perangkat belum terdaftar; daftarkan lebih dahulu")
+    _apply_server_trust(t, dev, synthetic)
 
     prev = await db.last_assessment(t.device_id)
     previous = prev["score"] if prev else None
@@ -141,13 +252,35 @@ async def _assess(t: Telemetry) -> tuple[RiskAssessment, AccessDecision, dict]:
 
 @router.post("/api/telemetry")
 async def telemetry(t: Telemetry, request: Request,
-                    x_owl_token: str | None = Header(default=None)):
+                    x_owl_token: str | None = Header(default=None),
+                    x_owl_signature: str | None = Header(default=None)):
     ip = request.client.host if request.client else ""
     try:
         _check_token(x_owl_token)
     except HTTPException:
         await db.save_reject("", "token tidak sah", "", ip)
         raise
+
+    # Perangkat yang sudah mendaftarkan kunci HARUS menandatangani laporannya.
+    # Token penggelaran sama untuk seluruh armada, jadi tanpa tanda tangan ini
+    # siapa pun yang memegang token dapat mengirim laporan "bersih" atas nama
+    # perangkat lain.
+    dev = await db.get_device(t.device_id)
+    if dev and dev.get("public_key"):
+        raw = await request.body()
+        if not x_owl_signature or not attest.verify_signature(dev["public_key"], raw, x_owl_signature):
+            await db.save_reject(t.device_id, "tanda tangan laporan tidak sah",
+                                 "tidak ada" if not x_owl_signature else "tidak cocok dengan kunci perangkat", ip)
+            log().warning("laporan ditolak, tanda tangan tidak sah",
+                          extra={"device_id": t.device_id})
+            raise HTTPException(status_code=401, detail="tanda tangan laporan tidak sah")
+        # Laporan lama yang sah tanda tangannya tetap tidak boleh diputar ulang.
+        baru = t.collected_at.isoformat()
+        if dev.get("last_collected_at") and baru <= dev["last_collected_at"]:
+            await db.save_reject(t.device_id, "laporan diputar ulang",
+                                 f"collected_at {baru} tidak lebih baru dari {dev['last_collected_at']}", ip)
+            raise HTTPException(status_code=409, detail="laporan lama; waktu pengumpulan tidak maju")
+        await db.set_last_collected(t.device_id, baru)
     try:
         a, d, out = await _assess(t)
     except HTTPException as e:
@@ -294,7 +427,9 @@ async def run_retention(days: float | None = Query(default=None, ge=0),
              dependencies=[Depends(require_demo), Depends(require_read)])
 async def demo_seed():
     """Muat dua perangkat contoh: satu bersih, satu berisiko."""
-    result = await demo.seed(_assess)
+    async def contoh(t: Telemetry):
+        return await _assess(t, synthetic=True)
+    result = await demo.seed(contoh)
     return result
 
 

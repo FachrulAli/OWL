@@ -26,6 +26,11 @@ services:
       OWL_RETENTION_DAYS: ${OWL_RETENTION_DAYS:-90}
       OWL_LOG_FILE: /data/owl.log
       OWL_AIR_GAPPED: "true"
+      # verify: hanya perangkat dengan rantai Key Attestation yang lolos
+      # verifikasi yang dipercaya. claim hanya untuk emulator dan curl.
+      OWL_ATTESTATION: ${OWL_ATTESTATION:-verify}
+      # Isi "false" pada penggelaran satuan: /api/demo/reset mengosongkan data.
+      OWL_DEMO: ${OWL_DEMO:-true}
       # Isi kedua nilai di bawah pada penggelaran satuan. Dibiarkan kosong,
       # event tetap dicatat di basis data lokal untuk diambil petugas.
       OWL_SOC_WEBHOOK: ${OWL_SOC_WEBHOOK:-}

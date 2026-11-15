@@ -1,7 +1,11 @@
 # OWL Agent (Android)
 
 Agent membaca enam sinyal dari API Android publik, membuktikan dirinya lewat
-attestation, lalu mengirim laporan postur ke OWL Core. Penilaian risikonya
+Key Attestation, lalu mengirim laporan postur bertanda tangan ke OWL Core.
+Saat mendaftar ia meminta tantangan, membuat kunci di perangkat keras untuk
+tantangan itu, dan mengirim rantai sertifikatnya utuh; OWL Core yang
+memutuskan sah tidaknya. Pada emulator rantai itu tidak berujung pada akar
+Google, sehingga OWL Core harus dijalankan dengan `OWL_ATTESTATION=claim`. Penilaian risikonya
 dikerjakan backend, bukan di perangkat: definisi aturan harus satu untuk
 seluruh armada, dan tidak boleh dapat diubah oleh perangkat yang sudah
 dikuasai penyerang.
@@ -47,7 +51,7 @@ dilawan produk ini.
 | 2 | Layanan aksesibilitas dan hamparan | `Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES`, `AppOpsManager` |
 | 3 | Sertifikat CA pengguna dan VPN | `KeyStore("AndroidCAStore")`, `ConnectivityManager` |
 | 4 | Sumber pemasangan | `PackageManager.getInstallSourceInfo` |
-| 5 | Integritas perangkat | Play Integrity, artefak root, `Build.VERSION.SECURITY_PATCH` |
+| 5 | Integritas perangkat | keadaan boot dari Key Attestation (diperiksa OWL Core), artefak root, `Build.VERSION.SECURITY_PATCH` |
 | 6 | Perilaku jaringan | `NetworkStatsManager`, `UsageStatsManager` |
 
 ## Batas yang jujur

@@ -91,6 +91,23 @@ class Settings:
     LOG_MAX_BYTES: int = int(_s("OWL_LOG_MAX_BYTES", str(5 * 1024 * 1024)))
     LOG_BACKUPS: int = int(_s("OWL_LOG_BACKUPS", "3"))
 
+    # ——— kepercayaan pada laporan agent ———
+    # verify  OWL Core hanya memercayai perangkat yang rantai Key Attestation-nya
+    #         lolos verifikasi di sini. Perangkat tanpa rantai yang sah memicu
+    #         OWL-X01 dan ditolak. Ini bawaan.
+    # claim   klaim `key_attestation` dari agent dipercaya untuk perangkat yang
+    #         TIDAK punya catatan attestation. Hanya untuk emulator dan telemetri
+    #         contoh lewat curl; emulator tidak punya kunci attestation Google.
+    # Perangkat yang SUDAH mengirim rantai selalu dinilai dari hasil verifikasi,
+    # apa pun modenya: bukti mengalahkan klaim.
+    ATTESTATION_MODE: str = _s("OWL_ATTESTATION", "verify").lower()
+    # Identitas aplikasi yang boleh memegang kunci agent. Sidik penanda tangan
+    # dipisah koma; dibiarkan kosong berarti hanya nama paket yang diperiksa,
+    # dan itu HANYA sah selama agent masih build debug.
+    AGENT_PACKAGE: str = _s("OWL_AGENT_PACKAGE", "id.tniad.owl.agent")
+    AGENT_SIGNERS: str = _s("OWL_AGENT_SIGNERS", "")
+    CHALLENGE_TTL_SECONDS: float = _f("OWL_CHALLENGE_TTL", 300.0)
+
     # Endpoint demo (/api/demo/seed dan /api/demo/reset). `reset` MENGHAPUS
     # seluruh perangkat dan penilaian, jadi pada penggelaran satuan keduanya
     # harus mati: OWL_DEMO=false membuat keduanya menjawab 404.

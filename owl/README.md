@@ -80,6 +80,60 @@ Satu indikator di perangkat hampir selalu ambigu. Aturan yang bertanda
 `corroborate` karena itu diturunkan satu tingkat severitas jika ia
 satu-satunya yang menyala.
 
+## Kepercayaan pada laporan: dibuktikan, bukan diklaim
+
+Seluruh penilaian di bawah bergantung pada satu hal: bahwa laporan itu memang
+datang dari agent asli pada perangkat yang belum dibongkar. Itu dibuktikan
+dengan Android Key Attestation dan diperiksa **di OWL Core**, sepenuhnya luring.
+
+```
+agent                         OWL Core
+  │  GET /api/enroll/challenge   │
+  │ ───────────────────────────► │  tantangan acak, sekali pakai, 5 menit
+  │  buat kunci EC di TEE atau   │
+  │  StrongBox UNTUK tantangan   │
+  │  POST /api/devices + rantai  │
+  │ ───────────────────────────► │  verifikasi rantai sampai akar Google yang
+  │                              │  disematkan; baca tingkat keamanan, keadaan
+  │                              │  boot, dan identitas aplikasi; simpan kunci
+  │  POST /api/telemetry         │
+  │  + X-OWL-Signature           │
+  │ ───────────────────────────► │  tanda tangan ECDSA atas badan laporan
+```
+
+| Yang dibuktikan rantai | Akibat jika tidak |
+|---|---|
+| Berujung pada akar attestation Google (`rules/google-attestation-roots.pem`) | OWL-X01, ditolak |
+| Kunci lahir di TEE atau StrongBox, bukan perangkat lunak | OWL-X01, ditolak |
+| Dibuat untuk tantangan yang baru diberikan | pendaftaran tidak diakui |
+| Diminta paket agent OWL, dan penanda tangannya jika `OWL_AGENT_SIGNERS` diisi | pendaftaran tidak diakui |
+| Boot terverifikasi dan bootloader terkunci, menurut perangkat keras | OWL-D01, ditolak |
+
+Sesudah itu setiap laporan harus bertanda tangan kunci yang sama. Laporan
+tanpa tanda tangan, bertanda tangan kunci lain, atau yang waktu pengumpulannya
+tidak maju ditolak dan dicatat. Kunci yang sudah terbukti tidak dapat ditimpa
+pendaftaran ulang yang tidak membawa rantai sah.
+
+Klaim agent tentang dirinya (`key_attestation` pada telemetri) tidak lagi
+dipakai untuk perangkat yang punya catatan attestation. `OWL_ATTESTATION`
+mengatur perangkat yang belum punya:
+
+| Nilai | Perangkat tanpa rantai sah |
+|---|---|
+| `verify` (bawaan) | tidak dipercaya, OWL-X01, ditolak |
+| `claim` | klaim agent dipercaya. Untuk emulator, yang tidak punya kunci attestation Google, dan untuk telemetri contoh lewat curl |
+
+**Terbukti pada perangkat fisik.** Infinix X6515 (Android 12) mendaftar dengan
+rantai yang lolos sampai akar Google: kunci di TEE, boot terverifikasi,
+bootloader terkunci. Laporan palsu atas nama perangkat itu, dengan token yang
+benar tetapi tanpa tanda tangan atau dengan tanda tangan karangan, ditolak 401;
+pendaftaran ulang tanpa rantai ditolak 409.
+
+**Yang belum.** Masa berlaku sertifikat tidak ditegakkan, sebab rantai di
+lapangan sering bertanggal aneh. Daftar pencabutan Google untuk kunci
+attestation yang bocor belum diperiksa; pada jaringan tertutup daftar itu harus
+dibawa masuk lewat berkas. Baru satu merek yang diuji.
+
 ## Dua lapis keputusan
 
 Skor hanya menimbang yang ambigu. Empat keadaan diputus **sebelum** skor
@@ -231,8 +285,9 @@ Ringkasnya:
 | Metode | Jalur | Guna | Autentikasi |
 |---|---|---|---|
 | GET | `/health` | status layanan, mode air-gapped, keadaan autentikasi | terbuka |
-| POST | `/api/devices` | registrasi perangkat | `X-OWL-Token` |
-| POST | `/api/telemetry` | kirim laporan postur | `X-OWL-Token` |
+| GET | `/api/enroll/challenge?device_id=` | tantangan sekali pakai untuk Key Attestation | `X-OWL-Token` |
+| POST | `/api/devices` | registrasi perangkat, membawa rantai attestation | `X-OWL-Token` |
+| POST | `/api/telemetry` | kirim laporan postur | `X-OWL-Token`, dan `X-OWL-Signature` jika perangkat punya kunci |
 | GET | `/api/devices` | daftar perangkat dengan skor terakhir | `X-OWL-Api-Key` |
 | GET | `/api/devices/{id}` | detail, riwayat, status indikator | `X-OWL-Api-Key` |
 | POST | `/api/gate/{id}?resource=` | minta rekomendasi keputusan akses | `X-OWL-Api-Key` |
@@ -303,8 +358,8 @@ tanda tangan webhook, dan sifat itu dikunci uji.
 |---|---|
 | minSdk | 29 (Android 10) |
 | compileSdk dan targetSdk | 35 (Android 15) |
-| Diuji pada | Emulator Android 15, API 35, arm64-v8a |
-| Belum diuji | perangkat fisik, StrongBox sungguhan, verdict Play Integrity yang sah |
+| Diuji pada | Emulator Android 15, API 35, arm64-v8a; Infinix X6515, Android 12, API 31 (perangkat fisik) |
+| Belum diuji | StrongBox sungguhan (Infinix itu memakai TEE), merek lain, Android 13 sampai 15 pada perangkat fisik |
 
 Izin yang diminta dan alasan tiap izin ada di `agent/android/app/src/main/AndroidManifest.xml`,
 dan batas yang tidak dapat dilampaui aplikasi biasa ada di [`agent/README.md`](agent/README.md).
@@ -312,12 +367,13 @@ dan batas yang tidak dapat dilampaui aplikasi biasa ada di [`agent/README.md`](a
 ## Hasil pengujian
 
 ```
-61 uji lulus     (cd owl && make test)
+81 uji lulus     (cd owl && make test)
 ```
 
 | Berkas | Cakupan |
 |---|---|
 | `tests/test_scoring.py` | angka demo 18 dan 87, kejenuhan kategori, peluruhan, korelasi multi-sinyal, attestation, sumber pemasangan, aturan penentu, laporan kedaluwarsa |
+| `tests/test_attestation.py` | verifikasi rantai (akar, tantangan, tingkat keamanan, rantai yang diubah), laporan bertanda tangan, putar ulang, bootloader terbuka menurut perangkat keras, identitas aplikasi, pengambilalihan lewat daftar ulang |
 | `tests/test_export.py` | bentuk bundle STIX 2.1, pelolosan karakter CEF, stabilitas tanda tangan HMAC |
 | `tests/test_api.py` | registrasi bertoken, validasi dan pencatatan penolakan, empat tingkat risiko, reproduksibilitas skor, autentikasi gerbang dan ekspor, mode demo, kebijakan yang bertahan melewati restart |
 | `tests/test_retention.py` | data lampau benar-benar terhapus, jejak audit selamat, penyapuan menuntut token admin, log JSON tanpa rahasia |

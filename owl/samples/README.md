@@ -4,6 +4,12 @@ Dua berkas di folder ini adalah telemetri yang bentuknya persis sama dengan
 yang dikirim agent Android. Keduanya dapat dikirim langsung ke OWL Core,
 sehingga skor pada demo dapat diperiksa ulang tanpa perangkat fisik.
 
+OWL Core harus dijalankan dengan `OWL_ATTESTATION=claim` untuk cara ini
+(`make backend OWL_ATTESTATION=claim`). Pada mode bawaan, `verify`, perangkat
+yang didaftarkan lewat curl tidak membawa rantai attestation, jadi laporannya
+tidak dipercaya dan gerbang menolaknya, apa pun isi telemetrinya. Itu memang
+maksudnya.
+
 ```bash
 # daftarkan perangkatnya lebih dahulu
 curl -s -X POST localhost:8000/api/devices \

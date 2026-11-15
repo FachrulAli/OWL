@@ -78,6 +78,14 @@ CREATE TABLE IF NOT EXISTS rejects (
 );
 CREATE INDEX IF NOT EXISTS ix_rejects_at ON rejects(received_at DESC);
 
+-- Tantangan pendaftaran: sekali pakai, berumur pendek. Rantai attestation
+-- harus memuat tantangan ini, sehingga rantai lama tidak dapat diputar ulang.
+CREATE TABLE IF NOT EXISTS enroll_challenges (
+    device_id   TEXT PRIMARY KEY,
+    challenge   TEXT NOT NULL,
+    created_at  TEXT NOT NULL
+);
+
 -- FR-12: perubahan bobot dan ambang dicatat beserta pelakunya.
 CREATE TABLE IF NOT EXISTS policy_audit (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -101,6 +109,15 @@ async def init() -> None:
     _db = await aiosqlite.connect(settings.DB_PATH)
     _db.row_factory = aiosqlite.Row
     await _db.executescript(SCHEMA)
+    # Kolom yang ditambahkan sesudah skema pertama. Basis data lama tetap
+    # dapat dibuka: kolomnya ditambahkan di tempat, bukan dibuat ulang.
+    cur = await _db.execute("PRAGMA table_info(devices)")
+    have = {r["name"] for r in await cur.fetchall()}
+    for col, ddl in (("public_key", "TEXT NOT NULL DEFAULT ''"),
+                     ("attestation", "TEXT NOT NULL DEFAULT ''"),
+                     ("last_collected_at", "TEXT NOT NULL DEFAULT ''")):
+        if col not in have:
+            await _db.execute(f"ALTER TABLE devices ADD COLUMN {col} {ddl}")
     await _db.commit()
 
 
@@ -132,10 +149,51 @@ async def upsert_device(d: dict) -> None:
     await conn().commit()
 
 
+def _device_row(row) -> dict:
+    r = dict(row)
+    r["attestation"] = json.loads(r["attestation"]) if r.get("attestation") else None
+    return r
+
+
 async def get_device(device_id: str) -> dict | None:
     cur = await conn().execute("SELECT * FROM devices WHERE device_id=?", (device_id,))
     row = await cur.fetchone()
-    return dict(row) if row else None
+    return _device_row(row) if row else None
+
+
+async def save_challenge(device_id: str, challenge: str) -> None:
+    await conn().execute(
+        """INSERT INTO enroll_challenges (device_id, challenge, created_at) VALUES (?,?,?)
+           ON CONFLICT(device_id) DO UPDATE SET
+             challenge=excluded.challenge, created_at=excluded.created_at""",
+        (device_id, challenge, _now()))
+    await conn().commit()
+
+
+async def take_challenge(device_id: str, ttl_seconds: float) -> str | None:
+    """Ambil tantangan lalu hapus: sekali pakai, berhasil ataupun gagal."""
+    cur = await conn().execute(
+        "SELECT challenge, created_at FROM enroll_challenges WHERE device_id=?", (device_id,))
+    row = await cur.fetchone()
+    if not row:
+        return None
+    await conn().execute("DELETE FROM enroll_challenges WHERE device_id=?", (device_id,))
+    await conn().commit()
+    age = (datetime.now(timezone.utc) - datetime.fromisoformat(row["created_at"])).total_seconds()
+    return row["challenge"] if age <= ttl_seconds else None
+
+
+async def set_device_attestation(device_id: str, public_key: str, attestation: dict) -> None:
+    await conn().execute(
+        "UPDATE devices SET public_key=?, attestation=?, last_collected_at='' WHERE device_id=?",
+        (public_key, json.dumps(attestation, ensure_ascii=False), device_id))
+    await conn().commit()
+
+
+async def set_last_collected(device_id: str, collected_at: str) -> None:
+    await conn().execute(
+        "UPDATE devices SET last_collected_at=? WHERE device_id=?", (collected_at, device_id))
+    await conn().commit()
 
 
 async def list_devices() -> list[dict]:
@@ -156,6 +214,8 @@ async def list_devices() -> list[dict]:
         r["availability"] = json.loads(r["availability"]) if r.get("availability") else {}
         r["skipped_rules"] = json.loads(r["skipped_rules"]) if r.get("skipped_rules") else []
         r["attestation_ok"] = bool(r["attestation_ok"]) if r.get("attestation_ok") is not None else None
+        r["attestation"] = json.loads(r["attestation"]) if r.get("attestation") else None
+        r.pop("public_key", None)
         out.append(r)
     return out
 
@@ -273,6 +333,7 @@ async def policy_audit(limit: int = 50) -> list[dict]:
 
 
 async def reset() -> None:
-    for t in ("soc_events", "decisions", "assessments", "devices", "rejects"):
+    for t in ("soc_events", "decisions", "assessments", "devices", "rejects",
+              "enroll_challenges"):
         await conn().execute(f"DELETE FROM {t}")
     await conn().commit()
