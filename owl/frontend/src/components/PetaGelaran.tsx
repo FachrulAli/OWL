@@ -81,17 +81,23 @@ for (let lat = 10; lat >= -15; lat -= 5) LINTANG.push(lat)
 const ZOOM_KOTA = 2
 
 /**
- * Sapuan radar sepanjang bidang pandang.
+ * Sapuan radar, LATAR peta.
  *
  * Pusatnya titik tengah bidang, yang pada proyeksi ini jatuh di sekitar
  * 118 derajat bujur timur dan 2,5 derajat lintang selatan, yaitu tengah
- * kepulauan. Jari-jarinya dibuat melebihi sudut terjauh bidang supaya
- * sapuannya tidak pernah memperlihatkan tepinya sendiri.
+ * kepulauan. Jari-jarinya melebihi sudut terjauh bidang supaya sapuannya
+ * tidak pernah memperlihatkan tepinya sendiri.
  *
- * Lapisan ini berada DI LUAR kelompok yang digeser dan dizoom: ia menyapu
- * bingkai yang sedang dilihat, bukan menyapu daratan. Sapuan yang ikut
- * membesar saat peta didekatkan berhenti terbaca sebagai radar dan mulai
- * terbaca sebagai noda kuning.
+ * Dua hal yang menentukan tempatnya dalam urutan gambar:
+ *
+ *   1. Di LUAR kelompok yang digeser dan dizoom, sehingga ia menyapu
+ *      bingkai yang dilihat, bukan menyapu daratan. Sapuan yang ikut
+ *      membesar saat peta didekatkan berhenti terbaca sebagai radar.
+ *   2. Di BAWAH daratan dan pin, bukan di atasnya. Digambar paling akhir,
+ *      ia menyapu melintasi pin dan label, dan karena daratan di bawahnya
+ *      bergeser saat satuan dipilih, sapuan yang diam pun ikut terbaca
+ *      seolah bergeser. Sebagai latar, ia hanya mengisi laut — yaitu
+ *      bagian peta yang memang kosong.
  */
 const RADAR_R = Math.hypot(VB_W, VB_H) / 2 + 40
 const EKOR = [
@@ -431,6 +437,32 @@ export function PetaKomando({
           <rect x={X0} y={Y0} width={VB_W} height={VB_H} className="peta-laut" />
           <rect x={X0} y={Y0} width={VB_W} height={VB_H} fill="url(#peta-sinar)" />
 
+          {/* ——— lingkar jarak dan sapuan radar ——— */}
+          <g className="peta-sapu" pointerEvents="none">
+            {CINCIN.map((f) => (
+              <circle key={f} cx={CX} cy={CY} r={RADAR_R * f} className="cincin" />
+            ))}
+            {!tenang && (
+              <g>
+                {EKOR.map((e) => (
+                  <path
+                    key={e.lebar}
+                    d={juring(RADAR_R, e.lebar)}
+                    className="ekor"
+                    style={{ opacity: e.buram }}
+                    transform={`translate(${CX} ${CY})`}
+                  />
+                ))}
+                <line className="garis" x1={CX} y1={CY} x2={CX + RADAR_R} y2={CY} />
+                <animateTransform
+                  attributeName="transform" type="rotate"
+                  from={`0 ${CX} ${CY}`} to={`360 ${CX} ${CY}`}
+                  dur="16s" repeatCount="indefinite"
+                />
+              </g>
+            )}
+          </g>
+
           <g
             className={`peta-isi${geser ? ' geser' : ''}`}
             style={{ transform: `translate(${tx}px, ${ty}px) scale(${k})` }}
@@ -553,31 +585,6 @@ export function PetaKomando({
                 </g>
               )
             })}
-          </g>
-          {/* ——— lingkar jarak dan sapuan radar ——— */}
-          <g className="peta-sapu" pointerEvents="none">
-            {CINCIN.map((f) => (
-              <circle key={f} cx={CX} cy={CY} r={RADAR_R * f} className="cincin" />
-            ))}
-            {!tenang && (
-              <g>
-                {EKOR.map((e) => (
-                  <path
-                    key={e.lebar}
-                    d={juring(RADAR_R, e.lebar)}
-                    className="ekor"
-                    style={{ opacity: e.buram }}
-                    transform={`translate(${CX} ${CY})`}
-                  />
-                ))}
-                <line className="garis" x1={CX} y1={CY} x2={CX + RADAR_R} y2={CY} />
-                <animateTransform
-                  attributeName="transform" type="rotate"
-                  from={`0 ${CX} ${CY}`} to={`360 ${CX} ${CY}`}
-                  dur="16s" repeatCount="indefinite"
-                />
-              </g>
-            )}
           </g>
         </svg>
 

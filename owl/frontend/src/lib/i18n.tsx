@@ -518,7 +518,20 @@ const S = {
   },
   'ops.token': { id: 'Terbitkan token pendaftaran', en: 'Issue enrolment token' },
   'ops.apk': { id: 'Unduh untuk Android', en: 'Download for Android' },
-  'ops.apkSoon': { id: 'tautan menyusul', en: 'link to follow' },
+  'ops.apkIos': { id: 'Unduh untuk iOS', en: 'Download for iOS' },
+  'ops.soon': { id: 'segera hadir', en: 'coming soon' },
+  'ops.apkSoon': {
+    id: 'Tautan unduhnya belum dipasang. APK rilisnya sedang disiapkan.',
+    en: 'The download link is not wired up yet. The release APK is being prepared.',
+  },
+  'ops.iosWhy': {
+    id: 'Enam sinyal OWL dibaca lewat API yang tertutup bagi aplikasi pihak ketiga '
+      + 'di iOS: daftar aplikasi terpasang, sumber pemasangan, layanan aksesibilitas, '
+      + 'dan sertifikat CA pengguna.',
+    en: 'OWL’s six signals are read through APIs that iOS closes to third-party apps: '
+      + 'the installed app list, install source, accessibility services, and '
+      + 'user-installed CA certificates.',
+  },
   'ops.tokenIssued': { id: 'Token pendaftaran diterbitkan.', en: 'Enrolment token issued.' },
   'ops.revoke': { id: 'Cabut perangkat', en: 'Revoke device' },
   'ops.revokeDone': { id: 'Perangkat dicabut.', en: 'Device revoked.' },

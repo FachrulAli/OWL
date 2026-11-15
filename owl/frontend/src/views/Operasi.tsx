@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AGENT_INFO, UNDUH_AGENT } from '../lib/agent'
+import { AGENT_INFO, UNDUH_AGENT, UNDUH_IOS } from '../lib/agent'
 import { api } from '../lib/api'
 import { useT } from '../lib/i18n'
 import type { DeviceRow, Kasus, Pencabutan, StatusKasus } from '../lib/types'
@@ -229,7 +229,8 @@ export function Operasi({ devices, offline, onRefresh }: {
           {/* Unduh agent berdiri tepat di sebelah penerbitan token, sebab
               keduanya dipakai dalam menit yang sama: token diterbitkan,
               agent dipasang di ponsel, lalu perangkatnya mendaftar. */}
-          <UnduhAgent />
+          <UnduhAgent sistem="android" />
+          <UnduhAgent sistem="ios" />
           <button
             className="btn amber"
             disabled={sibuk || !adaAdmin || !adaPerangkat || !catatanCukup}
@@ -363,15 +364,22 @@ function labelCabut(status: string, t: (k: never) => string): string {
 }
 
 /**
- * Tombol unduh APK agent.
+ * Tombol unduh agent.
  *
- * Selama tautannya belum ada, tombolnya tetap ditampilkan tetapi mati dan
- * menyebutkan bahwa tautannya menyusul. Tombol yang menghilang membuat
- * orang mengira fiturnya tidak ada; tombol mati yang menerangkan dirinya
- * menyebutkan apa yang sedang ditunggu.
+ * Android hidup: ia tombol penuh, dapat ditekan, dan ketika tautannya
+ * belum diisi ia mengatakan itu di tempat alih-alih diam saja. Tombol
+ * yang diam setelah ditekan membuat orang mengira aplikasinya rusak.
+ *
+ * iOS mati dengan sengaja, dan bukan karena pekerjaannya belum sempat:
+ * enam sinyal OWL dibaca lewat API yang tertutup bagi aplikasi pihak
+ * ketiga di iOS. Keterangannya disebut, bukan disembunyikan.
  */
-function UnduhAgent() {
+function UnduhAgent({ sistem }: { sistem: 'android' | 'ios' }) {
   const { t } = useT()
+  const [kabar, setKabar] = useState('')
+  const ios = sistem === 'ios'
+  const tautan = ios ? UNDUH_IOS : UNDUH_AGENT
+
   const ikon = (
     <svg viewBox="0 0 16 16" aria-hidden="true" className="ops-unduh-ikon">
       <path d="M8 2v8M4.5 7.5 8 11l3.5-3.5" fill="none" stroke="currentColor"
@@ -380,21 +388,34 @@ function UnduhAgent() {
             strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   )
+  const label = ios ? t('ops.apkIos') : t('ops.apk')
 
-  if (!UNDUH_AGENT) {
+  if (ios) {
     return (
-      <span className="ops-unduh-mati" title={t('ops.apkSoon')}>
+      <span className="ops-unduh-mati" title={t('ops.iosWhy')}>
         {ikon}
-        {t('ops.apk')}
-        <i>{t('ops.apkSoon')}</i>
+        {label}
+        <i>{t('ops.soon')}</i>
+      </span>
+    )
+  }
+
+  if (!tautan) {
+    return (
+      <span className="ops-unduh-bungkus">
+        <button className="btn ops-unduh" onClick={() => setKabar(t('ops.apkSoon'))}>
+          {ikon}
+          {label}
+        </button>
+        {kabar && <i className="ops-unduh-kabar">{kabar}</i>}
       </span>
     )
   }
 
   return (
-    <a className="btn ops-unduh" href={UNDUH_AGENT} download>
+    <a className="btn ops-unduh" href={tautan} download>
       {ikon}
-      {t('ops.apk')}
+      {label}
       {AGENT_INFO && <i>{AGENT_INFO}</i>}
     </a>
   )

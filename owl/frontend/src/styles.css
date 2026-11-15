@@ -71,14 +71,17 @@ a { color: var(--gold-soft); }
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-rows: auto auto;
-  column-gap: 16px; row-gap: 7px;
+  column-gap: 16px; row-gap: 4px;
   margin-bottom: 22px; padding-bottom: 10px;
   border-bottom: 1px solid var(--line);
 }
 .topbar .brand { grid-area: 1 / 1; align-self: center; }
 .topbar .sudut-baris { grid-area: 1 / 3; justify-self: end; align-self: center; }
-.topbar .brand-sub { grid-area: 2 / 1; align-self: center; }
-.topbar .tabs { grid-area: 2 / 2; align-self: center; }
+/* Tagline menempel pada kata OWL di atasnya, sedangkan menu tetap duduk
+   di dasar barisnya. Keduanya berbagi baris yang sama, tetapi tidak
+   berbagi garis yang sama: tagline milik lambang, menu berdiri sendiri. */
+.topbar .brand-sub { grid-area: 2 / 1; align-self: start; }
+.topbar .tabs { grid-area: 2 / 2; align-self: end; }
 .topbar .status-koneksi { grid-area: 2 / 3; justify-self: end; align-self: center; }
 
 .topbar .brand .logo-mark { width: var(--logo); height: var(--logo); }
@@ -1994,9 +1997,9 @@ tbody tr.terpilih td:first-child { box-shadow: inset 2px 0 0 var(--gold); }
 }
 .ops-unduh-ikon { width: 15px; height: 15px; flex: 0 0 auto; }
 
-/* Keadaan menunggu: terlihat, terbaca, tetapi jelas belum dapat ditekan.
-   Dibedakan dari tombol mati biasa oleh garis putus-putus, supaya tidak
-   tertukar dengan tombol yang mati karena syaratnya belum dipenuhi. */
+/* Yang BELUM ADA, bukan yang sedang tidak boleh ditekan. Garis putus-putus
+   membedakannya dari tombol yang mati karena syaratnya belum dipenuhi,
+   misalnya kunci admin yang belum diisi. */
 .ops-unduh-mati {
   font-family: var(--display); font-size: 12.5px; font-weight: 600;
   color: var(--slate); cursor: default;
@@ -2010,3 +2013,10 @@ tbody tr.terpilih td:first-child { box-shadow: inset 2px 0 0 var(--gold); }
 }
 .ops-unduh i { color: #000; border-left-color: rgba(0, 0, 0, .25); }
 .ops-unduh:not(:hover) i { color: var(--gold-dim); border-left-color: var(--line); }
+
+.ops-unduh-bungkus { display: inline-flex; align-items: center; gap: 10px; }
+.ops-unduh-kabar {
+  font-style: normal; font-family: var(--mono); font-size: 10.5px;
+  line-height: 1.4; color: var(--amber); max-width: 30ch;
+}
+.ops-unduh-mati[title] { cursor: help; }

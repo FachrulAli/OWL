@@ -28,5 +28,17 @@
  */
 export const UNDUH_AGENT = ''
 
-/** Keterangan singkat di bawah tombol: versi dan ukuran, bila diketahui. */
+/** Keterangan singkat pada tombol: versi dan ukuran, bila diketahui. */
 export const AGENT_INFO = ''
+
+/**
+ * Agent iOS belum ada, dan tombolnya mengatakan itu.
+ *
+ * Enam sinyal OWL dibaca lewat API yang tidak punya padanannya di iOS:
+ * daftar aplikasi terpasang, sumber pemasangan, layanan aksesibilitas,
+ * dan sertifikat CA pengguna semuanya tertutup bagi aplikasi pihak
+ * ketiga di sana. Jadi ini bukan pekerjaan yang tinggal dikerjakan,
+ * melainkan rancangan yang harus dipikirkan ulang, dan tombolnya tidak
+ * berpura-pura sebaliknya.
+ */
+export const UNDUH_IOS = ''
