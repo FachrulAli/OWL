@@ -251,10 +251,11 @@ export default function App() {
     return (
       <>
         {tirai}
+        {/* Tanpa tombol Dashboard di sudut. Halaman depan sudah menawarkannya
+            dua kali pada tempat yang memang dibaca orang: di hero, dan di
+            penutup setelah seluruh klaimnya dinyatakan. Tombol ketiga yang
+            melayang di pojok hanya bersaing dengan keduanya. */}
         <header className="land-top">
-          <button className="btn ghost" onClick={() => pindah('/dashboard')}>
-            {t('land.toDashboard')}
-          </button>
           <div className="sudut">
             <div className="sudut-baris">
               <Notifikasi kabar={kabar} />

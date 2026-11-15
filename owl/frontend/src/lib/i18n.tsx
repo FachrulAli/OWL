@@ -31,7 +31,6 @@ const S = {
   'tab.aturan': { id: 'Aturan & bobot', en: 'Rules & weights' },
   'tab.soc': { id: 'SOC / CSIRT', en: 'SOC / CSIRT' },
 
-  'land.toDashboard': { id: 'Dashboard', en: 'Dashboard' },
   'land.home': { id: 'Kembali ke halaman depan', en: 'Back to the landing page' },
 
   'top.logout': { id: 'Keluar', en: 'Log out' },
