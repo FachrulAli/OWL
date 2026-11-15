@@ -1,21 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { GELARAN, JUMLAH_KODAM } from '../data/gelaran'
 import type { Satuan } from '../data/gelaran'
 import { INDONESIA_PATH, projX, projY } from '../data/indonesiaGeo'
+import { scoreColor } from '../lib/api'
 import { useT } from '../lib/i18n'
 import type { DeviceRow } from '../lib/types'
 
 /**
- * Peta gelaran satuan.
+ * Peta gelaran satuan, beserta panel keterangannya.
  *
  * Garis pantainya Natural Earth 50m (domain publik) yang sudah diproyeksikan
  * ke viewBox 1000x440, jadi pin mendarat di pulau yang benar, bukan di atas
  * gumpalan hiasan. Satu klik pada pin mendekatkan peta ke satuan itu dan
- * membuka satu jendela keterangan; klik di luar pin mengembalikannya.
+ * mengisi panel di sebelah kanannya; klik di luar pin mengembalikannya.
  *
  * Yang ditunjukkan peta ini adalah CAKUPAN KOMANDO, bukan posisi perangkat.
- * OWL tidak pernah membaca lokasi perangkat, jadi jumlah perangkat pada tiap
- * pin dihitung dari kolom `unit` yang diisi saat registrasi, bukan dari
+ * OWL tidak pernah membaca lokasi perangkat, jadi daftar perangkat pada tiap
+ * satuan disusun dari kolom `unit` yang diisi saat registrasi, bukan dari
  * telemetri. Keterangan itu ditulis di layar supaya tidak ada yang salah
  * membaca peta ini sebagai pelacakan.
  */
@@ -24,70 +25,101 @@ const VB_W = 1000
 const VB_H = 440
 const ZOOM = 2.6
 
+/** Ukuran pin dan label dalam piksel layar, bukan satuan viewBox. */
+const PX_INTI = 3.6
+const PX_INTI_PUSAT = 5
+const PX_DENYUT = 10
+const PX_SASAR = 15
+const PX_HURUF = 8.5
+const PX_LABEL_Y = -12
+
+export interface Titik {
+  s: Satuan
+  x: number
+  y: number
+  milik: DeviceRow[]
+}
+
 /** Perangkat dihitung masuk satu satuan bila kolom `unit`-nya menyebut satuan itu. */
 function cocok(unit: string, s: Satuan): boolean {
-  const u = unit.toLowerCase()
+  const u = (unit ?? '').toLowerCase()
   if (!u) return false
   return u.includes(s.nama.toLowerCase())
     || u.includes(`kodam ${s.singkat.toLowerCase()}`)
 }
 
-export function PetaGelaran({ devices }: { devices: DeviceRow[] }) {
-  const { t } = useT()
-  const [fokus, setFokus] = useState<string | null>(null)
-  const bungkus = useRef<HTMLDivElement>(null)
-
-  const titik = useMemo(
+/** Titik peta beserta perangkat yang terdaftar pada tiap satuan. */
+export function useGelaran(devices: DeviceRow[]): Titik[] {
+  return useMemo(
     () => GELARAN.map((s) => ({
       s,
       x: projX(s.lon),
       y: projY(s.lat),
-      n: devices.filter((d) => cocok(d.unit ?? '', s)).length,
+      milik: devices.filter((d) => cocok(d.unit, s)),
     })),
     [devices],
   )
+}
 
-  const aktif = titik.find((p) => p.s.id === fokus) ?? null
-  const terpeta = titik.reduce((a, p) => a + p.n, 0)
+export function PetaGelaran({
+  titik, fokus, onFokus,
+}: {
+  titik: Titik[]
+  fokus: string | null
+  onFokus: (id: string | null) => void
+}) {
+  const { t } = useT()
+  const bungkus = useRef<HTMLDivElement>(null)
+  const [lebar, setLebar] = useState(VB_W)
 
-  // Escape menutup jendela keterangan, seperti layar kunci.
+  /**
+   * Berapa satuan viewBox untuk satu piksel layar.
+   *
+   * Tanpa ini, pin dan labelnya ikut mengecil ketika peta dipasang di kolom
+   * yang sempit: pada lebar render 690 piksel, huruf setinggi 7 satuan
+   * viewBox mendarat sebagai 4,8 piksel di layar dan tidak terbaca sama
+   * sekali. Jadi ukurannya dihitung balik dari lebar yang benar-benar
+   * dirender, bukan dipatok pada satuan viewBox.
+   */
+  useLayoutEffect(() => {
+    const el = bungkus.current
+    if (!el) return
+    const ukur = () => setLebar(el.getBoundingClientRect().width || VB_W)
+    ukur()
+    if (typeof ResizeObserver !== 'function') {
+      addEventListener('resize', ukur)
+      return () => removeEventListener('resize', ukur)
+    }
+    const ro = new ResizeObserver(ukur)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  // Escape melepas fokus, seperti layar kunci dan panel aturan.
   useEffect(() => {
     if (!fokus) return
-    const tekan = (e: KeyboardEvent) => { if (e.key === 'Escape') setFokus(null) }
+    const tekan = (e: KeyboardEvent) => { if (e.key === 'Escape') onFokus(null) }
     addEventListener('keydown', tekan)
     return () => removeEventListener('keydown', tekan)
-  }, [fokus])
+  }, [fokus, onFokus])
 
+  const aktif = titik.find((p) => p.s.id === fokus) ?? null
   const k = aktif ? ZOOM : 1
   const tx = aktif ? VB_W / 2 - k * aktif.x : 0
   const ty = aktif ? VB_H / 2 - k * aktif.y : 0
 
+  /** Piksel layar menjadi satuan viewBox, sudah dibagi faktor zoom. */
+  const px = (n: number) => (n * (VB_W / lebar)) / k
+
   return (
     <div className="card peta-kartu">
-      <div className="peta-kepala">
-        <div>
-          <div className="kicker" style={{ marginBottom: 4 }}>{t('map.kicker')}</div>
-          <p className="muted" style={{ maxWidth: '62ch' }}>{t('map.note')}</p>
-        </div>
-        <div className="peta-angka">
-          <div>
-            <span className="n">{JUMLAH_KODAM}</span>
-            <span className="l">{t('map.kodam')}</span>
-          </div>
-          <div>
-            <span className="n">{terpeta}</span>
-            <span className="l">{t('map.mapped')}</span>
-          </div>
-        </div>
-      </div>
-
       <div className="peta-bungkus" ref={bungkus}>
         <svg
           viewBox={`0 0 ${VB_W} ${VB_H}`}
           className="peta"
           role="img"
           aria-label={t('map.alt')}
-          onClick={() => setFokus(null)}
+          onClick={() => onFokus(null)}
         >
           <defs>
             <radialGradient id="peta-sinar" cx="50%" cy="42%" r="70%">
@@ -105,38 +137,31 @@ export function PetaGelaran({ devices }: { devices: DeviceRow[] }) {
           <g className="peta-isi" style={{ transform: `translate(${tx}px, ${ty}px) scale(${k})` }}>
             <path d={INDONESIA_PATH} className="peta-darat" />
 
-            {titik.map(({ s, x, y, n }) => {
+            {titik.map(({ s, x, y, milik }) => {
               const dipilih = s.id === fokus
+              const pilih = () => onFokus(dipilih ? null : s.id)
               return (
                 <g
                   key={s.id}
                   className={`peta-pin${s.pusat ? ' pusat' : ''}${s.baru ? ' baru' : ''}`
-                    + `${dipilih ? ' dipilih' : ''}${n > 0 ? ' isi' : ''}`}
+                    + `${dipilih ? ' dipilih' : ''}${milik.length > 0 ? ' isi' : ''}`}
                   transform={`translate(${x} ${y})`}
-                  onClick={(e) => { e.stopPropagation(); setFokus(dipilih ? null : s.id) }}
+                  onClick={(e) => { e.stopPropagation(); pilih() }}
                   role="button"
                   tabIndex={0}
                   aria-label={`${s.nama}, ${s.markas}`}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      setFokus(dipilih ? null : s.id)
-                    }
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pilih() }
                   }}
                 >
-                  {/* Jari-jari dan ukuran huruf dibagi faktor zoom, sehingga pin
-                      dan labelnya tetap sebesar semula saat peta didekatkan.
-                      Yang membesar hanya garis pantainya, dan itu memang yang
-                      ingin dilihat lebih dekat; pin yang ikut membesar hanya
-                      menjadi gumpalan. */}
-                  <circle className="denyut" r={(s.pusat ? 13 : 10) / k} />
-                  <circle className="sasar" r={14 / k} />
-                  <circle className="inti" r={(s.pusat ? 5 : 3.4) / k} />
+                  <circle className="denyut" r={px(PX_DENYUT)} />
+                  <circle className="sasar" r={px(PX_SASAR)} />
+                  <circle className="inti" r={px(s.pusat ? PX_INTI_PUSAT : PX_INTI)} />
                   <text
                     className="nama"
-                    x={(s.dx ?? 0) / k}
-                    y={(s.dy ?? -11) / k}
-                    style={{ fontSize: `${7 / k}px` }}
+                    x={px(s.dx ?? 0)}
+                    y={px(s.dy ?? PX_LABEL_Y)}
+                    style={{ fontSize: `${px(PX_HURUF)}px` }}
                   >
                     {s.pusat ? 'MABESAD' : s.singkat}
                   </text>
@@ -146,41 +171,103 @@ export function PetaGelaran({ devices }: { devices: DeviceRow[] }) {
           </g>
         </svg>
 
-        {aktif && (
-          <div className="peta-pop" role="dialog" aria-label={aktif.s.nama}>
-            <button
-              className="peta-pop-tutup"
-              onClick={() => setFokus(null)}
-              aria-label={t('map.close')}
-            >
-              ×
-            </button>
-            <div className="kicker" style={{ marginBottom: 6 }}>
-              {aktif.s.pusat ? t('map.center') : t('map.command')}
-              {aktif.s.baru && <span className="peta-tag">{t('map.new')}</span>}
-            </div>
-            <h4>{aktif.s.nama}</h4>
-            <dl>
-              <div><dt>{t('map.hq')}</dt><dd>{aktif.s.markas}</dd></div>
-              <div><dt>{t('map.area')}</dt><dd>{aktif.s.wilayah}</dd></div>
-              <div>
-                <dt>{t('map.devices')}</dt>
-                <dd className={aktif.n > 0 ? 'isi' : ''}>
-                  {aktif.n > 0 ? t('map.deviceN', { n: aktif.n }) : t('map.deviceNone')}
-                </dd>
-              </div>
-            </dl>
-          </div>
-        )}
-
         <div className="peta-legenda">
           <span><i className="l-pusat" />{t('map.center')}</span>
           <span><i className="l-kodam" />{t('map.command')}</span>
           <span><i className="l-baru" />{t('map.new2025')}</span>
         </div>
       </div>
+    </div>
+  )
+}
 
-      <p className="peta-kaki">{t('map.foot')}</p>
+/**
+ * Panel keterangan di sebelah kanan peta.
+ *
+ * Selama belum ada pin yang ditekan, panel ini tidak dibiarkan kosong: ia
+ * memakai ruangnya untuk menyatakan apa yang sebenarnya ditunjukkan peta di
+ * sebelahnya, sebab membaca peta komando sebagai peta pelacakan adalah salah
+ * paham yang paling mahal di layar ini.
+ */
+export function KeteranganSatuan({
+  titik, fokus, onFokus,
+}: {
+  titik: Titik[]
+  fokus: string | null
+  onFokus: (id: string | null) => void
+}) {
+  const { t, word } = useT()
+  const aktif = titik.find((p) => p.s.id === fokus) ?? null
+  const terpeta = titik.reduce((a, p) => a + p.milik.length, 0)
+
+  if (!aktif) {
+    return (
+      <div className="card peta-sisi kosong">
+        <div className="kicker">{t('map.kicker')}</div>
+        <div className="peta-angka">
+          <div>
+            <span className="n">{JUMLAH_KODAM}</span>
+            <span className="l">{t('map.kodam')}</span>
+          </div>
+          <div>
+            <span className="n">{terpeta}</span>
+            <span className="l">{t('map.mapped')}</span>
+          </div>
+        </div>
+        <p className="muted">{t('map.note')}</p>
+        <p className="peta-ajak">{t('map.pick')}</p>
+        <p className="peta-kaki">{t('map.foot')}</p>
+      </div>
+    )
+  }
+
+  const { s, milik } = aktif
+
+  return (
+    <div className="card peta-sisi">
+      <div className="peta-sisi-kepala">
+        <div className="kicker" style={{ marginBottom: 0 }}>
+          {s.pusat ? t('map.center') : t('map.command')}
+          {s.baru && <span className="peta-tag">{t('map.new')}</span>}
+        </div>
+        <button className="peta-sisi-tutup" onClick={() => onFokus(null)} aria-label={t('map.close')}>
+          ×
+        </button>
+      </div>
+
+      <h4>{s.nama}</h4>
+      <dl>
+        <div><dt>{t('map.hq')}</dt><dd>{s.markas}</dd></div>
+        <div><dt>{t('map.area')}</dt><dd>{s.wilayah}</dd></div>
+      </dl>
+
+      <div className="peta-sisi-garis" />
+
+      <div className="kicker" style={{ marginBottom: 10 }}>
+        {t('map.deviceList', { n: milik.length })}
+      </div>
+
+      {milik.length === 0 ? (
+        <p className="muted peta-sisi-kosong">{t('map.deviceNoneLong')}</p>
+      ) : (
+        <ul className="peta-sisi-daftar">
+          {milik.map((d) => (
+            <li key={d.device_id}>
+              <span
+                className="skor"
+                style={{ color: d.score === null ? 'var(--slate)' : scoreColor(d.score) }}
+              >
+                {d.score === null ? '—' : d.score.toFixed(0)}
+              </span>
+              <span className="isi">
+                <span className="nama">{d.label || d.device_id}</span>
+                <span className="sub">{d.device_id} · {d.owner_role || '—'}</span>
+              </span>
+              <span className="tingkat">{d.level ? word(d.level) : t('dev.notAssessed')}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

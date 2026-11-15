@@ -398,6 +398,18 @@ const S = {
   'map.devices': { id: 'Perangkat', en: 'Devices' },
   'map.deviceN': { id: '{n} terdaftar', en: '{n} enrolled' },
   'map.deviceNone': { id: 'belum ada yang terdaftar', en: 'none enrolled yet' },
+  'map.pick': {
+    id: 'Tekan satu pin untuk membuka keterangan satuan beserta perangkat yang '
+      + 'terdaftar di bawahnya.',
+    en: 'Press a pin to open that command’s details and the devices enrolled under it.',
+  },
+  'map.deviceList': { id: 'Perangkat terdaftar · {n}', en: 'Enrolled devices · {n}' },
+  'map.deviceNoneLong': {
+    id: 'Belum ada perangkat yang terdaftar pada satuan ini. Perangkat masuk ke '
+      + 'daftar ini ketika kolom satuan pada registrasinya menyebut satuan ini.',
+    en: 'No device is enrolled under this command yet. A device joins this list when '
+      + 'the unit field on its enrolment names this command.',
+  },
   'map.foot': {
     id: 'Dua puluh satu Kodam, yaitu 15 yang lama ditambah 6 hasil penataan 10 '
       + 'Agustus 2025. Perangkat dipetakan dari kolom satuan yang diisi saat '
