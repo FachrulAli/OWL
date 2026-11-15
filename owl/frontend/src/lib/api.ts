@@ -1,5 +1,7 @@
 import snapshot from '../data/snapshot.json'
-import type { Catalog, Decision, DeviceRow, Sensitivity, SocEvent } from './types'
+import type {
+  Catalog, Decision, DeviceRow, Kasus, Metrics, Pencabutan, Sensitivity, SocEvent, TokenDaftar,
+} from './types'
 
 const BASE = import.meta.env.VITE_OWL_API ?? ''
 
@@ -146,10 +148,62 @@ async function withFallback<T>(live: () => Promise<T>, recorded: () => T): Promi
   }
 }
 
+/**
+ * Endpoint operasi.
+ *
+ * Berbeda dengan `devices` dan `catalog`, kelompok ini TIDAK punya rekaman
+ * cadangan, dan memang tidak boleh punya. Pencabutan perangkat, penanganan
+ * kasus, dan daftar pencabutan attestation adalah keadaan yang berubah dan
+ * ditindaklanjuti orang; menampilkan rekaman lama sebagai keadaan sekarang
+ * berarti menyuruh petugas bertindak atas dunia yang sudah lewat. Pada
+ * tautan publik, layarnya mengatakan bahwa bagian ini menuntut OWL Core.
+ */
 export const api = {
   operations: <T,>(path: string, method = 'GET', body?: unknown, admin = '') =>
     req<T>(path, { method, body: body === undefined ? undefined : JSON.stringify(body),
       headers: admin ? { 'X-OWL-Admin': admin } : {} }),
+
+  metrics: () => req<Metrics>('/api/metrics'),
+  cases: () => req<Kasus[]>('/api/cases'),
+  revocations: () => req<Pencabutan>('/api/attestation/revocations'),
+
+  setCase: (id: string, status: string, note: string, ttlMinutes: number, admin: string) =>
+    req<Kasus>(`/api/cases/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status, note, ttl_minutes: ttlMinutes }),
+      headers: { 'X-OWL-Admin': admin },
+    }),
+
+  revokeDevice: (id: string, reason: string, admin: string) =>
+    req<unknown>(`/api/devices/${encodeURIComponent(id)}/revoke`, {
+      method: 'PUT',
+      body: JSON.stringify({ reason }),
+      headers: { 'X-OWL-Admin': admin },
+    }),
+
+  unrevokeDevice: (id: string, admin: string) =>
+    req<unknown>(`/api/devices/${encodeURIComponent(id)}/revoke`, {
+      method: 'DELETE',
+      headers: { 'X-OWL-Admin': admin },
+    }),
+
+  enrollToken: (id: string, admin: string) =>
+    req<TokenDaftar>('/api/enroll/tokens', {
+      method: 'POST',
+      body: JSON.stringify({ device_id: id }),
+      headers: { 'X-OWL-Admin': admin },
+    }),
+
+  scanAlarms: (admin: string) =>
+    req<{ ok: boolean }>('/api/alarms/scan', { method: 'POST', headers: { 'X-OWL-Admin': admin } }),
+
+  /** Impor berkas JSON yang dibawa lewat media, bukan diunduh OWL Core. */
+  importJson: (path: string, method: 'POST' | 'PUT', isi: unknown, admin: string) =>
+    req<unknown>(path, {
+      method,
+      body: JSON.stringify(isi),
+      headers: { 'X-OWL-Admin': admin },
+    }),
   health: () =>
     withFallback(
       () => req<{ service: string; version: string; air_gapped: boolean }>('/health'),

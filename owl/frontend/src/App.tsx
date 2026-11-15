@@ -1,21 +1,23 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Latar } from './components/Latar'
 import { Logo } from './components/Logo'
 import { Login } from './components/Login'
+import { Notifikasi } from './components/Notifikasi'
+import type { Kabar } from './components/Notifikasi'
 import { PanelAturan } from './components/PanelAturan'
 import { StatusKoneksi, Versi } from './components/Status'
 import { api, clearKey, hasKey, isOffline, onOfflineChange, onUnauthorized, snapshotGeneratedAt, wsQuery } from './lib/api'
 import { LangToggle, useT } from './lib/i18n'
 import type { Key } from './lib/i18n'
-import type { Catalog, DeviceRow, SocEvent } from './lib/types'
-import { Ikhtisar } from './views/Ikhtisar'
+import type { Catalog, DeviceRow, Metrics, SocEvent } from './lib/types'
+import { Gelaran } from './views/Gelaran'
 import { Landing } from './views/Landing'
 import { Gerbang } from './views/Gerbang'
 import { Perangkat } from './views/Perangkat'
+import { Operasi } from './views/Operasi'
 import { Soc } from './views/Soc'
-import { Operations } from './components/Operations'
 
-type Tab = 'ikhtisar' | 'gerbang' | 'perangkat' | 'soc'
+type Tab = 'ikhtisar' | 'gerbang' | 'perangkat' | 'soc' | 'operasi'
 
 /**
  * Dua halaman, satu berkas.
@@ -62,6 +64,7 @@ const TABS: { id: Tab; label: Key }[] = [
   { id: 'gerbang', label: 'tab.gerbang' },
   { id: 'perangkat', label: 'tab.perangkat' },
   { id: 'soc', label: 'tab.soc' },
+  { id: 'operasi', label: 'tab.operasi' },
 ]
 
 export default function App() {
@@ -71,6 +74,7 @@ export default function App() {
   const [devices, setDevices] = useState<DeviceRow[]>([])
   const [catalog, setCatalog] = useState<Catalog | null>(null)
   const [events, setEvents] = useState<SocEvent[]>([])
+  const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [panel, setPanel] = useState(false)
   const [health, setHealth] = useState<{ version: string; air_gapped: boolean } | null>(null)
   const [err, setErr] = useState('')
@@ -85,6 +89,7 @@ export default function App() {
     try {
       setDevices(await api.devices())
       api.socEvents(12).then(setEvents).catch(() => undefined)
+      api.metrics().then(setMetrics).catch(() => setMetrics(null))
       setErr('')
     } catch (e) {
       setErr(String(e instanceof Error ? e.message : e))
@@ -190,6 +195,30 @@ export default function App() {
     return () => { ws?.close(); wsRef.current = null }
   }, [refresh, locked, route])
 
+  /**
+   * Isi lonceng pemberitahuan.
+   *
+   * Keadaan yang sama yang dulu memasang spanduk selebar halaman di atas
+   * setiap tab. Lampu dan tulisan "mode luring" tetap menyala di bilah atas,
+   * jadi yang pindah ke sini adalah uraian panjangnya, bukan pengakuannya.
+   */
+  const kabar = useMemo<Kabar[]>(() => {
+    const out: Kabar[] = []
+    if (offline) {
+      out.push({
+        id: 'luring',
+        nada: 'warn',
+        judul: t('offline.title'),
+        isi: `${t('offline.body', { time: new Date(snapshotGeneratedAt).toLocaleString(locale) })}`
+          + ` make backend ${t('offline.body2')} owl/ ${t('offline.body3')}`,
+      })
+    }
+    if (err && !offline) {
+      out.push({ id: 'gagal', nada: 'err', judul: t('err.title'), isi: err })
+    }
+    return out
+  }, [offline, err, t, locale])
+
   const tirai = (
     <>
       <Latar redup={route === '/dashboard'} />
@@ -226,7 +255,10 @@ export default function App() {
             {t('land.toDashboard')}
           </button>
           <div className="sudut">
-            <LangToggle />
+            <div className="sudut-baris">
+              <Notifikasi kabar={kabar} />
+              <LangToggle />
+            </div>
             <StatusKoneksi offline={offline} />
           </div>
         </header>
@@ -250,53 +282,42 @@ export default function App() {
             <div className="sub">ON DEVICE WATCH LAYER</div>
           </div>
         </button>
-        <div className="spacer" />
-        <button className="btn ghost" onClick={() => void refresh()}>{t('top.refresh')}</button>
-        <button className="btn ghost" onClick={keluar}>{t('top.logout')}</button>
+        <nav className="tabs">
+          {TABS.map((tb) => (
+            <button key={tb.id} aria-current={tab === tb.id} onClick={() => setTab(tb.id)}>
+              {t(tb.label)}
+            </button>
+          ))}
+        </nav>
+
         <div className="sudut">
-          <LangToggle />
+          <div className="sudut-baris">
+            <button className="btn ghost" onClick={() => void refresh()}>{t('top.refresh')}</button>
+            <button className="btn ghost" onClick={keluar}>{t('top.logout')}</button>
+            <Notifikasi kabar={kabar} />
+            <LangToggle />
+          </div>
           <StatusKoneksi offline={offline} />
         </div>
       </header>
 
-      <nav className="tabs">
-        {TABS.map((tb) => (
-          <button key={tb.id} aria-current={tab === tb.id} onClick={() => setTab(tb.id)}>
-            {t(tb.label)}
-          </button>
-        ))}
-      </nav>
-
-      {offline && (
-        <div className="card" style={{ marginBottom: 16, borderColor: 'rgba(245,158,11,.45)' }}>
-          <h3>{t('offline.title')}</h3>
-          <p className="muted">
-            {t('offline.body', { time: new Date(snapshotGeneratedAt).toLocaleString(locale) })}{' '}
-            <code>make backend</code> {t('offline.body2')} <code>owl/</code>{' '}
-            {t('offline.body3')}
-          </p>
-        </div>
-      )}
-      {err && !offline && (
-        <div className="card err" style={{ marginBottom: 16 }}>
-          <h3>{t('err.title')}</h3>
-          <p className="muted">{err}</p>
-        </div>
-      )}
-
       <div className="tabisi" key={tab}>
-        {tab === 'ikhtisar' && (
-          <Ikhtisar
+        {tab === 'ikhtisar' && <Gelaran devices={devices} />}
+        {tab === 'gerbang' && (
+          <Gerbang
             devices={devices}
             catalog={catalog}
             events={events}
+            metrics={metrics}
             onLihatPerangkat={() => setTab('perangkat')}
+            onRefresh={() => void refresh()}
           />
         )}
-        {tab === 'gerbang' && <Gerbang devices={devices} onRefresh={refresh} />}
         {tab === 'perangkat' && <Perangkat devices={devices} />}
         {tab === 'soc' && <Soc devices={devices} />}
-        {tab === 'soc' && !offline && <Operations />}
+        {tab === 'operasi' && (
+          <Operasi devices={devices} offline={offline} onRefresh={() => void refresh()} />
+        )}
       </div>
     </div>
     {!locked && !muat && (
