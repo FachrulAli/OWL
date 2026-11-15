@@ -254,6 +254,174 @@ const S = {
     id: 'Pilih satu event untuk melihat payload yang dikirim.',
     en: 'Pick an event to see the payload that was sent.',
   },
+
+  /* ——— ikhtisar satuan ——— */
+
+  'tab.ikhtisar': { id: 'Ikhtisar', en: 'Overview' },
+  'ov.empty': {
+    id: 'Belum ada perangkat terdaftar, jadi belum ada yang dapat diikhtisarkan.',
+    en: 'No devices are enrolled yet, so there is nothing to summarise.',
+  },
+  'ov.posture': { id: 'Postur satuan', en: 'Unit posture' },
+  'ov.postureNote': {
+    id: 'rata-rata skor dari {n} perangkat yang sudah dinilai',
+    en: 'mean score across {n} assessed devices',
+  },
+  'ov.devices': { id: 'Perangkat terdaftar', en: 'Enrolled devices' },
+  'ov.devicesNote': { id: '{n} belum pernah dinilai', en: '{n} never assessed' },
+  'ov.atRisk': { id: 'Perlu tindakan', en: 'Needs action' },
+  'ov.atRiskNote': {
+    id: 'perangkat pada tingkat tinggi atau kritis',
+    en: 'devices at high or critical level',
+  },
+  'ov.findings': { id: 'Temuan aktif', en: 'Active findings' },
+  'ov.findingsNote': {
+    id: '{n} di antaranya severitas tinggi atau kritis',
+    en: '{n} of them high or critical severity',
+  },
+  'ov.blind': { id: 'Indikator tak terbaca', en: 'Unreadable indicators' },
+  'ov.blindNote': {
+    id: 'aturan yang dilewati, dan tidak dihitung lulus',
+    en: 'rules skipped, and never counted as passed',
+  },
+  'ov.spread': { id: 'Sebaran tingkat risiko', en: 'Risk level spread' },
+  'ov.spreadNote': {
+    id: 'Tingkatnya keluar dari mesin aturan, memakai ambang yang sama dengan '
+      + 'gerbang. Tidak ada ambang baru yang dibuat di layar ini.',
+    en: 'Levels come from the rule engine, using the same thresholds as the gate. '
+      + 'No new threshold is invented on this screen.',
+  },
+  'ov.byCategory': { id: 'Asal poin risiko', en: 'Where the risk points come from' },
+  'ov.byCategoryNote': {
+    id: 'Jumlah poin tiap kategori di seluruh perangkat. Kategori teratas adalah '
+      + 'tempat perbaikan kebijakan paling berdampak.',
+    en: 'Total points per category across every device. The top category is where a '
+      + 'policy fix pays off most.',
+  },
+  'ov.noFindings': { id: 'Tidak ada temuan pada seluruh perangkat.', en: 'No findings on any device.' },
+  'ov.attention': { id: 'Perlu dilihat lebih dahulu', en: 'Look at these first' },
+  'ov.openDevices': { id: 'Buka daftar perangkat', en: 'Open device list' },
+  'ov.allCalm': {
+    id: 'Tidak ada perangkat yang melewati ambang perhatian.',
+    en: 'No device is above the attention threshold.',
+  },
+  'ov.noRule': { id: 'tanpa temuan', en: 'no findings' },
+  'ov.attestation': {
+    id: '{n} perangkat melapor dengan attestation agent yang tidak sah; laporannya '
+      + 'tidak dipercaya.',
+    en: '{n} devices reported with invalid agent attestation; their reports are not trusted.',
+  },
+  'ov.socFlow': { id: 'Keluaran terakhir ke SOC', en: 'Latest output to SOC' },
+  'ov.socNote': {
+    id: '"Tersimpan lokal" adalah keadaan normal pada mode air-gapped: event tetap '
+      + 'disimpan untuk diambil petugas.',
+    en: '"Stored locally" is normal in air-gapped mode: the event is kept for an '
+      + 'operator to collect.',
+  },
+
+  /* ——— pencarian dan penyaringan perangkat ——— */
+
+  'dev.search': { id: 'Cari perangkat', en: 'Search devices' },
+  'dev.searchHint': {
+    id: 'Cari nama, id, satuan, model, atau id aturan…',
+    en: 'Search name, id, unit, model, or rule id…',
+  },
+  'dev.clear': { id: 'Kosongkan pencarian', en: 'Clear the search' },
+  'dev.filterLevel': { id: 'Saring menurut tingkat risiko', en: 'Filter by risk level' },
+  'dev.all': { id: 'Semua', en: 'All' },
+  'dev.sort': { id: 'Urutkan', en: 'Sort' },
+  'dev.sortScore': { id: 'Skor tertinggi dulu', en: 'Highest score first' },
+  'dev.sortFindings': { id: 'Temuan terbanyak dulu', en: 'Most findings first' },
+  'dev.sortName': { id: 'Nama A–Z', en: 'Name A–Z' },
+  'dev.showing': {
+    id: 'Menampilkan {n} dari {total} perangkat.',
+    en: 'Showing {n} of {total} devices.',
+  },
+  'dev.reset': { id: 'Tampilkan semua', en: 'Show all' },
+  'dev.noMatch': {
+    id: 'Tidak ada perangkat yang cocok dengan pencarian itu.',
+    en: 'No device matches that search.',
+  },
+
+  /* ——— panel aturan ——— */
+
+  'panel.open': { id: 'Buka panel aturan dan bobot', en: 'Open the rules and weights panel' },
+  'panel.close': { id: 'Tutup panel', en: 'Close the panel' },
+  'panel.kicker': { id: 'Rujukan terbuka', en: 'Open reference' },
+  'panel.lead': {
+    id: 'Seluruh aturan beserta bobot, severitas, dan tingkat keyakinannya. Skor '
+      + 'yang tidak dapat dibuka adalah skor yang tidak dapat dipercaya, jadi '
+      + 'halaman ini sengaja dapat dibuka kapan saja tanpa meninggalkan layar kerja.',
+    en: 'Every rule with its weight, severity, and confidence. A score you cannot '
+      + 'open is a score you cannot trust, so this reference stays reachable without '
+      + 'leaving the screen you are working on.',
+  },
+
+  /* ——— versi build ——— */
+
+  'ver.title': { id: 'Keterangan build', en: 'Build information' },
+  'ver.build': { id: 'Versi', en: 'Version' },
+  'ver.mode': { id: 'Mode', en: 'Mode' },
+  'ver.recorded': { id: 'Rekaman dibuat', en: 'Recording made' },
+  'ver.note': {
+    id: 'Versi mesin aturan yang menilai, bukan versi tampilan. Keduanya dibangun '
+      + 'dan diterbitkan bersama.',
+    en: 'The version of the rule engine doing the assessment, not of the interface. '
+      + 'Both are built and shipped together.',
+  },
+  'top.online': { id: 'mode daring · langsung', en: 'online mode · live' },
+
+  /* ——— peta gelaran ——— */
+
+  'map.kicker': { id: 'Gelaran satuan', en: 'Unit deployment' },
+  'map.note': {
+    id: 'Cakupan komando tempat OWL digelar. Peta ini menunjukkan WILAYAH, bukan '
+      + 'posisi perangkat: OWL tidak pernah membaca lokasi perangkat, dan skema '
+      + 'telemetrinya tidak punya tempat untuk itu.',
+    en: 'The command footprint OWL is deployed across. This map shows TERRITORY, not '
+      + 'device positions: OWL never reads a device location, and its telemetry schema '
+      + 'has no field for one.',
+  },
+  'map.kodam': { id: 'Kodam', en: 'Area commands' },
+  'map.mapped': { id: 'perangkat terpetakan', en: 'devices mapped' },
+  'map.alt': {
+    id: 'Peta Indonesia dengan pin markas Kodam',
+    en: 'Map of Indonesia with area command headquarters pins',
+  },
+  'map.close': { id: 'Tutup keterangan', en: 'Close the details' },
+  'map.center': { id: 'Markas besar', en: 'Headquarters' },
+  'map.command': { id: 'Komando daerah militer', en: 'Military area command' },
+  'map.new': { id: 'baru', en: 'new' },
+  'map.new2025': { id: 'penataan 2025', en: '2025 expansion' },
+  'map.hq': { id: 'Markas', en: 'Based at' },
+  'map.area': { id: 'Wilayah', en: 'Territory' },
+  'map.devices': { id: 'Perangkat', en: 'Devices' },
+  'map.deviceN': { id: '{n} terdaftar', en: '{n} enrolled' },
+  'map.deviceNone': { id: 'belum ada yang terdaftar', en: 'none enrolled yet' },
+  'map.pick': {
+    id: 'Tekan satu pin untuk membuka keterangan satuan beserta perangkat yang '
+      + 'terdaftar di bawahnya.',
+    en: 'Press a pin to open that command’s details and the devices enrolled under it.',
+  },
+  'map.deviceList': { id: 'Perangkat terdaftar · {n}', en: 'Enrolled devices · {n}' },
+  'map.deviceNoneLong': {
+    id: 'Belum ada perangkat yang terdaftar pada satuan ini. Perangkat masuk ke '
+      + 'daftar ini ketika kolom satuan pada registrasinya menyebut satuan ini.',
+    en: 'No device is enrolled under this command yet. A device joins this list when '
+      + 'the unit field on its enrolment names this command.',
+  },
+  'map.foot': {
+    id: 'Dua puluh satu Kodam, yaitu 15 yang lama ditambah 6 hasil penataan 10 '
+      + 'Agustus 2025. Perangkat dipetakan dari kolom satuan yang diisi saat '
+      + 'registrasi. Lapisan Kodim tidak dipetakan, sebab koordinat markasnya tidak '
+      + 'dapat diverifikasi satu per satu, dan pin yang tidak dapat '
+      + 'dipertanggungjawabkan pada peta militer adalah cacat, bukan kelengkapan.',
+    en: 'Twenty-one area commands: the 15 older ones plus the 6 created on 10 August '
+      + '2025. Devices are mapped from the unit field filled in at enrolment. The '
+      + 'district level is deliberately not mapped, because those headquarters '
+      + 'coordinates cannot be verified one by one, and an unaccountable pin on a '
+      + 'military map is a defect, not a feature.',
+  },
 } as const
 
 export type Key = keyof typeof S

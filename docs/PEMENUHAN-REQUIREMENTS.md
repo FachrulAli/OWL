@@ -19,7 +19,7 @@ perangkat fisik, Infinix X6515 dengan Android 12.
 | FR-05 skor 0 sampai 100 | **Selesai** | `app/scoring.py`, `app/rules.py` | Input yang sama menghasilkan skor yang sama tiga kali berturut-turut (`test_skor_dapat_direproduksi`). Jumlah kontributor selalu sama dengan skor |
 | FR-06 alasan pembentuk skor | **Selesai** | `Finding.points`, `CategoryScore`, komponen `Contributors` | Tiap temuan membawa poin, severitas, bukti, dan pemetaan MITRE. Tab Aturan menampilkan seluruh bobot |
 | FR-07 Allow, Step-up, Restrict, Deny | **Selesai** | `app/pdp.py` | Keempat keputusan terjangkau; `test_empat_tingkat_risiko_terjangkau` menguji keempat tingkat dengan perangkat terpisah |
-| FR-08 daftar perangkat dan waktu periksa | **Selesai** | tab Gerbang dan Perangkat | Dua perangkat tampil berdampingan dengan skor, tingkat, dan waktu pemeriksaan |
+| FR-08 daftar perangkat dan waktu periksa | **Selesai** | tab Ikhtisar, Gerbang, dan Perangkat | Dua perangkat tampil berdampingan dengan skor, tingkat, dan waktu pemeriksaan |
 | FR-09 detail indikator per perangkat | **Selesai** | komponen `Indicators` dan `Contributors` | Tab Perangkat menampilkan status sembilan indikator dan rincian poin tiap temuan |
 | FR-10 event audit | **Selesai** | tabel `decisions`, `GET /api/decisions` | Tiap keputusan menyimpan waktu, perangkat, skor, keputusan, dan alasan. Uji `test_keputusan_tercatat_sebagai_event_audit` |
 | FR-11 kirim event ke Kartika CSIRT | **Selesai sebagai demonstrasi payload** | `app/stix.py`, `app/cef.py`, `app/soc.py` | STIX 2.1 bertanda tangan HMAC-SHA256 dan baris CEF dibuat untuk tiap penilaian. Integrasi sungguhan belum tersedia, jadi payload disimpan dan ditampilkan di tab SOC, sesuai bunyi FR-11 |

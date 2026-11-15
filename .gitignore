@@ -43,3 +43,4 @@ owl/backend.out
 owl/frontend.out
 owl/run-backend.cmd
 owl/run-frontend.cmd
+.env*

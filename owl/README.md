@@ -41,7 +41,8 @@ perangkat dipercaya sama sekali: attestation agent.
 Katalog lengkapnya, beserta severitas, pemetaan MITRE ATT&CK Mobile, dan
 tingkat keyakinan tiap metode, ada di
 [`services/backend/rules/rules.yaml`](services/backend/rules/rules.yaml) dan
-tampil apa adanya di tab **Aturan & bobot** pada dashboard.
+tampil apa adanya pada panel **Aturan & bobot**, yang ditarik dari lidah di
+tepi kiri dashboard.
 
 ## Status indikator: yang tidak terbaca tidak dianggap lulus
 
