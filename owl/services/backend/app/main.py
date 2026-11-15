@@ -12,7 +12,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from . import db, retention, rules
+from . import db, policy, retention, rules
 from .api import router
 from .applog import setup as setup_log
 from .config import settings
@@ -23,11 +23,14 @@ async def lifespan(app: FastAPI):
     log = setup_log()
     await db.init()
     cat = rules.load()
+    dipulihkan = policy.restore(await db.policy_latest())
     log.info("owl core menyala", extra={
         "aturan": len(cat["rules"]),
         "air_gapped": settings.AIR_GAPPED,
         "api_auth": "kunci" if settings.API_KEY else "terbuka",
         "retensi_hari": settings.RETENTION_DAYS,
+        "kebijakan_dipulihkan": dipulihkan,
+        "mode_demo": settings.DEMO_MODE,
     })
 
     # Penyapuan pertama saat mulai, lalu berkala. Data lampau tidak menunggu

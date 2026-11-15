@@ -31,6 +31,7 @@ Variabel lingkungan yang diisi saat penggelaran satuan:
 | `OWL_SOC_SECRET` | kunci HMAC-SHA256 untuk tanda tangan payload | `owl-demo-secret` |
 | `OWL_SYSLOG_HOST` | kolektor Syslog SIEM | kosong |
 | `OWL_AIR_GAPPED` | menyatakan mode penggelaran di API dan dashboard | `true` |
+| `OWL_DEMO` | menyalakan `/api/demo/seed` dan `/api/demo/reset`; **isi `false` pada penggelaran satuan**, sebab `reset` mengosongkan basis data | `true` |
 | `OWL_T_HIGH`, `OWL_T_CRITICAL` | ambang keputusan akses | 70, 90 |
 
 Dibiarkan kosong, kedua tujuan SOC tidak dihubungi dan event tetap dicatat

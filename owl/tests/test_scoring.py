@@ -15,7 +15,7 @@ import pytest  # noqa: E402
 
 from app import demo, pdp, rules, scoring  # noqa: E402
 from app.config import settings  # noqa: E402
-from app.models import InstalledApp, Telemetry  # noqa: E402
+from app.models import InstalledApp, Telemetry, VpnProfile  # noqa: E402
 
 
 @pytest.fixture(autouse=True, scope="module")
@@ -99,14 +99,119 @@ def test_sinyal_tunggal_diturunkan_tanpa_korelasi():
     t = demo.telemetry_bersih()
     t.integrity.security_patch = (datetime.now(timezone.utc).date()).isoformat()
     t.network.new_destinations = []
+    t.apps = [a for a in t.apps if a.installer]          # buang aplikasi tanpa sumber
+    t.vpn_profiles = [VpnProfile(name="vpn-asing")]
     f = rules.evaluate(t)
-    assert len(f) == 1 and f[0].rule_id == "OWL-A02"
+    assert len(f) == 1 and f[0].rule_id == "OWL-C02"
     assert f[0].downgraded is True and f[0].severity == "low"
 
 
 def test_korelasi_tidak_menurunkan_saat_sinyal_banyak():
     f = rules.evaluate(demo.telemetry_berisiko())
     assert not any(x.downgraded for x in f)
+
+
+# ——————————————————————— sumber pemasangan ———————————————————————
+
+P_MIC = "android.permission.RECORD_AUDIO"
+P_CAM = "android.permission.CAMERA"
+P_LOC = "android.permission.ACCESS_FINE_LOCATION"
+PKG_INSTALLER = "com.google.android.packageinstaller"
+
+
+def _hanya_aplikasi(apps: list[InstalledApp]) -> Telemetry:
+    """Perangkat bersih yang seluruh temuannya dibuang, lalu diberi aplikasi
+    tertentu, supaya uji di bawah hanya menilai aturan aplikasi."""
+    t = demo.telemetry_bersih()
+    t.integrity.security_patch = datetime.now(timezone.utc).date().isoformat()
+    t.network.new_destinations = []
+    t.apps = apps
+    return t
+
+
+def test_apk_pasang_manual_tidak_lolos_sebagai_toko():
+    """APK yang dipasang dari berkas tercatat dipasang oleh penginstal paket
+    sistem. Nama itu pernah ada di daftar toko, sehingga payload uji pada HP
+    sungguhan lolos dari OWL-A01."""
+    t = _hanya_aplikasi([InstalledApp(package="com.x.payload", installer=PKG_INSTALLER)])
+    f = rules.evaluate(t)
+    a01 = next(x for x in f if x.rule_id == "OWL-A01")
+    assert a01.severity == "high"
+    assert "dipasang manual" in a01.evidence[0]
+
+
+def test_sumber_tidak_tercatat_lebih_ringan_daripada_pasang_manual():
+    t = _hanya_aplikasi([InstalledApp(package="com.vendor.bawaan", installer="")])
+    a01 = next(x for x in rules.evaluate(t) if x.rule_id == "OWL-A01")
+    assert a01.severity == "medium"
+
+
+def test_agent_owl_tidak_menandai_dirinya_sendiri():
+    t = _hanya_aplikasi([InstalledApp(package="id.tniad.owl.agent", installer="")])
+    assert rules.evaluate(t) == []
+
+
+def test_izin_perekaman_aplikasi_toko_tidak_dihitung():
+    """Aplikasi pesan dari toko resmi memegang mikrofon dan kamera di hampir
+    setiap ponsel. Menghitungnya membuat seluruh armada mulai dari 10 poin dan
+    tidak membedakan apa pun."""
+    t = _hanya_aplikasi([InstalledApp(package="com.whatsapp", installer="com.android.vending",
+                                     permissions=[P_MIC, P_CAM, P_LOC])])
+    assert rules.evaluate(t) == []
+
+
+def test_perangkat_dengan_dan_tanpa_payload_dapat_dibedakan():
+    """Sifat yang gagal pada HP uji 2026-11-15: skor dengan dan tanpa payload
+    sama persis. Dikunci di sini supaya tidak terulang."""
+    toko = InstalledApp(package="com.whatsapp", installer="com.android.vending",
+                        permissions=[P_MIC, P_CAM])
+    payload = InstalledApp(package="com.x.payload", installer=PKG_INSTALLER,
+                           permissions=[P_MIC, P_CAM, P_LOC])
+    tanpa = _assess(_hanya_aplikasi([toko]))
+    dengan = _assess(_hanya_aplikasi([toko, payload]))
+    assert tanpa.score == 0.0
+    assert dengan.score >= tanpa.score + 20
+
+
+# ——————————————————————— aturan penentu ———————————————————————
+
+def test_aplikasi_di_daftar_larangan_ditolak_tanpa_melihat_skor():
+    t = _hanya_aplikasi([InstalledApp(package="com.metasploit.stage", installer=PKG_INSTALLER)])
+    a = _assess(t)
+    assert a.score < 70                      # skornya sendiri TIDAK cukup untuk menolak
+    for resource in ("standard", "classified"):
+        d = pdp.decide(a, resource)
+        assert d.decision == "deny" and d.quarantine is True
+        assert "OWL-A03" in d.reason
+
+
+def test_daftar_larangan_cocok_lewat_penanda_tangan(monkeypatch):
+    """Nama paket dapat diganti; kunci penanda tangan tidak."""
+    sidik = "ab" * 32
+    monkeypatch.setitem(rules.catalog()["blocklists"], "signers", [sidik.upper()])
+    t = _hanya_aplikasi([InstalledApp(package="com.nama.diganti", installer="com.android.vending",
+                                     signer_sha256=sidik)])
+    f = rules.evaluate(t)
+    assert any(x.rule_id == "OWL-A03" and x.decisive for x in f)
+
+
+def test_perangkat_root_ditolak_walau_skornya_rendah():
+    """Root hanya menyumbang 15 poin, dan dulu itu berarti lolos."""
+    t = _hanya_aplikasi([])
+    t.integrity.root_artifacts = ["/system/xbin/su"]
+    a = _assess(t)
+    assert a.score < 30
+    assert pdp.decide(a, "standard").decision == "deny"
+
+
+def test_laporan_kedaluwarsa_ditolak():
+    """Perangkat yang berhenti melapor bukan perangkat yang aman."""
+    a = _assess(demo.telemetry_bersih())
+    kini = a.assessed_at
+    assert pdp.decide(a, "standard", now=kini + timedelta(minutes=30)).decision == "allow"
+    d = pdp.decide(a, "standard", now=kini + timedelta(minutes=61))
+    assert d.decision == "deny" and d.quarantine is False
+    assert "kedaluwarsa" in d.reason
 
 
 # ——————————————————————— attestation ———————————————————————

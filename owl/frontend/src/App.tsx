@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Latar } from './components/Latar'
 import { Logo } from './components/Logo'
 import { Login } from './components/Login'
-import { api, clearKey, hasKey, isOffline, onOfflineChange, onUnauthorized, snapshotGeneratedAt } from './lib/api'
+import { api, clearKey, hasKey, isOffline, onOfflineChange, onUnauthorized, snapshotGeneratedAt, wsQuery } from './lib/api'
 import { LangToggle, useT } from './lib/i18n'
 import type { Key } from './lib/i18n'
 import type { Catalog, DeviceRow } from './lib/types'
@@ -155,7 +155,7 @@ export default function App() {
   // muat ulang, sehingga dashboard tidak perlu menebak kapan harus bertanya.
   useEffect(() => {
     if (locked || route !== '/dashboard') return
-    const url = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws'
+    const url = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws' + wsQuery()
     let ws: WebSocket | null = null
     try {
       ws = new WebSocket(url)

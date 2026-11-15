@@ -50,7 +50,8 @@ object Posture {
     fun apps(ctx: Context): JSONArray {
         val pm = ctx.packageManager
         val out = JSONArray()
-        val pkgs = pm.getInstalledPackages(PackageManager.GET_PERMISSIONS)
+        val pkgs = pm.getInstalledPackages(
+            PackageManager.GET_PERMISSIONS or PackageManager.GET_SIGNING_CERTIFICATES)
         for (p in pkgs) {
             val appInfo = p.applicationInfo ?: continue
             // Aplikasi sistem bawaan dilewati: keduanya memang memegang izin
@@ -72,11 +73,29 @@ object Posture {
             out.put(JSONObject().apply {
                 put("package", p.packageName)
                 put("installer", installerOf(ctx, p.packageName))
+                put("signer_sha256", signerOf(p))
                 put("permissions", JSONArray(granted))
             })
         }
         return out
     }
+
+    /**
+     * SHA-256 sertifikat penanda tangan APK. Nama paket dapat diganti siapa
+     * saja; kunci penanda tangan tidak. OWL Core memakainya untuk daftar
+     * larangan dan, kelak, daftar izin. Kosong berarti tidak terbaca.
+     */
+    private fun signerOf(p: android.content.pm.PackageInfo): String = try {
+        val info = p.signingInfo
+        val sigs = when {
+            info == null -> null
+            info.hasMultipleSigners() -> info.apkContentsSigners
+            else -> info.signingCertificateHistory
+        }
+        // Pada riwayat rotasi, entri TERAKHIR adalah penanda tangan saat ini.
+        val cur = sigs?.lastOrNull()
+        if (cur == null) "" else sha256(cur.toByteArray())
+    } catch (_: Exception) { "" }
 
     /** Sinyal 4: sumber pemasangan. String kosong berarti tidak diketahui. */
     private fun installerOf(ctx: Context, pkg: String): String = try {

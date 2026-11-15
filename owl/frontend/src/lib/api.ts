@@ -28,6 +28,14 @@ export function hasKey(): boolean {
   return apiKey !== ''
 }
 
+/**
+ * Kunci untuk WebSocket. Browser tidak dapat menyetel header pada WebSocket,
+ * jadi OWL Core menerimanya lewat parameter kueri `key`.
+ */
+export function wsQuery(): string {
+  return apiKey ? `?key=${encodeURIComponent(apiKey)}` : ''
+}
+
 export function setKey(k: string): void {
   apiKey = k
   try { sessionStorage.setItem(KEY_STORE, k) } catch { /* jendela privat */ }

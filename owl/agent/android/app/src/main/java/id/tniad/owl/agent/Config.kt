@@ -5,6 +5,7 @@ import android.provider.Settings
 
 object Config {
     const val POSTURE_INTERVAL_MS = 15 * 60 * 1000L   // satu laporan tiap 15 menit
+    const val RETRY_INTERVAL_MS = 60 * 1000L          // setelah gagal: coba lagi semenit kemudian
     const val NOTIF_CHANNEL = "owl-posture"
     const val NOTIF_ID = 1001
 

@@ -40,7 +40,10 @@ object Uploader {
         }
     }
 
-    /** Pendaftaran perangkat. Dipanggil sekali saat agent pertama berjalan. */
+    /**
+     * Pendaftaran perangkat. Idempoten di sisi OWL Core, jadi aman diulang:
+     * dipanggil saat agent mulai, dan lagi setiap kali laporan ditolak 404.
+     */
     fun enroll(deviceId: String, label: String, model: String, osVersion: String): Result {
         val url = URL("${Config.baseUrl}/api/devices")
         var conn: HttpURLConnection? = null
@@ -57,6 +60,8 @@ object Uploader {
                 readTimeout = 15_000
                 doOutput = true
                 setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                // OWL Core menuntut token penggelaran untuk pendaftaran juga.
+                setRequestProperty("X-OWL-Token", Config.token)
             }
             conn.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
             val code = conn.responseCode

@@ -4,8 +4,9 @@ Dokumen ini memetakan tiap kebutuhan pada `OWL_Requirements_Hackathon.md` ke
 tempatnya di kode, dan ke bukti bahwa kebutuhan itu memang berjalan. Status
 ditulis apa adanya: yang belum selesai disebut belum selesai.
 
-Diperiksa 14 November 2026. Uji otomatis: **47 lulus**
-(`cd owl && make test`).
+Diperiksa 15 November 2026. Uji otomatis: **61 lulus**
+(`cd owl && make test`). Agent diuji pada emulator Android 15 dan pada satu
+perangkat fisik, Infinix X6515 dengan Android 12.
 
 ## Kebutuhan fungsional
 
@@ -108,7 +109,10 @@ Attestation terbukti bernilai sah pada air-gapped.
 
 | Hal | Keterangan |
 |---|---|
-| Uji pada perangkat fisik | Baru diuji di emulator. Emulator tidak dapat menguji StrongBox sungguhan, verdict Play Integrity yang sah, dan perilaku termal |
+| Uji pada perangkat fisik | Sudah pada satu perangkat (Infinix X6515, Android 12): pendaftaran, enam sinyal, dan penilaian berjalan. Uji itu menemukan empat cacat yang sudah diperbaiki: APK pasang manual lolos dari OWL-A01, agent menandai dirinya sendiri, izin perekaman aplikasi toko mengisi skor seluruh armada, dan pendaftaran yang gagal sekali tidak pernah diulang. Belum diuji: StrongBox sungguhan, verdict Play Integrity yang sah, dan lebih dari satu merek |
+| Verifikasi rantai Key Attestation | **Belum ada.** Agent hanya mengirim sidik rantai dan OWL Core memercayai `key_attestation` apa adanya, sehingga agent yang dikuasai penyerang masih dapat melaporkan dirinya sah. Laporan juga belum ditandatangani per perangkat: token penggelaran masih satu untuk seluruh armada. Ini kekurangan terbesar yang tersisa |
+| Daftar larangan berbasis nama paket | OWL-A03 cocok lewat nama paket atau sidik penanda tangan. Nama paket mudah diganti penyerang; daftar bawaannya baru berisi satu nama contoh |
+| Heuristik OWL-N01 | Memakai volume keluar seluruh perangkat. Pada HP uji menyala oleh pemakaian wajar; perlu diganti volume per aplikasi |
 | mTLS agent ke backend | Tercatat di arsitektur, belum dipasang. Agent masih `usesCleartextTraffic` |
 | Pengguna dan peran pada dashboard | Tiga peran sudah terpisah di API (baca, administrasi, telemetri), tetapi antarmukanya belum: tombol tamu memberi akses penuh, dan kata sandinya tunggal serta dipakai bersama. Log karena itu tidak dapat menyebut siapa yang membuka apa |
 | Validasi korpus Drebin dan AndroZoo | Tercatat sebagai rencana pada deepdive §10.4, belum dijalankan |

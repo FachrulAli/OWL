@@ -28,10 +28,10 @@ Registrasi → Telemetri → Korelasi multi-sinyal → Skor 0-100 → Keputusan 
 
 | # | Sinyal | Aturan | Bobot kategori |
 |---|---|---|---|
-| 1 | Izin mikrofon, kamera, lokasi yang berlebihan | OWL-A02 | 25 (integritas aplikasi) |
+| 1 | Izin mikrofon, kamera, lokasi pada aplikasi dari luar toko | OWL-A02 | 25 (integritas aplikasi) |
 | 2 | Layanan aksesibilitas dan hamparan jendela | OWL-R01, R02 | 30 (perilaku runtime) |
 | 3 | Sertifikat CA pengguna dan profil VPN | OWL-C01, C02 | 20 (konfigurasi) |
-| 4 | Sumber pemasangan aplikasi | OWL-A01 | 25 (integritas aplikasi) |
+| 4 | Sumber pemasangan aplikasi, dan daftar larangan | OWL-A01, A03 | 25 (integritas aplikasi) |
 | 5 | Integritas perangkat dan tingkat patch | OWL-D01, D02 | 15 (integritas perangkat) |
 | 6 | Perilaku jaringan, metadata saja | OWL-N01, N02, N03 | 10 (perilaku jaringan) |
 
@@ -79,6 +79,30 @@ Tiga sifat dijaga mesin skor, dan ketiganya dikunci oleh uji:
 Satu indikator di perangkat hampir selalu ambigu. Aturan yang bertanda
 `corroborate` karena itu diturunkan satu tingkat severitas jika ia
 satu-satunya yang menyala.
+
+## Dua lapis keputusan
+
+Skor hanya menimbang yang ambigu. Empat keadaan diputus **sebelum** skor
+dilihat, karena keempatnya pasti, bukan indikasi:
+
+| Keadaan | Aturan | Akibat |
+|---|---|---|
+| Laporan kedaluwarsa (lebih tua dari `max_report_age_minutes`, bawaan 60) | gerbang | ditolak, tanpa karantina |
+| Attestation agent tidak sah | OWL-X01 critical | ditolak dan dikarantina |
+| Aplikasi di daftar larangan, lewat nama paket atau sidik penanda tangan | OWL-A03 | ditolak dan dikarantina |
+| Integritas perangkat gagal: root, bootloader terbuka | OWL-D01 | ditolak dan dikarantina |
+
+Aturan semacam ini bertanda `decisive` di `rules.yaml`. Tanpa lapis ini
+perangkat ber-root hanya memperoleh 15 poin dan lolos, dan perangkat yang
+berhenti melapor mempertahankan skor terakhirnya selamanya.
+
+Lapis ini lahir dari uji pada perangkat fisik (Infinix X6515, Android 12)
+yang membawa satu payload uji. Mesin versi pertama memberinya skor 40 dan
+rekomendasi Step-up, sama persis dengan perangkat itu tanpa payload: aturan
+sideload meloloskan APK yang dipasang manual, dan izin perekaman pada
+WhatsApp serta Telegram mengisi kategori yang sama sampai jenuh. Sekarang
+perangkat itu ditolak, dan tanpa payload skornya 25 dan lolos. Kedua sifat
+itu dikunci uji.
 
 ## Keputusan akses
 
@@ -207,13 +231,14 @@ Ringkasnya:
 | Metode | Jalur | Guna | Autentikasi |
 |---|---|---|---|
 | GET | `/health` | status layanan, mode air-gapped, keadaan autentikasi | terbuka |
-| POST | `/api/devices` | registrasi perangkat | terbuka |
+| POST | `/api/devices` | registrasi perangkat | `X-OWL-Token` |
 | POST | `/api/telemetry` | kirim laporan postur | `X-OWL-Token` |
 | GET | `/api/devices` | daftar perangkat dengan skor terakhir | `X-OWL-Api-Key` |
 | GET | `/api/devices/{id}` | detail, riwayat, status indikator | `X-OWL-Api-Key` |
-| POST | `/api/gate/{id}?resource=` | minta rekomendasi keputusan akses | terbuka |
-| GET | `/api/devices/{id}/stix` | bundle STIX 2.1 | terbuka |
-| GET | `/api/devices/{id}/cef` | baris CEF | terbuka |
+| POST | `/api/gate/{id}?resource=` | minta rekomendasi keputusan akses | `X-OWL-Api-Key` |
+| GET | `/api/devices/{id}/stix` | bundle STIX 2.1 | `X-OWL-Api-Key` |
+| GET | `/api/devices/{id}/cef` | baris CEF | `X-OWL-Api-Key` |
+| POST | `/api/demo/seed`, `/api/demo/reset` | muat atau kosongkan data contoh; hilang jika `OWL_DEMO=false` | `X-OWL-Api-Key` |
 | GET | `/api/rejects` | telemetri yang ditolak beserta alasannya | `X-OWL-Api-Key` |
 | GET | `/api/policy` | bobot, ambang, dan riwayat perubahannya | `X-OWL-Api-Key` |
 | PUT | `/api/policy/weight` | ubah bobot kategori | `X-OWL-Admin` |
@@ -221,7 +246,7 @@ Ringkasnya:
 | GET | `/api/catalog` | katalog aturan dan bobot | `X-OWL-Api-Key` |
 | GET | `/api/retention` | kebijakan retensi dan cacah baris tersimpan | `X-OWL-Api-Key` |
 | POST | `/api/retention/sweep` | hapus data lampau sekarang | `X-OWL-Admin` |
-| WS | `/ws` | siaran perubahan ke dashboard | terbuka |
+| WS | `/ws?key=` | siaran perubahan ke dashboard | kunci baca lewat kueri |
 
 `X-OWL-Api-Key` hanya ditegakkan jika `OWL_API_KEY` diisi. Dibiarkan kosong,
 API baca terbuka, dan `/health` menyatakannya sebagai `api_auth: terbuka`.
@@ -287,14 +312,14 @@ dan batas yang tidak dapat dilampaui aplikasi biasa ada di [`agent/README.md`](a
 ## Hasil pengujian
 
 ```
-47 uji lulus     (cd owl && make test)
+61 uji lulus     (cd owl && make test)
 ```
 
 | Berkas | Cakupan |
 |---|---|
-| `tests/test_scoring.py` | angka demo 18 dan 87, kejenuhan kategori, peluruhan, korelasi multi-sinyal, attestation |
+| `tests/test_scoring.py` | angka demo 18 dan 87, kejenuhan kategori, peluruhan, korelasi multi-sinyal, attestation, sumber pemasangan, aturan penentu, laporan kedaluwarsa |
 | `tests/test_export.py` | bentuk bundle STIX 2.1, pelolosan karakter CEF, stabilitas tanda tangan HMAC |
-| `tests/test_api.py` | registrasi, validasi dan pencatatan penolakan, empat tingkat risiko, reproduksibilitas skor, autentikasi, perubahan kebijakan |
+| `tests/test_api.py` | registrasi bertoken, validasi dan pencatatan penolakan, empat tingkat risiko, reproduksibilitas skor, autentikasi gerbang dan ekspor, mode demo, kebijakan yang bertahan melewati restart |
 | `tests/test_retention.py` | data lampau benar-benar terhapus, jejak audit selamat, penyapuan menuntut token admin, log JSON tanpa rahasia |
 
 Pemetaan lengkap tiap kebutuhan ke kode dan buktinya ada di

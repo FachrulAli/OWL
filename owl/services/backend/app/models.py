@@ -51,6 +51,10 @@ class VpnProfile(BaseModel):
 class InstalledApp(BaseModel):
     package: str
     installer: str = ""           # kosong berarti tidak diketahui, bukan aman
+    # SHA-256 sertifikat penanda tangan APK. Kosong pada agent lama. Lebih
+    # kuat daripada nama paket untuk daftar izin dan daftar larangan, sebab
+    # nama paket dapat diganti siapa saja sedangkan kunci penanda tangan tidak.
+    signer_sha256: str = ""
     permissions: list[str] = Field(default_factory=list)
 
 
@@ -132,6 +136,7 @@ class Finding(BaseModel):
     confidence: str = ""
     evidence: list[str] = Field(default_factory=list)
     downgraded: bool = False      # true jika diturunkan karena berdiri sendiri
+    decisive: bool = False        # true jika aturan penentu: gerbang menolak tanpa melihat skor
     points: float = 0.0           # sumbangan ke skor, diisi oleh scoring
 
 

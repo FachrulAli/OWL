@@ -41,6 +41,7 @@ _NEEDS: dict[str, str] = {
     "OWL-R02": "accessibility",
     "OWL-A01": "install_source",
     "OWL-A02": "permissions",
+    "OWL-A03": "permissions",
     "OWL-C01": "certificates",
     "OWL-C02": "vpn",
     "OWL-D01": "integrity",
@@ -86,6 +87,15 @@ def _allow(name: str) -> list[str]:
     return catalog().get("allowlists", {}).get(name) or []
 
 
+def _block(name: str) -> list[str]:
+    return catalog().get("blocklists", {}).get(name) or []
+
+
+def is_decisive(rule_id: str) -> bool:
+    """Apakah aturan ini aturan penentu (lihat kepala rules.yaml)."""
+    return bool(_RULES.get(rule_id, {}).get("decisive"))
+
+
 def _mk(rule_id: str, evidence: list[str], severity: str | None = None) -> Finding:
     r = _RULES[rule_id]
     sev = severity or r["severity"]
@@ -99,6 +109,9 @@ def _mk(rule_id: str, evidence: list[str], severity: str | None = None) -> Findi
         mitre=r.get("mitre", ""),
         confidence=r.get("confidence", ""),
         evidence=evidence,
+        # Penentu hanya pada severitas critical. OWL-X01 tingkat medium
+        # (verdict tidak diperoleh) tetap temuan biasa, bukan alasan menolak.
+        decisive=bool(r.get("decisive")) and sev == "critical",
     )
 
 
@@ -119,31 +132,59 @@ def _r02(t: Telemetry) -> Finding | None:
     return _mk("OWL-R02", [f"SYSTEM_ALERT_WINDOW: {p}" for p in rogue])
 
 
+def _untrusted_apps(t: Telemetry) -> list:
+    """Aplikasi yang sumbernya bukan toko yang diizinkan.
+
+    Dipakai OWL-A01 dan OWL-A02 supaya keduanya menilai kumpulan yang sama.
+    Aplikasi sistem dan paket yang dikecualikan satuan (agent OWL sendiri,
+    misalnya) tidak termasuk.
+    """
+    stores = set(_allow("installers"))
+    exempt = set(_allow("packages"))
+    return [a for a in t.apps
+            if a.installer not in stores
+            and a.package not in exempt
+            and not a.package.startswith(_SYSTEM_PREFIX)]
+
+
 def _a01(t: Telemetry) -> Finding | None:
-    allowed = set(_allow("installers"))
-    side = [a.package for a in t.apps
-            if a.installer not in allowed and not a.package.startswith(_SYSTEM_PREFIX)]
+    side = _untrusted_apps(t)
     if not side:
         return None
-    ev = []
-    for a in t.apps:
-        if a.package in side:
-            src = a.installer or "sumber tidak diketahui"
-            ev.append(f"{a.package} dipasang oleh {src}")
-    return _mk("OWL-A01", ev)
+    # Dua keadaan yang berbeda bobotnya. Installer TERISI tetapi bukan toko
+    # berarti seseorang memasang APK itu dengan sengaja dari berkas. Installer
+    # KOSONG berarti bawaan pabrik atau adb, dan keduanya tidak dapat
+    # dibedakan dari sini, sehingga tidak dihukum seberat pemasangan manual.
+    manual = [a for a in side if a.installer]
+    ev = [f"{a.package} dipasang manual lewat {a.installer}" for a in manual]
+    ev += [f"{a.package}: sumber pemasangan tidak tercatat" for a in side if not a.installer]
+    return _mk("OWL-A01", ev, severity=None if manual else "medium")
 
 
 def _a02(t: Telemetry) -> Finding | None:
     hits = []
-    for a in t.apps:
-        if a.package.startswith(_SYSTEM_PREFIX):
-            continue
+    for a in _untrusted_apps(t):
         perms = set(a.permissions)
         if _RECORDING.issubset(perms) or (perms & _RECORDING and perms & _LOCATION):
             hits.append(f"{a.package}: {', '.join(sorted(p.rsplit('.', 1)[-1] for p in perms & (_RECORDING | _LOCATION)))}")
     if not hits:
         return None
     return _mk("OWL-A02", hits)
+
+
+def _a03(t: Telemetry) -> Finding | None:
+    """Daftar larangan: kecocokan pasti, bukan indikasi."""
+    bad_pkg = set(_block("packages"))
+    bad_sig = {s.lower() for s in _block("signers")}
+    ev = []
+    for a in t.apps:
+        if a.package in bad_pkg:
+            ev.append(f"{a.package}: nama paket ada di daftar larangan")
+        elif a.signer_sha256 and a.signer_sha256.lower() in bad_sig:
+            ev.append(f"{a.package}: penanda tangan {a.signer_sha256[:16]}… ada di daftar larangan")
+    if not ev:
+        return None
+    return _mk("OWL-A03", ev)
 
 
 def _c01(t: Telemetry) -> Finding | None:
@@ -264,7 +305,7 @@ def _x01(t: Telemetry) -> Finding | None:
 
 _CHECKS = {
     "OWL-R01": _r01, "OWL-R02": _r02,
-    "OWL-A01": _a01, "OWL-A02": _a02,
+    "OWL-A01": _a01, "OWL-A02": _a02, "OWL-A03": _a03,
     "OWL-C01": _c01, "OWL-C02": _c02,
     "OWL-D01": _d01, "OWL-D02": _d02,
     "OWL-N01": _n01, "OWL-N02": _n02, "OWL-N03": _n03,

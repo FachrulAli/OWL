@@ -258,6 +258,14 @@ async def save_policy_change(actor: str, field: str, old: str, new: str) -> None
     await conn().commit()
 
 
+async def policy_latest() -> dict[str, str]:
+    """Nilai terakhir tiap ruas kebijakan, untuk dipulihkan saat layanan mulai."""
+    cur = await conn().execute(
+        """SELECT field, new_value FROM policy_audit
+            WHERE id IN (SELECT MAX(id) FROM policy_audit GROUP BY field)""")
+    return {r["field"]: r["new_value"] for r in await cur.fetchall()}
+
+
 async def policy_audit(limit: int = 50) -> list[dict]:
     cur = await conn().execute(
         "SELECT * FROM policy_audit ORDER BY changed_at DESC, id DESC LIMIT ?", (limit,))

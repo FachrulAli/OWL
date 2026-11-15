@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-14T07:13:52.668963+00:00",
+  "generated_at": "2026-11-15T08:42:52.290787+00:00",
   "engine_version": "1.0.0",
   "devices": [
     {
@@ -9,10 +9,10 @@
       "unit": "Staf Komando",
       "model": "Samsung Galaxy S24",
       "os_version": "Android 15",
-      "enrolled_at": "2026-11-14T07:13:52.668664+00:00",
+      "enrolled_at": "2026-11-15T08:42:52.290300+00:00",
       "score": 87.0,
       "level": "tinggi",
-      "assessed_at": "2026-11-14T07:13:52.668664+00:00",
+      "assessed_at": "2026-11-15T08:42:52.290300+00:00",
       "findings": [
         {
           "rule_id": "OWL-R01",
@@ -27,6 +27,7 @@
             "layanan aksesibilitas aktif: com.sys.servicehelper"
           ],
           "downgraded": false,
+          "decisive": false,
           "points": 18.8
         },
         {
@@ -42,6 +43,7 @@
             "SYSTEM_ALERT_WINDOW: com.sys.servicehelper"
           ],
           "downgraded": false,
+          "decisive": false,
           "points": 11.2
         },
         {
@@ -50,29 +52,31 @@
           "severity": "high",
           "base_severity": "high",
           "title": "Aplikasi dipasang dari luar toko resmi",
-          "detail": "Sumber pemasangan tidak ada di daftar installer yang diizinkan. Sideload adalah vektor masuk utama spyware komersial.",
+          "detail": "Sumber pemasangan bukan toko yang diizinkan. Dipasang manual dari berkas APK bernilai high; sumber yang tidak tercatat sama sekali (bawaan pabrik atau adb, keduanya tidak dapat dibedakan dari sini) bernilai medium.",
           "mitre": "T1478 Install Insecure or Malicious Configuration",
           "confidence": "tinggi",
           "evidence": [
-            "com.sys.servicehelper dipasang oleh sumber tidak diketahui"
+            "com.sys.servicehelper dipasang manual lewat com.google.android.packageinstaller"
           ],
           "downgraded": false,
-          "points": 15.0
+          "decisive": false,
+          "points": 12.5
         },
         {
           "rule_id": "OWL-A02",
           "category": "app",
-          "severity": "medium",
-          "base_severity": "medium",
-          "title": "Izin mikrofon, kamera, atau lokasi yang berlebihan",
-          "detail": "Aplikasi memegang gabungan izin perekaman yang tidak sejalan dengan fungsinya. Diukur sebagai gabungan, bukan satu izin, karena satu izin mikrofon pada aplikasi pesan adalah hal yang wajar.",
+          "severity": "high",
+          "base_severity": "high",
+          "title": "Aplikasi dari luar toko resmi memegang izin perekaman",
+          "detail": "Aplikasi yang sumbernya bukan toko yang diizinkan memegang gabungan izin mikrofon, kamera, atau lokasi. Korelasinya per aplikasi: aplikasi toko resmi yang memegang izin serupa (aplikasi pesan, misalnya) tidak dihitung, sebab itu menyala di hampir setiap ponsel dan tidak membedakan apa pun.",
           "mitre": "T1429 Audio Capture / T1512 Video Capture",
           "confidence": "sedang",
           "evidence": [
             "com.sys.servicehelper: ACCESS_FINE_LOCATION, CAMERA, RECORD_AUDIO"
           ],
           "downgraded": false,
-          "points": 10.0
+          "decisive": false,
+          "points": 12.5
         },
         {
           "rule_id": "OWL-C01",
@@ -87,6 +91,7 @@
             "CA pengguna: CN=Secure Proxy CA, O=-"
           ],
           "downgraded": false,
+          "decisive": false,
           "points": 12.0
         },
         {
@@ -102,6 +107,7 @@
             "profil VPN aktif: fast-secure-vpn"
           ],
           "downgraded": false,
+          "decisive": false,
           "points": 8.0
         },
         {
@@ -114,9 +120,10 @@
           "mitre": "T1404 Exploitation for Privilege Escalation",
           "confidence": "tinggi",
           "evidence": [
-            "patch 2026-08-10, tertinggal 96 hari"
+            "patch 2026-08-11, tertinggal 96 hari"
           ],
           "downgraded": false,
+          "decisive": false,
           "points": 6.0
         },
         {
@@ -133,6 +140,7 @@
             "layar menyala 2 persen dari waktu itu"
           ],
           "downgraded": false,
+          "decisive": false,
           "points": 6.0
         }
       ],
@@ -142,55 +150,55 @@
           "status": "ok",
           "reason": "",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.668071Z"
+          "checked_at": "2026-11-15T08:42:52.289523Z"
         },
         "accessibility": {
           "status": "ok",
           "reason": "",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.668071Z"
+          "checked_at": "2026-11-15T08:42:52.289523Z"
         },
         "certificates": {
           "status": "ok",
           "reason": "",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.668071Z"
+          "checked_at": "2026-11-15T08:42:52.289523Z"
         },
         "vpn": {
           "status": "ok",
           "reason": "",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.668071Z"
+          "checked_at": "2026-11-15T08:42:52.289523Z"
         },
         "install_source": {
           "status": "ok",
           "reason": "",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.668071Z"
+          "checked_at": "2026-11-15T08:42:52.289523Z"
         },
         "integrity": {
           "status": "partial",
           "reason": "status bootloader tidak diberikan API publik; dinilai lewat verdict integritas",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.668071Z"
+          "checked_at": "2026-11-15T08:42:52.289523Z"
         },
         "network_volume": {
           "status": "ok",
           "reason": "",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.668071Z"
+          "checked_at": "2026-11-15T08:42:52.289523Z"
         },
         "network_destinations": {
           "status": "ok",
           "reason": "",
           "source": "resolver",
-          "checked_at": "2026-11-14T07:13:52.668071Z"
+          "checked_at": "2026-11-15T08:42:52.289523Z"
         },
         "attestation": {
           "status": "ok",
           "reason": "",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.668071Z"
+          "checked_at": "2026-11-15T08:42:52.289523Z"
         }
       },
       "skipped_rules": []
@@ -202,24 +210,25 @@
       "unit": "Yonif Raider",
       "model": "Samsung Galaxy A55",
       "os_version": "Android 14",
-      "enrolled_at": "2026-11-14T07:13:52.668171+00:00",
+      "enrolled_at": "2026-11-15T08:42:52.289666+00:00",
       "score": 18.0,
       "level": "rendah",
-      "assessed_at": "2026-11-14T07:13:52.668171+00:00",
+      "assessed_at": "2026-11-15T08:42:52.289666+00:00",
       "findings": [
         {
-          "rule_id": "OWL-A02",
+          "rule_id": "OWL-A01",
           "category": "app",
           "severity": "medium",
           "base_severity": "medium",
-          "title": "Izin mikrofon, kamera, atau lokasi yang berlebihan",
-          "detail": "Aplikasi memegang gabungan izin perekaman yang tidak sejalan dengan fungsinya. Diukur sebagai gabungan, bukan satu izin, karena satu izin mikrofon pada aplikasi pesan adalah hal yang wajar.",
-          "mitre": "T1429 Audio Capture / T1512 Video Capture",
-          "confidence": "sedang",
+          "title": "Aplikasi dipasang dari luar toko resmi",
+          "detail": "Sumber pemasangan bukan toko yang diizinkan. Dipasang manual dari berkas APK bernilai high; sumber yang tidak tercatat sama sekali (bawaan pabrik atau adb, keduanya tidak dapat dibedakan dari sini) bernilai medium.",
+          "mitre": "T1478 Install Insecure or Malicious Configuration",
+          "confidence": "tinggi",
           "evidence": [
-            "id.tniad.pesan: ACCESS_FINE_LOCATION, RECORD_AUDIO"
+            "com.vendor.catatan: sumber pemasangan tidak tercatat"
           ],
           "downgraded": false,
+          "decisive": false,
           "points": 10.0
         },
         {
@@ -232,9 +241,10 @@
           "mitre": "T1404 Exploitation for Privilege Escalation",
           "confidence": "tinggi",
           "evidence": [
-            "patch 2026-08-31, tertinggal 75 hari"
+            "patch 2026-09-01, tertinggal 75 hari"
           ],
           "downgraded": false,
+          "decisive": false,
           "points": 6.0
         },
         {
@@ -250,6 +260,7 @@
             "tujuan baru: cdn.pembaruan-peta.id"
           ],
           "downgraded": false,
+          "decisive": false,
           "points": 2.0
         }
       ],
@@ -259,55 +270,55 @@
           "status": "ok",
           "reason": "",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.667777Z"
+          "checked_at": "2026-11-15T08:42:52.289382Z"
         },
         "accessibility": {
           "status": "ok",
           "reason": "",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.667777Z"
+          "checked_at": "2026-11-15T08:42:52.289382Z"
         },
         "certificates": {
           "status": "ok",
           "reason": "",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.667777Z"
+          "checked_at": "2026-11-15T08:42:52.289382Z"
         },
         "vpn": {
           "status": "ok",
           "reason": "",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.667777Z"
+          "checked_at": "2026-11-15T08:42:52.289382Z"
         },
         "install_source": {
           "status": "ok",
           "reason": "",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.667777Z"
+          "checked_at": "2026-11-15T08:42:52.289382Z"
         },
         "integrity": {
           "status": "partial",
           "reason": "status bootloader tidak diberikan API publik; dinilai lewat verdict integritas",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.667777Z"
+          "checked_at": "2026-11-15T08:42:52.289382Z"
         },
         "network_volume": {
           "status": "ok",
           "reason": "",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.667777Z"
+          "checked_at": "2026-11-15T08:42:52.289382Z"
         },
         "network_destinations": {
           "status": "ok",
           "reason": "",
           "source": "resolver",
-          "checked_at": "2026-11-14T07:13:52.667777Z"
+          "checked_at": "2026-11-15T08:42:52.289382Z"
         },
         "attestation": {
           "status": "ok",
           "reason": "",
           "source": "agent",
-          "checked_at": "2026-11-14T07:13:52.667777Z"
+          "checked_at": "2026-11-15T08:42:52.289382Z"
         }
       },
       "skipped_rules": []
@@ -323,7 +334,7 @@
         "reason": "Allow. Skor di bawah ambang, akses penuh direkomendasikan.",
         "quarantine": false,
         "top_contributors": [
-          "OWL-A02 izin mikrofon, kamera, atau lokasi yang berlebihan (+10)",
+          "OWL-A01 aplikasi dipasang dari luar toko resmi (+10)",
           "OWL-D02 patch keamanan tertinggal (+6)",
           "OWL-N03 tujuan jaringan baru di luar kebiasaan perangkat (+2)"
         ]
@@ -336,7 +347,7 @@
         "reason": "Allow. Skor di bawah ambang, akses penuh direkomendasikan.",
         "quarantine": false,
         "top_contributors": [
-          "OWL-A02 izin mikrofon, kamera, atau lokasi yang berlebihan (+10)",
+          "OWL-A01 aplikasi dipasang dari luar toko resmi (+10)",
           "OWL-D02 patch keamanan tertinggal (+6)",
           "OWL-N03 tujuan jaringan baru di luar kebiasaan perangkat (+2)"
         ]
@@ -352,8 +363,8 @@
         "quarantine": false,
         "top_contributors": [
           "OWL-R01 layanan aksesibilitas di luar daftar izin (+19)",
-          "OWL-A01 aplikasi dipasang dari luar toko resmi (+15)",
-          "OWL-C01 sertifikat ca dipasang pengguna (+12)"
+          "OWL-A01 aplikasi dipasang dari luar toko resmi (+12)",
+          "OWL-A02 aplikasi dari luar toko resmi memegang izin perekaman (+12)"
         ]
       },
       "classified": {
@@ -365,8 +376,8 @@
         "quarantine": true,
         "top_contributors": [
           "OWL-R01 layanan aksesibilitas di luar daftar izin (+19)",
-          "OWL-A01 aplikasi dipasang dari luar toko resmi (+15)",
-          "OWL-C01 sertifikat ca dipasang pengguna (+12)"
+          "OWL-A01 aplikasi dipasang dari luar toko resmi (+12)",
+          "OWL-A02 aplikasi dari luar toko resmi memegang izin perekaman (+12)"
         ]
       }
     }
@@ -375,54 +386,57 @@
     {
       "id": 1,
       "device_id": "TACTICAL-07",
-      "sent_at": "2026-11-14T07:13:52.668171+00:00",
+      "sent_at": "2026-11-15T08:42:52.289666+00:00",
       "kind": "stix",
       "delivered": false,
-      "payload": "{\"type\": \"bundle\", \"id\": \"bundle--6e552912-5f8b-4958-a19f-0f34ab262b85\", \"objects\": [{\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--e56b9e60-447d-464d-bea2-e42cd9e43238\", \"created\": \"2026-11-14T07:13:52.668Z\", \"modified\": \"2026-11-14T07:13:52.668Z\", \"name\": \"OWL-A02 Izin mikrofon, kamera, atau lokasi yang berlebihan\", \"description\": \"Aplikasi memegang gabungan izin perekaman yang tidak sejalan dengan fungsinya. Diukur sebagai gabungan, bukan satu izin, karena satu izin mikrofon pada aplikasi pesan adalah hal yang wajar.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:permissions CONTAINS 'RECORD_AUDIO' AND x-oca-asset:permissions CONTAINS 'CAMERA']\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-14T07:13:52.668Z\", \"confidence\": 60, \"labels\": [\"app\", \"medium\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1429 Audio Capture / T1512 Video Capture\"}], \"x_owl_points\": 10.0, \"x_owl_evidence\": [\"id.tniad.pesan: ACCESS_FINE_LOCATION, RECORD_AUDIO\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--13bcb786-8a44-4a7d-b662-a13c210824d0\", \"created\": \"2026-11-14T07:13:52.668Z\", \"modified\": \"2026-11-14T07:13:52.668Z\", \"name\": \"OWL-D02 Patch keamanan tertinggal\", \"description\": \"Tingkat patch keamanan lebih tua daripada ambang satuan. Naik ke high jika melewati ambang kedua.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:x_security_patch_age_days > 60]\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-14T07:13:52.668Z\", \"confidence\": 85, \"labels\": [\"device\", \"medium\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1404 Exploitation for Privilege Escalation\"}], \"x_owl_points\": 6.0, \"x_owl_evidence\": [\"patch 2026-08-31, tertinggal 75 hari\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--beca6b64-7c49-4c56-80d8-164dc3713cf2\", \"created\": \"2026-11-14T07:13:52.668Z\", \"modified\": \"2026-11-14T07:13:52.668Z\", \"name\": \"OWL-N03 Tujuan jaringan baru di luar kebiasaan perangkat\", \"description\": \"Perangkat menghubungi tujuan yang belum pernah terlihat pada riwayatnya sendiri. Sendirian ini bukan bukti apa-apa, karena pemakaian wajar pun memunculkan tujuan baru. Dicatat sebagai sinyal lemah supaya analis melihatnya jika sinyal lain ikut menyala.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:x_owl_rule = 'OWL-N03']\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-14T07:13:52.668Z\", \"confidence\": 30, \"labels\": [\"identity\", \"low\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1437 Exfiltration Over C2 Channel\"}], \"x_owl_points\": 2.0, \"x_owl_evidence\": [\"tujuan baru: cdn.pembaruan-peta.id\"]}, {\"type\": \"x-oca-asset\", \"spec_version\": \"2.1\", \"id\": \"x-oca-asset--26c6ca2e-4299-4ea9-b858-c56d0e158a70\", \"created\": \"2026-11-14T07:13:52.668Z\", \"modified\": \"2026-11-14T07:13:52.668Z\", \"name\": \"HP dinas satuan tempur\", \"device_id\": \"TACTICAL-07\", \"x_owl_unit\": \"Yonif Raider\", \"x_owl_risk_score\": 18.0, \"x_owl_risk_level\": \"rendah\", \"x_owl_risk_contributors\": [\"OWL-A02\", \"OWL-D02\", \"OWL-N03\"], \"x_owl_attestation_ok\": true}, {\"type\": \"observed-data\", \"spec_version\": \"2.1\", \"id\": \"observed-data--2904df49-41c3-4ae2-bb37-7d3ca13ef56c\", \"created\": \"2026-11-14T07:13:52.668Z\", \"modified\": \"2026-11-14T07:13:52.668Z\", \"first_observed\": \"2026-11-14T07:13:52.668Z\", \"last_observed\": \"2026-11-14T07:13:52.668Z\", \"number_observed\": 1, \"object_refs\": [\"x-oca-asset--26c6ca2e-4299-4ea9-b858-c56d0e158a70\", \"indicator--e56b9e60-447d-464d-bea2-e42cd9e43238\", \"indicator--13bcb786-8a44-4a7d-b662-a13c210824d0\", \"indicator--beca6b64-7c49-4c56-80d8-164dc3713cf2\"]}, {\"type\": \"x-owl-access-decision\", \"spec_version\": \"2.1\", \"id\": \"x-owl-access-decision--396f97b8-6111-42d3-819a-44fbb133daf3\", \"created\": \"2026-11-14T07:13:52.668Z\", \"device_id\": \"TACTICAL-07\", \"resource_sensitivity\": \"classified\", \"decision\": \"allow\", \"quarantine\": false, \"risk_score\": 18.0, \"reason\": \"Allow. Skor di bawah ambang, akses penuh direkomendasikan.\"}]}"
+      "payload": "{\"type\": \"bundle\", \"id\": \"bundle--c013b6dd-c3d0-40b9-85ef-a7b862c186f5\", \"objects\": [{\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--5493740a-be64-4977-a12b-3abb5efef65f\", \"created\": \"2026-11-15T08:42:52.289Z\", \"modified\": \"2026-11-15T08:42:52.289Z\", \"name\": \"OWL-A01 Aplikasi dipasang dari luar toko resmi\", \"description\": \"Sumber pemasangan bukan toko yang diizinkan. Dipasang manual dari berkas APK bernilai high; sumber yang tidak tercatat sama sekali (bawaan pabrik atau adb, keduanya tidak dapat dibedakan dari sini) bernilai medium.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:x_install_source NOT IN ('com.android.vending')]\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-15T08:42:52.289Z\", \"confidence\": 85, \"labels\": [\"app\", \"medium\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1478 Install Insecure or Malicious Configuration\"}], \"x_owl_points\": 10.0, \"x_owl_evidence\": [\"com.vendor.catatan: sumber pemasangan tidak tercatat\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--6d6a227b-752d-416c-892a-1fbb9419bbbb\", \"created\": \"2026-11-15T08:42:52.289Z\", \"modified\": \"2026-11-15T08:42:52.289Z\", \"name\": \"OWL-D02 Patch keamanan tertinggal\", \"description\": \"Tingkat patch keamanan lebih tua daripada ambang satuan. Naik ke high jika melewati ambang kedua.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:x_security_patch_age_days > 60]\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-15T08:42:52.289Z\", \"confidence\": 85, \"labels\": [\"device\", \"medium\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1404 Exploitation for Privilege Escalation\"}], \"x_owl_points\": 6.0, \"x_owl_evidence\": [\"patch 2026-09-01, tertinggal 75 hari\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--dd460048-e3d3-47d3-bdba-2368fef7c5f6\", \"created\": \"2026-11-15T08:42:52.289Z\", \"modified\": \"2026-11-15T08:42:52.289Z\", \"name\": \"OWL-N03 Tujuan jaringan baru di luar kebiasaan perangkat\", \"description\": \"Perangkat menghubungi tujuan yang belum pernah terlihat pada riwayatnya sendiri. Sendirian ini bukan bukti apa-apa, karena pemakaian wajar pun memunculkan tujuan baru. Dicatat sebagai sinyal lemah supaya analis melihatnya jika sinyal lain ikut menyala.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:x_owl_rule = 'OWL-N03']\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-15T08:42:52.289Z\", \"confidence\": 30, \"labels\": [\"identity\", \"low\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1437 Exfiltration Over C2 Channel\"}], \"x_owl_points\": 2.0, \"x_owl_evidence\": [\"tujuan baru: cdn.pembaruan-peta.id\"]}, {\"type\": \"x-oca-asset\", \"spec_version\": \"2.1\", \"id\": \"x-oca-asset--f66e4c0d-d679-4d81-9dc0-4e41ef8af6b9\", \"created\": \"2026-11-15T08:42:52.289Z\", \"modified\": \"2026-11-15T08:42:52.289Z\", \"name\": \"HP dinas satuan tempur\", \"device_id\": \"TACTICAL-07\", \"x_owl_unit\": \"Yonif Raider\", \"x_owl_risk_score\": 18.0, \"x_owl_risk_level\": \"rendah\", \"x_owl_risk_contributors\": [\"OWL-A01\", \"OWL-D02\", \"OWL-N03\"], \"x_owl_attestation_ok\": true}, {\"type\": \"observed-data\", \"spec_version\": \"2.1\", \"id\": \"observed-data--b01b6be2-00c5-44d2-9817-46190183cc95\", \"created\": \"2026-11-15T08:42:52.289Z\", \"modified\": \"2026-11-15T08:42:52.289Z\", \"first_observed\": \"2026-11-15T08:42:52.289Z\", \"last_observed\": \"2026-11-15T08:42:52.289Z\", \"number_observed\": 1, \"object_refs\": [\"x-oca-asset--f66e4c0d-d679-4d81-9dc0-4e41ef8af6b9\", \"indicator--5493740a-be64-4977-a12b-3abb5efef65f\", \"indicator--6d6a227b-752d-416c-892a-1fbb9419bbbb\", \"indicator--dd460048-e3d3-47d3-bdba-2368fef7c5f6\"]}, {\"type\": \"x-owl-access-decision\", \"spec_version\": \"2.1\", \"id\": \"x-owl-access-decision--cab72ae4-b3ee-4b89-8426-7a9303782f0a\", \"created\": \"2026-11-15T08:42:52.289Z\", \"device_id\": \"TACTICAL-07\", \"resource_sensitivity\": \"classified\", \"decision\": \"allow\", \"quarantine\": false, \"risk_score\": 18.0, \"reason\": \"Allow. Skor di bawah ambang, akses penuh direkomendasikan.\"}]}"
     },
     {
       "id": 2,
       "device_id": "TACTICAL-07",
-      "sent_at": "2026-11-14T07:13:52.668171+00:00",
+      "sent_at": "2026-11-15T08:42:52.289666+00:00",
       "kind": "cef",
       "delivered": false,
-      "payload": "CEF:0|OWL|OnDeviceWatchLayer|1.0|100|Mobile Risk Score Rendah|3|deviceId=TACTICAL-07 dvchost=HP dinas satuan tempur cat=endpoint/mobile-risk rt=1794640432668 cs1Label=riskScore cs1=18.0 cs2Label=riskLevel cs2=rendah cs3Label=contributors cs3=OWL-A02,OWL-D02,OWL-N03 cs4Label=unit cs4=Yonif Raider cn1Label=findingCount cn1=3 cfp1Label=decayApplied cfp1=0.0 act=allow cs5Label=resource cs5=classified cs6Label=quarantine cs6=false"
+      "payload": "CEF:0|OWL|OnDeviceWatchLayer|1.0|100|Mobile Risk Score Rendah|3|deviceId=TACTICAL-07 dvchost=HP dinas satuan tempur cat=endpoint/mobile-risk rt=1794732172289 cs1Label=riskScore cs1=18.0 cs2Label=riskLevel cs2=rendah cs3Label=contributors cs3=OWL-A01,OWL-D02,OWL-N03 cs4Label=unit cs4=Yonif Raider cn1Label=findingCount cn1=3 cfp1Label=decayApplied cfp1=0.0 act=allow cs5Label=resource cs5=classified cs6Label=quarantine cs6=false"
     },
     {
       "id": 3,
       "device_id": "KOMANDO-02",
-      "sent_at": "2026-11-14T07:13:52.668664+00:00",
+      "sent_at": "2026-11-15T08:42:52.290300+00:00",
       "kind": "stix",
       "delivered": false,
-      "payload": "{\"type\": \"bundle\", \"id\": \"bundle--5d9c33e0-1019-484e-8150-b3e07b22d9ef\", \"objects\": [{\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--62acc7e2-9285-450b-8f35-df176b166cde\", \"created\": \"2026-11-14T07:13:52.668Z\", \"modified\": \"2026-11-14T07:13:52.668Z\", \"name\": \"OWL-R01 Layanan aksesibilitas di luar daftar izin\", \"description\": \"Aplikasi memegang BIND_ACCESSIBILITY_SERVICE tanpa berada di daftar izin satuan. Izin ini membaca seluruh isi layar dan dapat menekan tombol menggantikan pengguna, dan merupakan jalur utama pencurian kredensial.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:permissions CONTAINS 'BIND_ACCESSIBILITY_SERVICE']\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-14T07:13:52.668Z\", \"confidence\": 85, \"labels\": [\"runtime\", \"critical\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1417 Input Capture\"}], \"x_owl_points\": 18.8, \"x_owl_evidence\": [\"layanan aksesibilitas aktif: com.sys.servicehelper\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--5e8eedc5-ab3c-4a30-b92c-7e8b3bb06876\", \"created\": \"2026-11-14T07:13:52.668Z\", \"modified\": \"2026-11-14T07:13:52.668Z\", \"name\": \"OWL-R02 Jendela hamparan di atas aplikasi lain\", \"description\": \"Aplikasi memegang SYSTEM_ALERT_WINDOW. Dipakai sah oleh beberapa aplikasi, sehingga sendirian tidak cukup; bersama OWL-R01 pola ini adalah overlay pencuri kredensial.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:permissions CONTAINS 'SYSTEM_ALERT_WINDOW']\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-14T07:13:52.668Z\", \"confidence\": 60, \"labels\": [\"runtime\", \"high\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1411 Input Prompt\"}], \"x_owl_points\": 11.2, \"x_owl_evidence\": [\"SYSTEM_ALERT_WINDOW: com.sys.servicehelper\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--43ac3f54-8839-40a4-9c41-6d9f14d0f0c8\", \"created\": \"2026-11-14T07:13:52.668Z\", \"modified\": \"2026-11-14T07:13:52.668Z\", \"name\": \"OWL-A01 Aplikasi dipasang dari luar toko resmi\", \"description\": \"Sumber pemasangan tidak ada di daftar installer yang diizinkan. Sideload adalah vektor masuk utama spyware komersial.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:x_install_source NOT IN ('com.android.vending')]\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-14T07:13:52.668Z\", \"confidence\": 85, \"labels\": [\"app\", \"high\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1478 Install Insecure or Malicious Configuration\"}], \"x_owl_points\": 15.0, \"x_owl_evidence\": [\"com.sys.servicehelper dipasang oleh sumber tidak diketahui\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--757f9021-0fa8-456c-a25b-d2bf71d44381\", \"created\": \"2026-11-14T07:13:52.668Z\", \"modified\": \"2026-11-14T07:13:52.668Z\", \"name\": \"OWL-A02 Izin mikrofon, kamera, atau lokasi yang berlebihan\", \"description\": \"Aplikasi memegang gabungan izin perekaman yang tidak sejalan dengan fungsinya. Diukur sebagai gabungan, bukan satu izin, karena satu izin mikrofon pada aplikasi pesan adalah hal yang wajar.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:permissions CONTAINS 'RECORD_AUDIO' AND x-oca-asset:permissions CONTAINS 'CAMERA']\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-14T07:13:52.668Z\", \"confidence\": 60, \"labels\": [\"app\", \"medium\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1429 Audio Capture / T1512 Video Capture\"}], \"x_owl_points\": 10.0, \"x_owl_evidence\": [\"com.sys.servicehelper: ACCESS_FINE_LOCATION, CAMERA, RECORD_AUDIO\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--e3b53fec-91f4-44ea-89ed-9e4d7d858e4f\", \"created\": \"2026-11-14T07:13:52.668Z\", \"modified\": \"2026-11-14T07:13:52.668Z\", \"name\": \"OWL-C01 Sertifikat CA dipasang pengguna\", \"description\": \"Ada CA di trust store pengguna. Pada perangkat dinas tidak ada alasan sah untuk itu, dan CA semacam ini adalah prasyarat penyadapan TLS.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:x_user_ca_count > 0]\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-14T07:13:52.668Z\", \"confidence\": 85, \"labels\": [\"config\", \"high\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1557 Adversary-in-the-Middle\"}], \"x_owl_points\": 12.0, \"x_owl_evidence\": [\"CA pengguna: CN=Secure Proxy CA, O=-\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--1d8fded2-7acb-44f4-a295-8bc5158f6a34\", \"created\": \"2026-11-14T07:13:52.668Z\", \"modified\": \"2026-11-14T07:13:52.668Z\", \"name\": \"OWL-C02 Profil VPN di luar daftar izin\", \"description\": \"VPN aktif yang bukan milik satuan mengalihkan seluruh lalu lintas perangkat ke pihak yang tidak diketahui.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:x_vpn_profile != 'allowlisted']\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-14T07:13:52.668Z\", \"confidence\": 60, \"labels\": [\"config\", \"medium\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1557 Adversary-in-the-Middle\"}], \"x_owl_points\": 8.0, \"x_owl_evidence\": [\"profil VPN aktif: fast-secure-vpn\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--7aa20ffa-7aaa-4689-9b8c-111b3522d7cd\", \"created\": \"2026-11-14T07:13:52.668Z\", \"modified\": \"2026-11-14T07:13:52.668Z\", \"name\": \"OWL-D02 Patch keamanan tertinggal\", \"description\": \"Tingkat patch keamanan lebih tua daripada ambang satuan. Naik ke high jika melewati ambang kedua.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:x_security_patch_age_days > 60]\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-14T07:13:52.668Z\", \"confidence\": 85, \"labels\": [\"device\", \"medium\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1404 Exploitation for Privilege Escalation\"}], \"x_owl_points\": 6.0, \"x_owl_evidence\": [\"patch 2026-08-10, tertinggal 96 hari\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--e55d343d-79ab-4c60-8ac5-8d02fd56ea24\", \"created\": \"2026-11-14T07:13:52.668Z\", \"modified\": \"2026-11-14T07:13:52.668Z\", \"name\": \"OWL-N01 Unggahan besar saat perangkat tidak dipakai\", \"description\": \"Volume keluar 24 jam melewati ambang sementara layar mati. Metadata saja; isi lalu lintas tidak pernah dibaca.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:x_egress_mb_24h > 50 AND x-oca-asset:x_screen_on_ratio < 0.15]\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-14T07:13:52.668Z\", \"confidence\": 60, \"labels\": [\"identity\", \"high\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1437 Exfiltration Over C2 Channel\"}], \"x_owl_points\": 6.0, \"x_owl_evidence\": [\"unggahan 318.7 MB dalam 24 jam\", \"layar menyala 2 persen dari waktu itu\"]}, {\"type\": \"x-oca-asset\", \"spec_version\": \"2.1\", \"id\": \"x-oca-asset--b4095d29-0018-4777-8903-a94c18b9b95d\", \"created\": \"2026-11-14T07:13:52.668Z\", \"modified\": \"2026-11-14T07:13:52.668Z\", \"name\": \"HP dinas perwira\", \"device_id\": \"KOMANDO-02\", \"x_owl_unit\": \"Staf Komando\", \"x_owl_risk_score\": 87.0, \"x_owl_risk_level\": \"tinggi\", \"x_owl_risk_contributors\": [\"OWL-R01\", \"OWL-R02\", \"OWL-A01\", \"OWL-A02\", \"OWL-C01\", \"OWL-C02\", \"OWL-D02\", \"OWL-N01\"], \"x_owl_attestation_ok\": true}, {\"type\": \"observed-data\", \"spec_version\": \"2.1\", \"id\": \"observed-data--fce8b750-7e2e-4b2a-bb86-d6191d3add43\", \"created\": \"2026-11-14T07:13:52.668Z\", \"modified\": \"2026-11-14T07:13:52.668Z\", \"first_observed\": \"2026-11-14T07:13:52.668Z\", \"last_observed\": \"2026-11-14T07:13:52.668Z\", \"number_observed\": 1, \"object_refs\": [\"x-oca-asset--b4095d29-0018-4777-8903-a94c18b9b95d\", \"indicator--62acc7e2-9285-450b-8f35-df176b166cde\", \"indicator--5e8eedc5-ab3c-4a30-b92c-7e8b3bb06876\", \"indicator--43ac3f54-8839-40a4-9c41-6d9f14d0f0c8\", \"indicator--757f9021-0fa8-456c-a25b-d2bf71d44381\", \"indicator--e3b53fec-91f4-44ea-89ed-9e4d7d858e4f\", \"indicator--1d8fded2-7acb-44f4-a295-8bc5158f6a34\", \"indicator--7aa20ffa-7aaa-4689-9b8c-111b3522d7cd\", \"indicator--e55d343d-79ab-4c60-8ac5-8d02fd56ea24\"]}, {\"type\": \"x-owl-access-decision\", \"spec_version\": \"2.1\", \"id\": \"x-owl-access-decision--183e385f-5dee-4916-9c04-a25a777db92d\", \"created\": \"2026-11-14T07:13:52.668Z\", \"device_id\": \"KOMANDO-02\", \"resource_sensitivity\": \"classified\", \"decision\": \"deny\", \"quarantine\": true, \"risk_score\": 87.0, \"reason\": \"Deny / Quarantine. Skor melewati ambang untuk sumber daya ini; akses direkomendasikan ditolak dan perangkat dikarantina.\"}]}"
+      "payload": "{\"type\": \"bundle\", \"id\": \"bundle--16e7ea5e-dda5-452b-879f-6fbeca15657b\", \"objects\": [{\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--f61a06cf-181e-4e42-84b1-fdc76d7bac1c\", \"created\": \"2026-11-15T08:42:52.290Z\", \"modified\": \"2026-11-15T08:42:52.290Z\", \"name\": \"OWL-R01 Layanan aksesibilitas di luar daftar izin\", \"description\": \"Aplikasi memegang BIND_ACCESSIBILITY_SERVICE tanpa berada di daftar izin satuan. Izin ini membaca seluruh isi layar dan dapat menekan tombol menggantikan pengguna, dan merupakan jalur utama pencurian kredensial.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:permissions CONTAINS 'BIND_ACCESSIBILITY_SERVICE']\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-15T08:42:52.290Z\", \"confidence\": 85, \"labels\": [\"runtime\", \"critical\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1417 Input Capture\"}], \"x_owl_points\": 18.8, \"x_owl_evidence\": [\"layanan aksesibilitas aktif: com.sys.servicehelper\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--caf5dd6e-8d62-426b-9ef3-1af47f4f1e2e\", \"created\": \"2026-11-15T08:42:52.290Z\", \"modified\": \"2026-11-15T08:42:52.290Z\", \"name\": \"OWL-R02 Jendela hamparan di atas aplikasi lain\", \"description\": \"Aplikasi memegang SYSTEM_ALERT_WINDOW. Dipakai sah oleh beberapa aplikasi, sehingga sendirian tidak cukup; bersama OWL-R01 pola ini adalah overlay pencuri kredensial.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:permissions CONTAINS 'SYSTEM_ALERT_WINDOW']\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-15T08:42:52.290Z\", \"confidence\": 60, \"labels\": [\"runtime\", \"high\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1411 Input Prompt\"}], \"x_owl_points\": 11.2, \"x_owl_evidence\": [\"SYSTEM_ALERT_WINDOW: com.sys.servicehelper\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--1399f6c9-1fd9-4be7-9091-1f16523e581b\", \"created\": \"2026-11-15T08:42:52.290Z\", \"modified\": \"2026-11-15T08:42:52.290Z\", \"name\": \"OWL-A01 Aplikasi dipasang dari luar toko resmi\", \"description\": \"Sumber pemasangan bukan toko yang diizinkan. Dipasang manual dari berkas APK bernilai high; sumber yang tidak tercatat sama sekali (bawaan pabrik atau adb, keduanya tidak dapat dibedakan dari sini) bernilai medium.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:x_install_source NOT IN ('com.android.vending')]\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-15T08:42:52.290Z\", \"confidence\": 85, \"labels\": [\"app\", \"high\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1478 Install Insecure or Malicious Configuration\"}], \"x_owl_points\": 12.5, \"x_owl_evidence\": [\"com.sys.servicehelper dipasang manual lewat com.google.android.packageinstaller\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--4e4e53cb-dc4a-4992-b585-399b4fa489dc\", \"created\": \"2026-11-15T08:42:52.290Z\", \"modified\": \"2026-11-15T08:42:52.290Z\", \"name\": \"OWL-A02 Aplikasi dari luar toko resmi memegang izin perekaman\", \"description\": \"Aplikasi yang sumbernya bukan toko yang diizinkan memegang gabungan izin mikrofon, kamera, atau lokasi. Korelasinya per aplikasi: aplikasi toko resmi yang memegang izin serupa (aplikasi pesan, misalnya) tidak dihitung, sebab itu menyala di hampir setiap ponsel dan tidak membedakan apa pun.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:permissions CONTAINS 'RECORD_AUDIO' AND x-oca-asset:permissions CONTAINS 'CAMERA']\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-15T08:42:52.290Z\", \"confidence\": 60, \"labels\": [\"app\", \"high\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1429 Audio Capture / T1512 Video Capture\"}], \"x_owl_points\": 12.5, \"x_owl_evidence\": [\"com.sys.servicehelper: ACCESS_FINE_LOCATION, CAMERA, RECORD_AUDIO\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--369ce3c9-8b6f-4bd4-83c0-50dfb9f4e00b\", \"created\": \"2026-11-15T08:42:52.290Z\", \"modified\": \"2026-11-15T08:42:52.290Z\", \"name\": \"OWL-C01 Sertifikat CA dipasang pengguna\", \"description\": \"Ada CA di trust store pengguna. Pada perangkat dinas tidak ada alasan sah untuk itu, dan CA semacam ini adalah prasyarat penyadapan TLS.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:x_user_ca_count > 0]\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-15T08:42:52.290Z\", \"confidence\": 85, \"labels\": [\"config\", \"high\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1557 Adversary-in-the-Middle\"}], \"x_owl_points\": 12.0, \"x_owl_evidence\": [\"CA pengguna: CN=Secure Proxy CA, O=-\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--05e931e8-f773-42a9-8758-f085ab46247d\", \"created\": \"2026-11-15T08:42:52.290Z\", \"modified\": \"2026-11-15T08:42:52.290Z\", \"name\": \"OWL-C02 Profil VPN di luar daftar izin\", \"description\": \"VPN aktif yang bukan milik satuan mengalihkan seluruh lalu lintas perangkat ke pihak yang tidak diketahui.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:x_vpn_profile != 'allowlisted']\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-15T08:42:52.290Z\", \"confidence\": 60, \"labels\": [\"config\", \"medium\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1557 Adversary-in-the-Middle\"}], \"x_owl_points\": 8.0, \"x_owl_evidence\": [\"profil VPN aktif: fast-secure-vpn\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--f7bbca65-289f-404d-bf1c-688ac1a51aae\", \"created\": \"2026-11-15T08:42:52.290Z\", \"modified\": \"2026-11-15T08:42:52.290Z\", \"name\": \"OWL-D02 Patch keamanan tertinggal\", \"description\": \"Tingkat patch keamanan lebih tua daripada ambang satuan. Naik ke high jika melewati ambang kedua.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:x_security_patch_age_days > 60]\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-15T08:42:52.290Z\", \"confidence\": 85, \"labels\": [\"device\", \"medium\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1404 Exploitation for Privilege Escalation\"}], \"x_owl_points\": 6.0, \"x_owl_evidence\": [\"patch 2026-08-11, tertinggal 96 hari\"]}, {\"type\": \"indicator\", \"spec_version\": \"2.1\", \"id\": \"indicator--a5acc86f-b78a-4e68-a4e3-f953fbb3cac8\", \"created\": \"2026-11-15T08:42:52.290Z\", \"modified\": \"2026-11-15T08:42:52.290Z\", \"name\": \"OWL-N01 Unggahan besar saat perangkat tidak dipakai\", \"description\": \"Volume keluar 24 jam melewati ambang sementara layar mati. Metadata saja; isi lalu lintas tidak pernah dibaca.\", \"indicator_types\": [\"anomalous-activity\"], \"pattern\": \"[x-oca-asset:x_egress_mb_24h > 50 AND x-oca-asset:x_screen_on_ratio < 0.15]\", \"pattern_type\": \"stix\", \"valid_from\": \"2026-11-15T08:42:52.290Z\", \"confidence\": 60, \"labels\": [\"identity\", \"high\"], \"external_references\": [{\"source_name\": \"mitre-attack-mobile\", \"description\": \"T1437 Exfiltration Over C2 Channel\"}], \"x_owl_points\": 6.0, \"x_owl_evidence\": [\"unggahan 318.7 MB dalam 24 jam\", \"layar menyala 2 persen dari waktu itu\"]}, {\"type\": \"x-oca-asset\", \"spec_version\": \"2.1\", \"id\": \"x-oca-asset--d82fa307-05d4-41cd-bce2-852115dc7181\", \"created\": \"2026-11-15T08:42:52.290Z\", \"modified\": \"2026-11-15T08:42:52.290Z\", \"name\": \"HP dinas perwira\", \"device_id\": \"KOMANDO-02\", \"x_owl_unit\": \"Staf Komando\", \"x_owl_risk_score\": 87.0, \"x_owl_risk_level\": \"tinggi\", \"x_owl_risk_contributors\": [\"OWL-R01\", \"OWL-R02\", \"OWL-A01\", \"OWL-A02\", \"OWL-C01\", \"OWL-C02\", \"OWL-D02\", \"OWL-N01\"], \"x_owl_attestation_ok\": true}, {\"type\": \"observed-data\", \"spec_version\": \"2.1\", \"id\": \"observed-data--525105b3-36f4-40ea-b9e7-3f0e273c444e\", \"created\": \"2026-11-15T08:42:52.290Z\", \"modified\": \"2026-11-15T08:42:52.290Z\", \"first_observed\": \"2026-11-15T08:42:52.290Z\", \"last_observed\": \"2026-11-15T08:42:52.290Z\", \"number_observed\": 1, \"object_refs\": [\"x-oca-asset--d82fa307-05d4-41cd-bce2-852115dc7181\", \"indicator--f61a06cf-181e-4e42-84b1-fdc76d7bac1c\", \"indicator--caf5dd6e-8d62-426b-9ef3-1af47f4f1e2e\", \"indicator--1399f6c9-1fd9-4be7-9091-1f16523e581b\", \"indicator--4e4e53cb-dc4a-4992-b585-399b4fa489dc\", \"indicator--369ce3c9-8b6f-4bd4-83c0-50dfb9f4e00b\", \"indicator--05e931e8-f773-42a9-8758-f085ab46247d\", \"indicator--f7bbca65-289f-404d-bf1c-688ac1a51aae\", \"indicator--a5acc86f-b78a-4e68-a4e3-f953fbb3cac8\"]}, {\"type\": \"x-owl-access-decision\", \"spec_version\": \"2.1\", \"id\": \"x-owl-access-decision--c40224a0-d83b-4d1b-ad4f-01411f5ede7f\", \"created\": \"2026-11-15T08:42:52.290Z\", \"device_id\": \"KOMANDO-02\", \"resource_sensitivity\": \"classified\", \"decision\": \"deny\", \"quarantine\": true, \"risk_score\": 87.0, \"reason\": \"Deny / Quarantine. Skor melewati ambang untuk sumber daya ini; akses direkomendasikan ditolak dan perangkat dikarantina.\"}]}"
     },
     {
       "id": 4,
       "device_id": "KOMANDO-02",
-      "sent_at": "2026-11-14T07:13:52.668664+00:00",
+      "sent_at": "2026-11-15T08:42:52.290300+00:00",
       "kind": "cef",
       "delivered": false,
-      "payload": "CEF:0|OWL|OnDeviceWatchLayer|1.0|100|Mobile Risk Score Tinggi|7|deviceId=KOMANDO-02 dvchost=HP dinas perwira cat=endpoint/mobile-risk rt=1794640432668 cs1Label=riskScore cs1=87.0 cs2Label=riskLevel cs2=tinggi cs3Label=contributors cs3=OWL-R01,OWL-R02,OWL-A01,OWL-A02,OWL-C01,OWL-C02,OWL-D02,OWL-N01 cs4Label=unit cs4=Staf Komando cn1Label=findingCount cn1=8 cfp1Label=decayApplied cfp1=0.0 act=deny cs5Label=resource cs5=classified cs6Label=quarantine cs6=true"
+      "payload": "CEF:0|OWL|OnDeviceWatchLayer|1.0|100|Mobile Risk Score Tinggi|7|deviceId=KOMANDO-02 dvchost=HP dinas perwira cat=endpoint/mobile-risk rt=1794732172290 cs1Label=riskScore cs1=87.0 cs2Label=riskLevel cs2=tinggi cs3Label=contributors cs3=OWL-R01,OWL-R02,OWL-A01,OWL-A02,OWL-C01,OWL-C02,OWL-D02,OWL-N01 cs4Label=unit cs4=Staf Komando cn1Label=findingCount cn1=8 cfp1Label=decayApplied cfp1=0.0 act=deny cs5Label=resource cs5=classified cs6Label=quarantine cs6=true"
     }
   ],
   "catalog": {
-    "version": 1,
-    "updated": "2026-11-13",
+    "version": 2,
+    "updated": "2026-11-15",
     "parameters": {
       "patch_warn_days": 60,
       "patch_fail_days": 180,
       "egress_idle_mb": 50.0,
       "beacon_jitter_pct": 10.0,
       "unusual_destination_min": 1,
-      "new_destination_min": 1
+      "new_destination_min": 1,
+      "max_report_age_minutes": 60
     },
     "allowlists": {
       "accessibility_services": [],
       "vpn_profiles": [],
       "installers": [
         "com.android.vending",
-        "com.google.android.packageinstaller",
         "id.tniad.owl.store"
+      ],
+      "packages": [
+        "id.tniad.owl.agent"
       ]
     },
     "rules": [
@@ -451,7 +465,7 @@
         "category": "app",
         "severity": "high",
         "title": "Aplikasi dipasang dari luar toko resmi",
-        "detail": "Sumber pemasangan tidak ada di daftar installer yang diizinkan. Sideload adalah vektor masuk utama spyware komersial.",
+        "detail": "Sumber pemasangan bukan toko yang diizinkan. Dipasang manual dari berkas APK bernilai high; sumber yang tidak tercatat sama sekali (bawaan pabrik atau adb, keduanya tidak dapat dibedakan dari sini) bernilai medium.",
         "mitre": "T1478 Install Insecure or Malicious Configuration",
         "confidence": "tinggi",
         "corroborate": false
@@ -459,12 +473,23 @@
       {
         "id": "OWL-A02",
         "category": "app",
-        "severity": "medium",
-        "title": "Izin mikrofon, kamera, atau lokasi yang berlebihan",
-        "detail": "Aplikasi memegang gabungan izin perekaman yang tidak sejalan dengan fungsinya. Diukur sebagai gabungan, bukan satu izin, karena satu izin mikrofon pada aplikasi pesan adalah hal yang wajar.",
+        "severity": "high",
+        "title": "Aplikasi dari luar toko resmi memegang izin perekaman",
+        "detail": "Aplikasi yang sumbernya bukan toko yang diizinkan memegang gabungan izin mikrofon, kamera, atau lokasi. Korelasinya per aplikasi: aplikasi toko resmi yang memegang izin serupa (aplikasi pesan, misalnya) tidak dihitung, sebab itu menyala di hampir setiap ponsel dan tidak membedakan apa pun.",
         "mitre": "T1429 Audio Capture / T1512 Video Capture",
         "confidence": "sedang",
-        "corroborate": true
+        "corroborate": false
+      },
+      {
+        "id": "OWL-A03",
+        "category": "app",
+        "severity": "critical",
+        "decisive": true,
+        "title": "Aplikasi pada daftar larangan",
+        "detail": "Nama paket atau sidik penanda tangan aplikasi cocok dengan daftar larangan satuan. Ini kecocokan pasti, bukan indikasi: gerbang menolak tanpa melihat skor. Nama paket mudah diganti penyerang; kecocokan penanda tangan lebih kuat dan dipakai bila agent melaporkannya.",
+        "mitre": "T1476 Deliver Malicious App",
+        "confidence": "tinggi",
+        "corroborate": false
       },
       {
         "id": "OWL-C01",
@@ -490,6 +515,7 @@
         "id": "OWL-D01",
         "category": "device",
         "severity": "critical",
+        "decisive": true,
         "title": "Integritas perangkat gagal",
         "detail": "Play Integrity menolak perangkat, atau ditemukan artefak root (su, Magisk), atau bootloader terbuka. Root membatalkan hampir seluruh asumsi keamanan yang dipakai pemeriksaan lain.",
         "mitre": "T1404 Exploitation for Privilege Escalation",
@@ -540,6 +566,7 @@
         "id": "OWL-X01",
         "category": "device",
         "severity": "critical",
+        "decisive": true,
         "title": "Attestation agent tidak sah",
         "detail": "Laporan datang dari agent yang tidak dapat membuktikan dirinya build asli pada Keystore berbasis perangkat keras. Laporan \"perangkat bersih\" dari agent yang tidak terverifikasi tidak berarti apa-apa. Turun ke medium jika kunci terbukti tetapi verdict Play Integrity tidak dapat diperoleh, dan hilang sama sekali pada mode air-gapped, sebab di situ verdict memang mustahil diambil dan Key Attestation adalah penggantinya yang sah.",
         "mitre": "T1512 Masquerading",

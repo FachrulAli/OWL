@@ -38,24 +38,47 @@ class PostureService : Service() {
         scope.launch { loop() }
     }
 
-    private suspend fun loop() {
-        val id = Config.deviceId(this)
-        Uploader.enroll(id, "${Build.MANUFACTURER} ${Build.MODEL}",
-            Build.MODEL, "Android ${Build.VERSION.RELEASE}")
+    private fun enroll(): Boolean = Uploader.enroll(
+        Config.deviceId(this), "${Build.MANUFACTURER} ${Build.MODEL}",
+        Build.MODEL, "Android ${Build.VERSION.RELEASE}").ok
 
+    /**
+     * Pendaftaran TIDAK lagi dicoba sekali saja. Versi pertama mendaftar satu
+     * kali saat mulai; jika jaringan belum siap pada detik itu, setiap laporan
+     * sesudahnya ditolak 404 sampai agent dimatikan dan dinyalakan lagi.
+     * Ditemukan 2026-11-15 pada HP uji. Sekarang pendaftaran diulang sampai
+     * berhasil, dan diulang lagi kapan pun OWL Core menjawab 404, misalnya
+     * setelah basis datanya dikosongkan.
+     */
+    private suspend fun loop() {
+        var enrolled = false
         while (scope.isActive) {
+            var retrySoon = false
             try {
-                val verdict = Attestation.playVerdict(this)
-                val report = Posture.report(this, Attestation.block(verdict), verdict)
-                val res = withContext(Dispatchers.IO) { Uploader.send(report) }
-                notify(
-                    if (res.ok) "Laporan terkirim. Penilaian dilakukan OWL Core."
-                    else "Belum terkirim (${res.code}). Dicoba lagi pada siklus berikutnya."
-                )
+                if (!enrolled) enrolled = enroll()
+                if (!enrolled) {
+                    retrySoon = true
+                    notify("OWL Core belum terjangkau. Pendaftaran dicoba lagi sebentar lagi.")
+                } else {
+                    val verdict = Attestation.playVerdict(this)
+                    val report = Posture.report(this, Attestation.block(verdict), verdict)
+                    var res = withContext(Dispatchers.IO) { Uploader.send(report) }
+                    if (res.code == 404) {
+                        // Perangkat tidak dikenal OWL Core: daftar ulang, kirim sekali lagi.
+                        enrolled = enroll()
+                        if (enrolled) res = withContext(Dispatchers.IO) { Uploader.send(report) }
+                    }
+                    retrySoon = !res.ok
+                    notify(
+                        if (res.ok) "Laporan terkirim. Penilaian dilakukan OWL Core."
+                        else "Belum terkirim (${res.code}). Dicoba lagi sebentar lagi."
+                    )
+                }
             } catch (e: Exception) {
+                retrySoon = true
                 notify("Gagal menyusun laporan: ${e.message}")
             }
-            delay(Config.POSTURE_INTERVAL_MS)
+            delay(if (retrySoon) Config.RETRY_INTERVAL_MS else Config.POSTURE_INTERVAL_MS)
         }
     }
 

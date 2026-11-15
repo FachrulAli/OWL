@@ -40,6 +40,12 @@ async def require_read(x_owl_api_key: str | None = Header(default=None)) -> None
         raise HTTPException(status_code=401, detail="kunci API tidak sah")
 
 
+def require_demo() -> None:
+    """Endpoint demo hanya ada jika OWL_DEMO menyala."""
+    if not settings.DEMO_MODE:
+        raise HTTPException(status_code=404, detail="mode demo dimatikan")
+
+
 async def require_admin(x_owl_admin: str | None = Header(default=None)) -> str:
     """Otorisasi administrasi kebijakan (FR-12 dan NFR 5.1)."""
     if not settings.ADMIN_TOKEN or x_owl_admin != settings.ADMIN_TOKEN:
@@ -80,7 +86,17 @@ async def catalog():
 # ——————————————————————————— perangkat ———————————————————————————
 
 @router.post("/api/devices")
-async def enroll(d: Device):
+async def enroll(d: Device, request: Request,
+                 x_owl_token: str | None = Header(default=None)):
+    # Pendaftaran menuntut token penggelaran yang sama dengan telemetri.
+    # Tanpa itu siapa pun di jaringan dapat mendaftarkan perangkat karangan,
+    # atau menimpa label dan satuan perangkat yang sudah ada.
+    try:
+        _check_token(x_owl_token)
+    except HTTPException:
+        await db.save_reject(d.device_id, "pendaftaran ditolak", "token tidak sah",
+                             request.client.host if request.client else "")
+        raise
     await db.upsert_device(d.model_dump())
     await hub.broadcast("device_enrolled", d.model_dump())
     return {"ok": True, "device_id": d.device_id}
@@ -148,7 +164,7 @@ async def rejects(limit: int = 50):
 
 # ——————————————————————————— gerbang ———————————————————————————
 
-@router.post("/api/gate/{device_id}")
+@router.post("/api/gate/{device_id}", dependencies=[Depends(require_read)])
 async def gate(device_id: str, resource: Sensitivity = Query("classified")):
     """Keputusan gerbang. Inilah momen demo: perangkat datang, lalu lolos
     atau ditolak, berdasarkan penilaian terakhir yang dimiliki OWL."""
@@ -167,7 +183,7 @@ async def gate(device_id: str, resource: Sensitivity = Query("classified")):
 
 # ——————————————————————————— ekspor ———————————————————————————
 
-@router.get("/api/devices/{device_id}/stix")
+@router.get("/api/devices/{device_id}/stix", dependencies=[Depends(require_read)])
 async def export_stix(device_id: str, resource: Sensitivity = Query("classified")):
     row = await db.last_assessment(device_id)
     if not row:
@@ -181,7 +197,7 @@ async def export_stix(device_id: str, resource: Sensitivity = Query("classified"
     return stix_mod.bundle(a, d, device_label=dev.get("label", ""), unit=dev.get("unit", ""))
 
 
-@router.get("/api/devices/{device_id}/cef")
+@router.get("/api/devices/{device_id}/cef", dependencies=[Depends(require_read)])
 async def export_cef(device_id: str, resource: Sensitivity = Query("classified")):
     row = await db.last_assessment(device_id)
     if not row:
@@ -274,14 +290,16 @@ async def run_retention(days: float | None = Query(default=None, ge=0),
 
 # ——————————————————————————— demo ———————————————————————————
 
-@router.post("/api/demo/seed")
+@router.post("/api/demo/seed",
+             dependencies=[Depends(require_demo), Depends(require_read)])
 async def demo_seed():
     """Muat dua perangkat contoh: satu bersih, satu berisiko."""
     result = await demo.seed(_assess)
     return result
 
 
-@router.post("/api/demo/reset")
+@router.post("/api/demo/reset",
+             dependencies=[Depends(require_demo), Depends(require_read)])
 async def demo_reset():
     await db.reset()
     await hub.broadcast("reset", {})
@@ -291,7 +309,13 @@ async def demo_reset():
 # ——————————————————————————— websocket ———————————————————————————
 
 @router.websocket("/ws")
-async def ws_endpoint(ws: WebSocket):
+async def ws_endpoint(ws: WebSocket, key: str | None = Query(default=None)):
+    # Siaran ini membawa penilaian lengkap, jadi tunduk pada kunci baca yang
+    # sama dengan API. Browser tidak dapat menyetel header pada WebSocket,
+    # sehingga kuncinya dibawa lewat parameter kueri.
+    if settings.API_KEY and key != settings.API_KEY:
+        await ws.close(code=4401)
+        return
     await hub.join(ws)
     try:
         while True:

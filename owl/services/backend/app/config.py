@@ -91,6 +91,11 @@ class Settings:
     LOG_MAX_BYTES: int = int(_s("OWL_LOG_MAX_BYTES", str(5 * 1024 * 1024)))
     LOG_BACKUPS: int = int(_s("OWL_LOG_BACKUPS", "3"))
 
+    # Endpoint demo (/api/demo/seed dan /api/demo/reset). `reset` MENGHAPUS
+    # seluruh perangkat dan penilaian, jadi pada penggelaran satuan keduanya
+    # harus mati: OWL_DEMO=false membuat keduanya menjawab 404.
+    DEMO_MODE: bool = _s("OWL_DEMO", "true").lower() == "true"
+
     # Air-gapped: tidak ada panggilan keluar selain ke SOC di dalam jaringan
     # sendiri. Diberlakukan oleh jaringan, dan ditegaskan di sini supaya
     # terbaca sebagai keputusan, bukan kelalaian.

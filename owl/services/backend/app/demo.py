@@ -8,13 +8,13 @@ sungguhan. Itu pembedanya dari demo yang hanya menampilkan angka.
 Rincian skornya, supaya dapat diperiksa juri:
 
   TACTICAL-07 (bersih)                           18
-    app      OWL-A02 medium  25 x 2/5          = 10
+    app      OWL-A01 medium  25 x 2/5          = 10
     device   OWL-D02 medium  15 x 2/5          =  6
     identity OWL-N03 low     10 x 1/5          =  2
 
   KOMANDO-02 (berisiko)                          87
     runtime  OWL-R01 critical + R02 high, jenuh = 30
-    app      OWL-A01 high + A02 medium, jenuh   = 25
+    app      OWL-A01 high + A02 high, jenuh     = 25
     config   OWL-C01 high + C02 medium, jenuh   = 20
     device   OWL-D02 medium  15 x 2/5          =  6
     identity OWL-N01 high    10 x 3/5          =  6
@@ -83,9 +83,11 @@ DEVICES = [
 
 
 def telemetry_bersih() -> Telemetry:
-    """Perangkat yang wajar. Bukan nol: satu aplikasi pesan memegang izin
-    mikrofon dan lokasi, patchnya tertinggal 75 hari, dan ada satu tujuan
-    jaringan baru. Skor 18 berarti lolos, bukan berarti sempurna."""
+    """Perangkat yang wajar. Bukan nol: ada satu aplikasi bawaan pabrik yang
+    sumber pemasangannya tidak tercatat, patchnya tertinggal 75 hari, dan ada
+    satu tujuan jaringan baru. Aplikasi pesan dari toko resmi yang memegang
+    izin mikrofon dan lokasi TIDAK dihitung. Skor 18 berarti lolos, bukan
+    berarti sempurna."""
     now = datetime.now(timezone.utc)
     return Telemetry(
         availability=_status(now),
@@ -107,6 +109,9 @@ def telemetry_bersih() -> Telemetry:
              "permissions": [P_MIC, P_LOC]},
             {"package": "com.android.chrome", "installer": "com.android.vending",
              "permissions": []},
+            # Bawaan pabrik di luar partisi sistem: installer kosong. Pola ini
+            # diambil dari HP uji sungguhan, yang membawa satu aplikasi serupa.
+            {"package": "com.vendor.catatan", "installer": "", "permissions": []},
         ],
         integrity={
             "play_integrity": "MEETS_STRONG_INTEGRITY",
@@ -150,7 +155,10 @@ def telemetry_berisiko() -> Telemetry:
         ],
         vpn_profiles=[{"name": "fast-secure-vpn", "package": "com.fsv.client"}],
         apps=[
-            {"package": "com.sys.servicehelper", "installer": "",
+            # Dipasang manual dari berkas APK: pemasangnya penginstal paket
+            # sistem, persis seperti payload pada HP uji sungguhan.
+            {"package": "com.sys.servicehelper",
+             "installer": "com.google.android.packageinstaller",
              "permissions": [P_MIC, P_CAM, P_LOC]},
             {"package": "id.tniad.pesan", "installer": "com.android.vending",
              "permissions": [P_MIC]},
