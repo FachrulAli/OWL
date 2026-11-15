@@ -17,8 +17,16 @@ export function Ring({ score, size = 104 }: { score: number | null; size?: numbe
                 transform={`rotate(-90 ${size / 2} ${size / 2})`}
                 style={{ transition: 'stroke-dasharray .6s ease, stroke .3s ease' }} />
       </svg>
-      <div className="val" style={{ color }}>{score === null ? '—' : score.toFixed(0)}</div>
-      <div className="unit">/ 100</div>
+      <div
+        className="val"
+        style={{ color, fontSize: Math.round(size * 0.29) }}
+      >
+        {score === null ? '—' : score.toFixed(0)}
+      </div>
+      {/* Jarak "/ 100" dari pusat harus ikut ukuran cincin. Dipatok pada satu
+          angka, ia pas pada ukuran yang dulu dipakai dan jatuh keluar kotak
+          begitu cincinnya diperkecil. */}
+      <div className="unit" style={{ marginTop: Math.round(size * 0.42) }}>/ 100</div>
     </div>
   )
 }

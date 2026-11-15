@@ -212,16 +212,20 @@ Yang terbuka pertama kali adalah halaman depan di `/`: masalah, enam sinyal,
 cara kerja, hasil gerbang, dan batas klaim yang dinyatakan di depan. Dashboard
 ada di `/dashboard`, di belakang layar kunci.
 
-Dashboard punya lima layar, dan pembagiannya mengikuti pertanyaan yang
+Dashboard punya TIGA layar, dan pembagiannya mengikuti pertanyaan yang
 berbeda-beda, bukan mengikuti bentuk tabel di basis data:
 
 | Layar | Menjawab |
 |---|---|
-| **Ikhtisar** | Seberapa sehat gelaran secara keseluruhan, dan ke mana perhatian diarahkan lebih dahulu. Postur satuan, sebaran tingkat, asal poin risiko, bauran keputusan gerbang saat ini, dan telemetri yang ditolak |
-| **Gerbang** | Boleh masuk atau tidak. Peta gelaran selebar halaman dengan kendali gerbang dan keterangan satuan mengambang di atasnya |
+| **Ikhtisar** | Di mana ini dipakai, dan seberapa sehat keseluruhannya. Peta gelaran selebar halaman, dengan angka situasi pada panel yang mengambang di atasnya |
+| **Operasi** | Segala yang DIJALANKAN petugas, berurutan menurut alurnya: kendali gerbang dan jawabannya, angka yang menerangkan keputusan itu, event yang keluar ke SOC, lalu pencabutan dan penanganannya |
 | **Perangkat** | Satu perangkat, sampai ke aturan yang menyalakan tiap poin. Punya pencarian dan penyaringan |
-| **SOC / CSIRT** | Apa yang benar-benar dikirim keluar, diambil kembali dari tabel `soc_events` |
-| **Operasi** | Satu-satunya layar yang MENGUBAH keadaan: pencabutan perangkat, penanganan kasus, token pendaftaran, dan impor daftar |
+
+Gerbang, SOC/CSIRT, dan operasi perangkat dulu tiga tab terpisah. Ketiganya
+dibaca pada saat yang sama oleh orang yang sama, sehingga satu pekerjaan
+menuntut tiga kali perpindahan layar, dan tiap perpindahan menyembunyikan
+akibat dari tindakan sebelumnya: gerbang menolak, event keluar ke SOC, lalu
+penanganannya dibuka. Sekarang ketiganya seksi pada satu halaman.
 
 **Operasi sengaja tidak punya rekaman cadangan.** Layar lain jatuh ke
 `snapshot.json` ketika OWL Core tidak terjangkau, sebab angka penilaian yang

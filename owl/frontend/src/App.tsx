@@ -17,7 +17,7 @@ import { Perangkat } from './views/Perangkat'
 import { Operasi } from './views/Operasi'
 import { Soc } from './views/Soc'
 
-type Tab = 'ikhtisar' | 'gerbang' | 'perangkat' | 'soc' | 'operasi'
+type Tab = 'ikhtisar' | 'operasi' | 'perangkat'
 
 /**
  * Dua halaman, satu berkas.
@@ -52,19 +52,22 @@ function perluLayarPembuka(): boolean {
 }
 
 /**
- * Aturan & bobot tidak lagi berupa tab.
+ * Tiga layar, bukan lima.
  *
- * Sifatnya rujukan: dibuka untuk membuktikan satu angka, lalu ditutup.
- * Sekarang ia tinggal di panel sisi kiri yang dapat dibuka di sebelah
- * pekerjaan, dan slot navigasinya dipakai Ikhtisar, yang justru dibuka
- * lebih dahulu daripada layar mana pun.
+ * Gerbang, SOC/CSIRT, dan Operasi perangkat dibaca pada saat yang sama
+ * oleh orang yang sama: petugas yang sedang menjalankan sesuatu. Dipisah
+ * menjadi tiga tab, satu pekerjaan menuntut tiga kali perpindahan layar,
+ * dan tiap perpindahan menyembunyikan akibat dari tindakan sebelumnya —
+ * gerbang menolak, event keluar ke SOC, lalu penanganannya dibuka. Kini
+ * ketiganya satu halaman bernama Operasi, berurutan menurut alur itu.
+ *
+ * Aturan & bobot juga bukan tab: sifatnya rujukan, dibuka untuk
+ * membuktikan satu angka lalu ditutup, jadi ia tinggal di panel sisi kiri.
  */
 const TABS: { id: Tab; label: Key }[] = [
   { id: 'ikhtisar', label: 'tab.ikhtisar' },
-  { id: 'gerbang', label: 'tab.gerbang' },
-  { id: 'perangkat', label: 'tab.perangkat' },
-  { id: 'soc', label: 'tab.soc' },
   { id: 'operasi', label: 'tab.operasi' },
+  { id: 'perangkat', label: 'tab.perangkat' },
 ]
 
 export default function App() {
@@ -300,25 +303,21 @@ export default function App() {
       </header>
 
       <div className="tabisi" key={tab}>
-        {tab === 'ikhtisar' && (
-          <Gelaran
-            devices={devices}
-            catalog={catalog}
-            onLihatPerangkat={() => setTab('perangkat')}
-          />
-        )}
-        {tab === 'gerbang' && (
-          <Gerbang
-            devices={devices}
-            catalog={catalog}
-            metrics={metrics}
-            onRefresh={() => void refresh()}
-          />
-        )}
+        {tab === 'ikhtisar' && <Gelaran devices={devices} catalog={catalog} />}
         {tab === 'perangkat' && <Perangkat devices={devices} />}
-        {tab === 'soc' && <Soc devices={devices} />}
         {tab === 'operasi' && (
-          <Operasi devices={devices} offline={offline} onRefresh={() => void refresh()} />
+          <>
+            <Gerbang
+              devices={devices}
+              catalog={catalog}
+              metrics={metrics}
+              onRefresh={() => void refresh()}
+            />
+            <h2 className="seksi">{t('tab.soc')}</h2>
+            <Soc devices={devices} />
+            <h2 className="seksi">{t('ops.kicker')}</h2>
+            <Operasi devices={devices} offline={offline} onRefresh={() => void refresh()} />
+          </>
         )}
       </div>
     </div>

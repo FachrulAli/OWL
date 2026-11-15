@@ -1,7 +1,8 @@
 import {
   useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState,
 } from 'react'
-import { GELARAN, JUMLAH_KODAM } from '../data/gelaran'
+import type { ReactNode } from 'react'
+import { GELARAN } from '../data/gelaran'
 import type { Satuan } from '../data/gelaran'
 import { INDONESIA_PATH, projX, projY } from '../data/indonesiaGeo'
 import { PROVINSI } from '../data/provinsi'
@@ -78,6 +79,27 @@ for (let lat = 10; lat >= -15; lat -= 5) LINTANG.push(lat)
 
 /** Nama kota markas baru muncul saat peta cukup dekat untuk memuatnya. */
 const ZOOM_KOTA = 2
+
+/**
+ * Sapuan radar sepanjang bidang pandang.
+ *
+ * Pusatnya titik tengah bidang, yang pada proyeksi ini jatuh di sekitar
+ * 118 derajat bujur timur dan 2,5 derajat lintang selatan, yaitu tengah
+ * kepulauan. Jari-jarinya dibuat melebihi sudut terjauh bidang supaya
+ * sapuannya tidak pernah memperlihatkan tepinya sendiri.
+ *
+ * Lapisan ini berada DI LUAR kelompok yang digeser dan dizoom: ia menyapu
+ * bingkai yang sedang dilihat, bukan menyapu daratan. Sapuan yang ikut
+ * membesar saat peta didekatkan berhenti terbaca sebagai radar dan mulai
+ * terbaca sebagai noda kuning.
+ */
+const RADAR_R = Math.hypot(VB_W, VB_H) / 2 + 40
+const EKOR = [
+  { lebar: 74, buram: 0.030 },
+  { lebar: 48, buram: 0.042 },
+  { lebar: 24, buram: 0.060 },
+]
+const CINCIN = [0.3, 0.55, 0.8, 1]
 
 /** Gerak dimatikan pada mesin yang memintanya; SMIL tidak mematuhinya sendiri. */
 function diamSaja(): boolean {
@@ -178,11 +200,13 @@ export function useGelaran(devices: DeviceRow[]): Titik[] {
 }
 
 export function PetaKomando({
-  titik, fokus, onFokus,
+  titik, fokus, onFokus, ringkas,
 }: {
   titik: Titik[]
   fokus: string | null
   onFokus: (id: string | null) => void
+  /** Isi panel kiri. Dirakit pemanggil, sebab angkanya miliknya. */
+  ringkas: ReactNode
 }) {
   const { t } = useT()
   const bungkus = useRef<HTMLDivElement>(null)
@@ -530,6 +554,31 @@ export function PetaKomando({
               )
             })}
           </g>
+          {/* ——— lingkar jarak dan sapuan radar ——— */}
+          <g className="peta-sapu" pointerEvents="none">
+            {CINCIN.map((f) => (
+              <circle key={f} cx={CX} cy={CY} r={RADAR_R * f} className="cincin" />
+            ))}
+            {!tenang && (
+              <g>
+                {EKOR.map((e) => (
+                  <path
+                    key={e.lebar}
+                    d={juring(RADAR_R, e.lebar)}
+                    className="ekor"
+                    style={{ opacity: e.buram }}
+                    transform={`translate(${CX} ${CY})`}
+                  />
+                ))}
+                <line className="garis" x1={CX} y1={CY} x2={CX + RADAR_R} y2={CY} />
+                <animateTransform
+                  attributeName="transform" type="rotate"
+                  from={`0 ${CX} ${CY}`} to={`360 ${CX} ${CY}`}
+                  dur="16s" repeatCount="indefinite"
+                />
+              </g>
+            )}
+          </g>
         </svg>
 
         <div className="kmd-zoom">
@@ -570,7 +619,7 @@ export function PetaKomando({
         >
           {kiriBuka ? '‹' : '›'}
         </button>
-        <div className="kmd-isi"><RingkasGelaran titik={titik} /></div>
+        <div className="kmd-isi">{ringkas}</div>
       </div>
 
       {/* ——— panel kanan: keterangan satuan ——— */}
@@ -605,38 +654,6 @@ export function PetaKomando({
  * belakangnya, sebab membaca peta komando sebagai peta pelacakan adalah
  * salah paham yang paling mahal di layar ini.
  */
-/**
- * Ringkasan gelaran di panel kiri.
- *
- * Isinya tidak berubah mengikuti pin yang ditekan: ia menyatakan apa yang
- * sebenarnya ditunjukkan peta di belakangnya. Membaca peta komando sebagai
- * peta pelacakan adalah salah paham yang paling mahal di layar ini, dan
- * salah paham itu tidak boleh bergantung pada pembaca menekan sesuatu
- * lebih dahulu.
- */
-function RingkasGelaran({ titik }: { titik: Titik[] }) {
-  const { t } = useT()
-  const terpeta = titik.reduce((a, p) => a + p.milik.length, 0)
-  return (
-    <>
-      <div className="kicker">{t('map.kicker')}</div>
-      <div className="peta-angka">
-        <div>
-          <span className="n">{JUMLAH_KODAM}</span>
-          <span className="l">{t('map.kodam')}</span>
-        </div>
-        <div>
-          <span className="n">{terpeta}</span>
-          <span className="l">{t('map.mapped')}</span>
-        </div>
-      </div>
-      <p className="muted">{t('map.note')}</p>
-      <p className="muted" style={{ marginTop: 10 }}>{t('map.litNote')}</p>
-      <p className="peta-kaki">{t('map.foot')}</p>
-    </>
-  )
-}
-
 function KeteranganSatuan({
   titik, fokus, onPilih, onTutup,
 }: {

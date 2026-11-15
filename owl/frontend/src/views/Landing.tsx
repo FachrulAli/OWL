@@ -296,7 +296,10 @@ const EN: Copy = {
   footer: 'Kartika Cyber Hackathon 2026 prototype · PUSSIBERAD × CODEPOLITAN',
 }
 
-const REPO = 'https://github.com/MrPrinceAli/OWL'
+/* Repo yang dibagikan ke juri. Akun MrPrinceAli ditandai GitHub dan
+   seluruh repo-nya menjawab 404 bagi siapa pun selain dirinya, jadi tautan
+   lama mengirim pembaca ke halaman kosong. */
+const REPO = 'https://github.com/FachrulAli/OWL'
 
 /** Judul yang memuat baris baru ditulis sebagai beberapa baris sungguhan. */
 function Baris({ teks }: { teks: string }) {

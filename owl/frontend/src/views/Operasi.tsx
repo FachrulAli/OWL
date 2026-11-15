@@ -106,8 +106,10 @@ export function Operasi({ devices, offline, onRefresh }: {
   return (
     <div className="ops">
       {/* ——— kunci admin ——— */}
+      {/* Tanpa kicker: judul seksi di atas halaman sudah menyebut "Operasi
+          perangkat", dan mengulangnya di kartu pertama membuat keduanya
+          terbaca seperti dua hal yang berbeda. */}
       <div className="card ops-kunci">
-        <div className="kicker">{t('ops.kicker')}</div>
         <label className="ops-label" htmlFor="ops-admin">{t('ops.adminKey')}</label>
         <input
           id="ops-admin"

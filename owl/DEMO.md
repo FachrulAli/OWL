@@ -12,7 +12,7 @@ docker compose up --build       # atau: make backend + make frontend
 Buka halaman depan, lalu tekan **Buka dashboard**. Layar kunci muncul:
 masukkan kata sandi `adminowl` (bawaan; `OWL_API_KEY` pada penggelaran
 satuan), atau tekan **Masuk sebagai tamu**. Setelah terbuka, biarkan di tab
-**Gerbang**. Jangan tekan apa pun dulu.
+**Operasi**. Jangan tekan apa pun dulu.
 
 Siapkan satu terminal di samping, sudah berada di folder `owl/`.
 
@@ -54,7 +54,7 @@ Sekarang buka tab **Perangkat**, klik salah satu baris.
 > indikatornya tidak terbaca dilewati, dan tidak dihitung lulus. Perangkat
 > yang tidak dapat diperiksa bukan perangkat yang aman."
 
-Kembali ke **Gerbang**.
+Kembali ke **Operasi**.
 
 ## 1:30 — Gerbangnya
 
@@ -83,14 +83,14 @@ Kartu kanan berubah menjadi **TERBATAS**.
 
 ## 2:00 — Yang keluar ke SOC
 
-Buka tab **SOC / CSIRT**. Klik satu baris STIX.
+Gulung ke seksi **SOC / CSIRT** pada halaman yang sama. Klik satu baris STIX.
 
 > "Setiap penilaian mengeluarkan bundle STIX 2.1 ke Kartika CSIRT lewat
 > webhook bertanda tangan HMAC, dan satu baris CEF ke SIEM. Ini payload yang
 > benar-benar dikirim, diambil kembali dari basis datanya, bukan contoh yang
 > ditulis untuk slide."
 
-Terakhir, buka tab **Operasi** dan cabut satu perangkat.
+Terakhir, gulung ke seksi **Operasi perangkat** dan cabut satu perangkat.
 
 > "Dan ini yang dikerjakan orang, bukan mesin. Perangkat yang hilang
 > dicabut di sini, dan gerbang langsung menolaknya dengan alasan itu,

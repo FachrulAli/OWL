@@ -207,8 +207,8 @@ a { color: var(--gold-soft); }
 }
 
 .ring { display: grid; place-items: center; position: relative; }
-.ring .val { position: absolute; font-family: var(--display); font-weight: 700; font-size: 30px; }
-.ring .unit { position: absolute; margin-top: 44px; font-family: var(--mono); font-size: 10px; color: var(--slate-2); }
+.ring .val { position: absolute; font-family: var(--display); font-weight: 700; line-height: 1; }
+.ring .unit { position: absolute; font-family: var(--mono); font-size: 10px; color: var(--slate-2); }
 
 .devhead { display: flex; align-items: center; gap: 16px; }
 .devmeta .name { font-family: var(--display); font-size: 17px; font-weight: 600; }
@@ -1197,6 +1197,25 @@ pre {
 .peta-pin:hover .kota, .peta-pin.dipilih .kota { fill: var(--off); }
 .peta-pin:hover .nama, .peta-pin.dipilih .nama { fill: var(--gold-soft); }
 
+/* ——— lingkar jarak dan sapuan radar ———
+ *
+ * Laut di bidang ini luas dan kosong, dan kekosongan itu membuat peta
+ * terbaca seperti gambar mati. Lingkar jarak mengisinya tanpa mengaku
+ * membawa data, dan sapuan yang berputar menyatakan bahwa layar ini
+ * memang sedang mengawasi sesuatu. Keduanya sangat redup dengan sengaja:
+ * yang harus menang di peta ini adalah pin dan wilayah berdata, bukan
+ * hiasannya. */
+.peta-sapu { pointer-events: none; }
+.peta-sapu .cincin {
+  fill: none; stroke: rgba(201, 162, 39, .065); stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.peta-sapu .ekor { fill: var(--gold-soft); }
+.peta-sapu .garis {
+  stroke: rgba(231, 200, 120, .22); stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
 /* ——— panel mengambang ——— */
 
 .kmd-panel {
@@ -1514,33 +1533,9 @@ pre {
 
    Angka besar dulu, keterangannya menyusul. Yang dicari komandan dalam
    dua detik pertama adalah "berapa yang perlu ditindak", bukan uraian.
+   Deretan angkanya sendiri pindah ke panel kiri peta pada tab Ikhtisar;
+   yang tinggal di sini adalah bagan yang menerangkan keputusan gerbang.
    ——————————————————————————————————————————————————————————————— */
-
-.ov-kpi {
-  display: grid; gap: 14px;
-  grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr));
-}
-@media (max-width: 1180px) {
-  .ov-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ov-postur { grid-column: 1 / -1; }
-}
-@media (max-width: 560px) { .ov-kpi { grid-template-columns: 1fr; } }
-
-.ov-postur-isi { display: flex; align-items: center; gap: 18px; }
-.ov-postur-kata {
-  font-family: var(--display); font-size: 22px; font-weight: 600;
-  text-transform: capitalize; margin-bottom: 4px;
-}
-.ov-postur .muted { font-size: 12.5px; }
-
-.ov-angka { display: flex; flex-direction: column; }
-.ov-angka .n {
-  font-family: var(--display); font-weight: 700; font-size: 42px;
-  line-height: 1.05; color: var(--off); margin-bottom: 4px;
-}
-.ov-angka.nyala .n { color: var(--amber); }
-.ov-angka.nyala { border-color: rgba(232, 163, 61, .38); }
-.ov-angka .muted { font-size: 12.5px; }
 
 /* ——— sebaran tingkat risiko ——— */
 
@@ -1581,43 +1576,7 @@ pre {
 .ov-kat-baris .p {
   font-family: var(--mono); font-size: 12.5px; text-align: right; color: var(--gold-soft);
 }
-
-/* ——— daftar perhatian dan jalur SOC ——— */
-
-.ov-kepala {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 14px; margin-bottom: 14px;
-}
 .btn.kecil { padding: 7px 13px; font-size: 12px; }
-
-.ov-alert { list-style: none; display: grid; gap: 2px; }
-.ov-alert li {
-  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto;
-  gap: 12px; align-items: center;
-  padding: 11px 0; border-bottom: 1px solid rgba(201, 162, 39, .1);
-}
-.ov-alert li:last-child { border-bottom: 0; }
-.ov-alert .skor {
-  font-family: var(--display); font-weight: 700; font-size: 21px; text-align: right;
-}
-.ov-alert .isi { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.ov-alert .nama { font-size: 13.5px; font-weight: 600; }
-.ov-alert .sub {
-  font-family: var(--mono); font-size: 10.5px; color: var(--slate);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-
-.ov-soc { list-style: none; display: grid; gap: 2px; }
-.ov-soc li {
-  display: grid; grid-template-columns: 62px minmax(0, 1fr) auto auto;
-  gap: 10px; align-items: center;
-  padding: 11px 0; border-bottom: 1px solid rgba(201, 162, 39, .1);
-  font-size: 12.5px;
-}
-.ov-soc li:last-child { border-bottom: 0; }
-.ov-soc .jam, .ov-soc .id { font-family: var(--mono); font-size: 11px; }
-.ov-soc .jam { color: var(--slate); }
-.ov-soc .st { font-family: var(--mono); font-size: 10.5px; color: var(--slate-2); }
 
 /* ———————————————————————————————————————————————————————————————
    PENCARIAN DAN PENYARINGAN PERANGKAT
@@ -1935,29 +1894,6 @@ tbody tr.terpilih td:first-child { box-shadow: inset 2px 0 0 var(--gold); }
    IKHTISAR: PETA, LALU ANGKA, LALU DAFTAR PERHATIAN
    ——————————————————————————————————————————————————————————————— */
 
-.gl-kpi {
-  display: grid; gap: 14px; margin-top: 14px;
-  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
-}
-@media (max-width: 1100px) {
-  .gl-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .gl-kpi .ov-postur { grid-column: 1 / -1; }
-}
-@media (max-width: 560px) { .gl-kpi { grid-template-columns: 1fr; } }
-
-/* Tombol "lihat di peta" pada daftar perhatian: ia mengarahkan peta di
-   atasnya, jadi bentuknya tautan, bukan tombol penuh yang berebut perhatian
-   dengan severitas di sebelahnya. */
-.ov-kepeta {
-  flex: 0 0 auto; background: transparent; border: 0; cursor: pointer;
-  font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--gold-dim); padding: 2px 4px;
-  text-decoration: underline; text-underline-offset: 3px;
-  transition: color .18s ease;
-}
-.ov-kepeta:hover { color: var(--gold-soft); }
-.ov-alert li { grid-template-columns: 44px minmax(0, 1fr) auto auto; }
-
 /* ——— lapisan indikator pada peta ——— */
 
 /* Wilayah yang Kodam-nya sudah punya perangkat. Warnanya disuntik sebaris
@@ -1982,4 +1918,57 @@ tbody tr.terpilih td:first-child { box-shadow: inset 2px 0 0 var(--gold); }
 
 .peta-legenda .l-isi {
   background: transparent; border: 1px solid var(--gold-soft);
+}
+
+
+/* ———————————————————————————————————————————————————————————————
+   PANEL ANGKA DI ATAS PETA
+
+   Angka situasi tinggal di panel kiri, bukan sebagai deretan kartu di
+   bawah peta. Kartu di bawah peta menuntut pembaca menggulung untuk
+   melihat angka yang justru dipakai bersama peta itu, dan menggulung
+   memutus keduanya.
+   ——————————————————————————————————————————————————————————————— */
+
+.gl-postur { display: flex; align-items: center; gap: 14px; }
+.gl-postur .kata {
+  font-family: var(--display); font-size: 17px; font-weight: 600;
+  text-transform: capitalize; margin-bottom: 3px;
+}
+.gl-postur .muted { font-size: 12px !important; line-height: 1.45; }
+
+.gl-ringkas { list-style: none; display: grid; gap: 12px; }
+.gl-ringkas li { display: grid; gap: 2px; }
+.gl-ringkas .atas {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+}
+.gl-ringkas .l {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--slate);
+}
+.gl-ringkas .n {
+  font-family: var(--display); font-weight: 700; font-size: 24px;
+  line-height: 1; color: var(--off);
+}
+.gl-ringkas .k { font-size: 11.5px; line-height: 1.45; color: var(--slate-2); }
+.gl-ringkas li.nyala .n { color: var(--amber); }
+.gl-ringkas li.nyala .l { color: var(--amber); }
+
+
+/* Judul seksi pada halaman Operasi.
+ *
+ * Halaman itu memuat tiga pekerjaan berurutan — menjalankan gerbang,
+ * melihat apa yang keluar ke SOC, lalu menanganinya — dan tanpa penanda
+ * ketiganya terbaca sebagai satu tumpukan kartu yang tidak ada ujungnya.
+ * Penandanya garis dan huruf kecil, bukan judul besar: ia memisahkan,
+ * tidak merebut perhatian dari isinya. */
+.seksi {
+  display: flex; align-items: center; gap: 14px;
+  margin: 30px 0 16px;
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  letter-spacing: .24em; text-transform: uppercase; color: var(--gold-dim);
+}
+.seksi::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(201, 162, 39, .28), rgba(201, 162, 39, 0));
 }
