@@ -82,6 +82,12 @@ export function Aturan({ catalog }: { catalog: Catalog | null }) {
                     {r.corroborate && (
                       <div className="flag" style={{ marginTop: 5 }}>{t('rules.corroborate')}</div>
                     )}
+                    {r.decisive && (
+                      <div className="muted" style={{ marginTop: 5, fontSize: 12 }}>
+                        <span className="penentu">{t('gate.decisive')}</span>{' '}
+                        {t('gate.decisiveNote')}
+                      </div>
+                    )}
                   </td>
                   <td><span className={`sev ${r.severity}`}>{r.severity}</span></td>
                   <td className="muted" style={{ fontSize: 12 }}>{r.mitre || '—'}</td>

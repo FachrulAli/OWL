@@ -23,6 +23,11 @@ export interface Finding {
   confidence: string
   evidence: string[]
   downgraded: boolean
+  /**
+   * Aturan penentu: menyala pada severitas critical berarti gerbang menolak
+   * tanpa menimbang skor sama sekali (lihat kepala `app/pdp.py`).
+   */
+  decisive: boolean
   points: number
 }
 
@@ -73,6 +78,10 @@ export interface DeviceRow {
   attestation_ok: boolean | null
   availability: Record<string, IndicatorStatus>
   skipped_rules: string[]
+  /** Dicabut administrator: ditolak lebih dahulu daripada apa pun. */
+  revoked?: boolean
+  revoked_reason?: string
+  revoked_at?: string
 }
 
 export interface Rule {
@@ -84,11 +93,16 @@ export interface Rule {
   mitre: string
   confidence: string
   corroborate: boolean
+  decisive?: boolean
 }
 
 export interface Catalog {
   version: number
   updated: string
+  /** "rekomendasi": OWL menyarankan, tidak memblokir. Requirements §8. */
+  enforcement?: string
+  allowlists?: Record<string, string[]>
+  blocklists?: { packages: string[]; signers: string[] }
   rules: Rule[]
   weights: Record<Category, number>
   severity: Record<Severity, number>
@@ -104,4 +118,49 @@ export interface SocEvent {
   kind: 'stix' | 'cef'
   delivered: boolean
   payload: string
+}
+
+
+/* ———————————————————————————————————————————————————————————————
+   OPERASI PERANGKAT
+
+   Kemampuan yang datang bersama roadmap A dan B: penanganan kasus,
+   pencabutan perangkat, daftar pencabutan attestation, dan metrik gerbang.
+   Semuanya menuntut OWL Core; tidak ada rekamannya pada tautan publik.
+   ——————————————————————————————————————————————————————————————— */
+
+export type StatusKasus = 'baru' | 'diperiksa' | 'diselesaikan' | 'dikecualikan'
+
+export interface Kasus {
+  device_id: string
+  status: StatusKasus
+  note: string
+  actor: string
+  updated_at?: string
+  /** Terisi hanya pada status `dikecualikan`. */
+  expires_at: string | null
+}
+
+export interface Pencabutan {
+  /** "belum diimpor" | "terkini" | "basi" */
+  status: string
+  entries: number
+  age_days?: number
+  imported_at?: string
+  source_date?: string
+}
+
+export interface Metrics {
+  devices: number
+  decisions: Record<DecisionKind, number>
+  revocation_unchecked_devices: string[]
+  report_age_seconds: Record<string, number>
+  rejects_by_reason: Record<string, number>
+}
+
+export interface TokenDaftar {
+  device_id: string
+  token: string
+  expires_at: string
+  provision_url: string
 }

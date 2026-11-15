@@ -137,7 +137,10 @@ export function Perangkat({ devices }: { devices: DeviceRow[] }) {
                       className={`clickable${open === d.device_id ? ' terpilih' : ''}`}
                       onClick={() => setOpen(open === d.device_id ? null : d.device_id)}>
                     <td>
-                      <div style={{ fontWeight: 600 }}>{sorot(d.label || d.device_id, cari)}</div>
+                      <div style={{ fontWeight: 600 }}>
+                        {sorot(d.label || d.device_id, cari)}
+                        {d.revoked ? <span className="ops-lencana merah">{t('dev.revoked')}</span> : null}
+                      </div>
                       <div className="ev">{sorot(d.device_id, cari)} · {d.model}</div>
                     </td>
                     <td className="muted">{sorot(d.unit || '—', cari)}</td>

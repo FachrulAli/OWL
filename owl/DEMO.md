@@ -90,6 +90,15 @@ Buka tab **SOC / CSIRT**. Klik satu baris STIX.
 > benar-benar dikirim, diambil kembali dari basis datanya, bukan contoh yang
 > ditulis untuk slide."
 
+Terakhir, buka tab **Operasi** dan cabut satu perangkat.
+
+> "Dan ini yang dikerjakan orang, bukan mesin. Perangkat yang hilang
+> dicabut di sini, dan gerbang langsung menolaknya dengan alasan itu,
+> mendahului skor. Pengecualian pun ada, tetapi hanya menutup skor, dan
+> hanya sampai waktunya habis: ia tidak dapat meloloskan perangkat yang
+> dicabut, laporan yang kedaluwarsa, attestation yang gagal, atau aturan
+> penentu."
+
 Tunjuk status *tersimpan lokal*.
 
 > "Statusnya belum terkirim karena ini mode air-gapped, dan tidak ada tujuan

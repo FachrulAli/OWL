@@ -21,6 +21,9 @@ export function Contributors({ findings, max }: { findings: Finding[]; max?: num
           <span>
             <span style={{ fontSize: 13 }}>{ruleTitle(f.rule_id, f.title)}</span>{' '}
             <span className={`sev ${f.severity}`}>{f.severity}</span>
+            {f.decisive && (
+              <span className="penentu" title={t('gate.decisiveNote')}>{t('gate.decisive')}</span>
+            )}
             {f.downgraded && <span className="flag"> {t('contrib.downgraded')}</span>}
             <span className="bar" style={{ marginTop: 6 }}>
               <span style={{ width: `${(f.points / top) * 100}%`, background: scoreColor(f.points * 3) }} />

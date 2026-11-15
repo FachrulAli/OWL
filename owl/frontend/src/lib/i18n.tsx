@@ -436,6 +436,156 @@ const S = {
   },
 
   'gate.results': { id: 'Jawaban gerbang', en: 'Gate answers' },
+  'gate.decisive': { id: 'aturan penentu', en: 'decisive rule' },
+  'gate.decisiveNote': {
+    id: 'Aturan penentu: menyala pada severitas critical berarti gerbang menolak '
+      + 'tanpa menimbang skor. Dipakai untuk kecocokan yang pasti, bukan indikasi.',
+    en: 'Decisive rule: firing at critical severity denies at the gate without the '
+      + 'score being weighed at all. Used for exact matches, not indications.',
+  },
+  'dev.revoked': { id: 'dicabut', en: 'revoked' },
+
+  /* ——— operasi perangkat ——— */
+
+  'tab.operasi': { id: 'Operasi', en: 'Operations' },
+  'ops.kicker': { id: 'Operasi perangkat', en: 'Device operations' },
+  'ops.offlineTitle': {
+    id: 'Operasi menuntut OWL Core yang berjalan',
+    en: 'Operations needs a running OWL Core',
+  },
+  'ops.offlineBody': {
+    id: 'Pencabutan perangkat, penanganan kasus, dan daftar pencabutan attestation '
+      + 'adalah keadaan yang berubah dan ditindaklanjuti petugas. Halaman ini sengaja '
+      + 'TIDAK punya rekaman cadangan: menampilkan rekaman lama sebagai keadaan '
+      + 'sekarang berarti menyuruh orang bertindak atas dunia yang sudah lewat. '
+      + 'Jalankan OWL Core, lalu buka halaman ini lagi.',
+    en: 'Device revocation, case handling, and the attestation revocation list are '
+      + 'live state that operators act on. This page deliberately has NO recorded '
+      + 'fallback: showing an old recording as the present state means telling people '
+      + 'to act on a world that has moved on. Start OWL Core, then open this page again.',
+  },
+  'ops.adminKey': { id: 'Kunci admin', en: 'Admin key' },
+  'ops.adminHint': { id: 'X-OWL-Admin', en: 'X-OWL-Admin' },
+  'ops.adminNote': {
+    id: 'Disimpan di memori halaman ini saja, tidak di penyimpanan browser. Kunci '
+      + 'baca hanya membuka tampilan; kunci ini mengubah kebijakan, dan kunci semacam '
+      + 'itu tidak pantas bertahan melewati satu kali muat halaman.',
+    en: 'Held in this page’s memory only, never in browser storage. The read key only '
+      + 'opens the view; this one changes policy, and a key like that has no business '
+      + 'surviving a page load.',
+  },
+
+  'ops.revList': { id: 'Daftar pencabutan attestation', en: 'Attestation revocation list' },
+  'ops.revEntries': { id: 'entri', en: 'entries' },
+  'ops.revAge': { id: 'hari umur', en: 'days old' },
+  'ops.revFresh': { id: 'terkini', en: 'current' },
+  'ops.revStale': { id: 'basi', en: 'stale' },
+  'ops.revMissing': { id: 'belum diimpor', en: 'not imported' },
+  'ops.revNote': {
+    id: 'Berkas status Google, diunduh di mesin terhubung lalu dibawa lewat media. '
+      + 'OWL Core tidak pernah mengunduhnya sendiri, dan itu syarat air-gapped, bukan '
+      + 'keterbatasan yang belum sempat diperbaiki.',
+    en: 'Google’s status file, downloaded on a connected machine and carried in on '
+      + 'media. OWL Core never fetches it itself; that is an air-gap requirement, not '
+      + 'a limitation left unfinished.',
+  },
+  'ops.revImport': { id: 'Impor berkas pencabutan (JSON)', en: 'Import revocation file (JSON)' },
+
+  'ops.lists': { id: 'Daftar larangan dan pengecualian', en: 'Blocklist and allowlist' },
+  'ops.listsNote': {
+    id: 'Daftar larangan menyalakan OWL-A03, satu-satunya aturan penentu di kategori '
+      + 'aplikasi. Pengecualian pabrik membebaskan paket bawaan satuan dari OWL-A01.',
+    en: 'The blocklist drives OWL-A03, the only decisive rule in the application '
+      + 'category. The factory allowlist exempts unit-installed packages from OWL-A01.',
+  },
+  'ops.blocklist': { id: 'Ganti daftar larangan (bundle STIX)', en: 'Replace blocklist (STIX bundle)' },
+  'ops.factory': { id: 'Ganti pengecualian pabrik (JSON)', en: 'Replace factory allowlist (JSON)' },
+  'ops.scan': { id: 'Jalankan pemeriksaan alarm', en: 'Run the alarm sweep' },
+  'ops.scanNote': {
+    id: 'Memeriksa perangkat yang berhenti melapor, sesi akses kedaluwarsa, dan '
+      + 'lonjakan penolakan. Berjalan sendiri tiap menit; tombol ini hanya '
+      + 'mendahuluinya.',
+    en: 'Checks for devices that stopped reporting, expired access sessions, and '
+      + 'rejection spikes. It runs by itself every minute; this button only gets ahead of it.',
+  },
+  'ops.scanned': { id: 'Pemeriksaan alarm dijalankan.', en: 'Alarm sweep run.' },
+
+  'ops.device': { id: 'Satu perangkat', en: 'One device' },
+  'ops.deviceId': { id: 'ID perangkat', en: 'Device id' },
+  'ops.devicePick': { id: 'ketik atau pilih dari daftar', en: 'type or pick from the list' },
+  'ops.note': { id: 'Alasan atau catatan', en: 'Reason or note' },
+  'ops.noteHint': {
+    id: 'tercatat di jejak audit, minimal 3 huruf',
+    en: 'recorded in the audit trail, at least 3 characters',
+  },
+  'ops.token': { id: 'Terbitkan token pendaftaran', en: 'Issue enrolment token' },
+  'ops.tokenIssued': { id: 'Token pendaftaran diterbitkan.', en: 'Enrolment token issued.' },
+  'ops.revoke': { id: 'Cabut perangkat', en: 'Revoke device' },
+  'ops.revokeDone': { id: 'Perangkat dicabut.', en: 'Device revoked.' },
+  'ops.unrevoke': { id: 'Buka pencabutan', en: 'Lift revocation' },
+  'ops.unrevokeDone': { id: 'Pencabutan dibuka.', en: 'Revocation lifted.' },
+  'ops.revoked': { id: 'dicabut', en: 'revoked' },
+  'ops.linkOnce': { id: 'Tautan sekali pakai', en: 'One-time link' },
+  'ops.linkNote': {
+    id: 'Hanya muncul sekali; yang tersimpan di server cuma sidiknya. Buka di '
+      + 'perangkat yang hendak didaftarkan, atau salin ke saluran yang aman.',
+    en: 'Shown once only; the server keeps nothing but its fingerprint. Open it on the '
+      + 'device being enrolled, or copy it into a safe channel.',
+  },
+
+  'ops.caseEdit': { id: 'Penanganan perangkat ini', en: 'Handling for this device' },
+  'ops.caseStatus': { id: 'Status', en: 'Status' },
+  'ops.caseTtl': { id: 'Masa pengecualian (menit)', en: 'Exception window (minutes)' },
+  'ops.caseSave': { id: 'Simpan penanganan', en: 'Save handling' },
+  'ops.caseSaved': { id: 'Penanganan tersimpan.', en: 'Handling saved.' },
+  'ops.st.baru': { id: 'baru', en: 'new' },
+  'ops.st.diperiksa': { id: 'diperiksa', en: 'under review' },
+  'ops.st.diselesaikan': { id: 'diselesaikan', en: 'resolved' },
+  'ops.st.dikecualikan': { id: 'dikecualikan', en: 'excepted' },
+  'ops.exceptionWarn': {
+    id: 'Pengecualian hanya menutup SKOR, dan hanya sampai waktunya habis. Ia tidak '
+      + 'dapat meloloskan perangkat yang dicabut, laporan yang kedaluwarsa, '
+      + 'attestation yang gagal, atau aturan penentu yang menyala.',
+    en: 'An exception overrides the SCORE only, and only until it expires. It cannot '
+      + 'let through a revoked device, a stale report, failed attestation, or a '
+      + 'decisive rule that has fired.',
+  },
+  'ops.cases': { id: 'Penanganan berjalan', en: 'Open handling' },
+  'ops.casesEmpty': {
+    id: 'Belum ada penanganan. Baris dibuat sendiri ketika gerbang mengarantina '
+      + 'sebuah perangkat.',
+    en: 'No handling yet. A row appears by itself when the gate quarantines a device.',
+  },
+  'ops.actor': { id: 'Pelaku', en: 'Actor' },
+  'ops.expires': { id: 'Kedaluwarsa', en: 'Expires' },
+  'ops.imported': { id: '{nama} diimpor.', en: '{nama} imported.' },
+  'ops.badJson': { id: '{nama} bukan JSON yang sah.', en: '{nama} is not valid JSON.' },
+
+  /* ——— metrik gerbang pada ikhtisar ——— */
+
+  'ov.mix': { id: 'Keputusan gerbang saat ini', en: 'Gate decisions right now' },
+  'ov.mixNote': {
+    id: 'Dihitung ulang backend atas telemetri terakhir tiap perangkat memakai '
+      + 'kebijakan yang berlaku sekarang, bukan keputusan yang tersimpan dari dulu.',
+    en: 'Recomputed by the backend over each device’s latest telemetry using the '
+      + 'policy in force now, not decisions stored from some earlier run.',
+  },
+  'ov.rejects': { id: 'Telemetri ditolak', en: 'Rejected telemetry' },
+  'ov.rejectsNone': {
+    id: 'Tidak ada laporan yang ditolak.',
+    en: 'No report has been rejected.',
+  },
+  'ov.revUnchecked': {
+    id: '{n} perangkat belum dapat diperiksa terhadap daftar pencabutan.',
+    en: '{n} devices cannot be checked against the revocation list yet.',
+  },
+  'ov.stale': { id: 'Laporan kedaluwarsa', en: 'Stale reports' },
+  'ov.staleNote': {
+    id: 'perangkat yang penilaian terakhirnya melewati ambang umur, dan karena itu '
+      + 'ditolak gerbang tanpa melihat skor',
+    en: 'devices whose last assessment is past the age threshold, and are therefore '
+      + 'denied at the gate without the score being looked at',
+  },
 
   'map.pick': {
     id: 'Tekan satu pin untuk membuka keterangan satuan beserta perangkat yang '
@@ -549,14 +699,23 @@ const RULE_EN: Record<string, { title: string; detail: string }> = {
   },
   'OWL-A01': {
     title: 'App installed from outside the official store',
-    detail: 'The installing source is not on the list of permitted installers. '
-      + 'Sideloading is the main entry vector for commercial spyware.',
+    detail: 'The installing source is not a permitted store. Installed by hand from an '
+      + 'APK file counts as high; a source that was not recorded at all (factory '
+      + 'preload or adb, indistinguishable from here) counts as medium.',
   },
   'OWL-A02': {
-    title: 'Excessive microphone, camera, or location permissions',
-    detail: 'An app holds a combination of recording permissions that does not match '
-      + 'its function. Measured as a combination rather than a single permission, '
-      + 'because one microphone permission on a messaging app is perfectly normal.',
+    title: 'App from outside the official store holds recording permissions',
+    detail: 'An app whose source is not a permitted store holds a combination of '
+      + 'microphone, camera, or location permissions. The correlation is per app: a '
+      + 'store app holding the same permissions, a messenger for instance, is not '
+      + 'counted, because that fires on nearly every phone and distinguishes nothing.',
+  },
+  'OWL-A03': {
+    title: 'App on the blocklist',
+    detail: 'The package name or signer fingerprint matches the unit blocklist. This '
+      + 'is an exact match rather than an indication, so the gate denies without '
+      + 'weighing the score. Package names are easy for an attacker to change; a '
+      + 'signer match is stronger and is used whenever the agent reports one.',
   },
   'OWL-C01': {
     title: 'CA certificate installed by the user',
@@ -615,6 +774,17 @@ const REASON_EN: [string, string][] = [
     'Step-up. Score is moderate; access is recommended after additional verification (MFA).'],
   ['Restrict.',
     'Restrict. Score is high; access to sensitive resources is recommended to be limited.'],
+  ['Deny / Quarantine. Perangkat dicabut administrator',
+    'Deny / Quarantine. The device was revoked by an administrator.'],
+  ['Deny / Quarantine. Aturan penentu menyala',
+    'Deny / Quarantine. A decisive rule fired, so the score was not weighed at all.'],
+  ['Laporan kedaluwarsa.',
+    'Report expired. The last assessment is older than the threshold, so the current '
+    + 'state of the device is unknown; access is recommended to be denied until the '
+    + 'agent reports again.'],
+  ['Pengecualian admin sampai',
+    'Admin exception in force. The score is overridden until the stated time; it '
+    + 'cannot override revocation, a stale report, failed attestation, or a decisive rule.'],
   ['Deny / Quarantine.',
     'Deny / Quarantine. Score passes the threshold for this resource; access is '
     + 'recommended to be denied and the device quarantined.'],

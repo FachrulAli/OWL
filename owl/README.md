@@ -210,7 +210,34 @@ seluruh gerak dimatikan pada `prefers-reduced-motion`.
 
 Yang terbuka pertama kali adalah halaman depan di `/`: masalah, enam sinyal,
 cara kerja, hasil gerbang, dan batas klaim yang dinyatakan di depan. Dashboard
-ada di `/dashboard`, di belakang layar kunci. Jalur `/dashboard` yang dibuka
+ada di `/dashboard`, di belakang layar kunci.
+
+Dashboard punya lima layar, dan pembagiannya mengikuti pertanyaan yang
+berbeda-beda, bukan mengikuti bentuk tabel di basis data:
+
+| Layar | Menjawab |
+|---|---|
+| **Ikhtisar** | Seberapa sehat gelaran secara keseluruhan, dan ke mana perhatian diarahkan lebih dahulu. Postur satuan, sebaran tingkat, asal poin risiko, bauran keputusan gerbang saat ini, dan telemetri yang ditolak |
+| **Gerbang** | Boleh masuk atau tidak. Peta gelaran selebar halaman dengan kendali gerbang dan keterangan satuan mengambang di atasnya |
+| **Perangkat** | Satu perangkat, sampai ke aturan yang menyalakan tiap poin. Punya pencarian dan penyaringan |
+| **SOC / CSIRT** | Apa yang benar-benar dikirim keluar, diambil kembali dari tabel `soc_events` |
+| **Operasi** | Satu-satunya layar yang MENGUBAH keadaan: pencabutan perangkat, penanganan kasus, token pendaftaran, dan impor daftar |
+
+**Operasi sengaja tidak punya rekaman cadangan.** Layar lain jatuh ke
+`snapshot.json` ketika OWL Core tidak terjangkau, sebab angka penilaian yang
+lama masih benar sebagai rekaman. Pencabutan dan penanganan tidak begitu:
+keduanya keadaan yang ditindaklanjuti petugas, dan menampilkan rekaman lama
+sebagai keadaan sekarang berarti menyuruh orang bertindak atas dunia yang
+sudah lewat. Pada tautan publik, layar itu menyatakan dirinya tidak tersedia.
+
+Kunci admin pada layar Operasi hidup di memori halaman saja, tidak di
+`sessionStorage` seperti kunci baca. Kunci baca hanya membuka tampilan; kunci
+admin mengubah kebijakan, dan kunci semacam itu tidak pantas bertahan
+melewati satu kali muat halaman.
+
+Aturan & bobot bukan tab, melainkan panel yang ditarik dari lidah trapesium di
+tepi kiri. Sifatnya rujukan: dibuka untuk membuktikan satu angka lalu ditutup,
+jadi tidak pantas merebut satu slot navigasi dari layar yang dipakai terus. Jalur `/dashboard` yang dibuka
 langsung tetap sampai, sebab nginx dan `vercel.json` mengarahkan setiap jalur
 ke `index.html`.
 
@@ -394,7 +421,7 @@ owl/
     app/stix.py app/cef.py app/soc.py   ekspor ke CSIRT dan SIEM
     rules/rules.yaml     katalog aturan, parameter, daftar izin
   agent/android/         agent Kotlin, enam sinyal, attestation
-  frontend/              dashboard React: gerbang, perangkat, aturan, SOC
+  frontend/              dashboard React: ikhtisar, gerbang, perangkat, SOC, operasi
   tests/                 uji skor, gerbang, dan ekspor
 docs/                    proposal, analisis mendalam, deck
 ```

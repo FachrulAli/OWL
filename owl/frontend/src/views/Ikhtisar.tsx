@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Ring } from '../components/Ring'
 import { scoreColor } from '../lib/api'
 import { useT } from '../lib/i18n'
-import type { Catalog, DeviceRow, SocEvent } from '../lib/types'
+import type { Catalog, DeviceRow, Metrics, SocEvent } from '../lib/types'
 
 /**
  * Ikhtisar satuan.
@@ -28,15 +28,19 @@ const WARNA: Record<Tingkat, string> = {
   kritis: '#D9534F',
 }
 
+const KEPUTUSAN = ['allow', 'step_up', 'limited', 'deny'] as const
+
 export function Ikhtisar({
-  devices, catalog, events, onLihatPerangkat,
+  devices, catalog, events, metrics, onLihatPerangkat,
 }: {
   devices: DeviceRow[]
   catalog: Catalog | null
   events: SocEvent[]
+  /** Dari OWL Core. Null pada tautan publik: tidak ada rekamannya. */
+  metrics: Metrics | null
   onLihatPerangkat: () => void
 }) {
-  const { t, locale, category, word } = useT()
+  const { t, locale, category, word, decision } = useT()
 
   const r = useMemo(() => {
     const dinilai = devices.filter((d) => d.score !== null)
@@ -173,6 +177,55 @@ export function Ikhtisar({
         </div>
       </div>
 
+      {metrics && (
+        <div className="grid cols-2" style={{ marginTop: 16 }}>
+          {/* ——— bauran keputusan gerbang, dihitung backend ——— */}
+          <div className="card">
+            <div className="kicker">{t('ov.mix')}</div>
+            <div className="ov-mix">
+              {KEPUTUSAN.map((k) => (
+                <div key={k} className={metrics.decisions[k] ? '' : 'kosong'}>
+                  <span className="n" style={{ color: warnaKeputusan(k) }}>
+                    {metrics.decisions[k] ?? 0}
+                  </span>
+                  <span className="l">{decision(k)}</span>
+                </div>
+              ))}
+            </div>
+            {basi(metrics, catalog) > 0 && (
+              <p className="flag" style={{ marginTop: 12 }}>
+                {t('ov.stale')}: {basi(metrics, catalog)} — {t('ov.staleNote')}
+              </p>
+            )}
+            {metrics.revocation_unchecked_devices.length > 0 && (
+              <p className="flag" style={{ marginTop: 8 }}>
+                {t('ov.revUnchecked', { n: metrics.revocation_unchecked_devices.length })}
+              </p>
+            )}
+            <p className="muted" style={{ marginTop: 12 }}>{t('ov.mixNote')}</p>
+          </div>
+
+          {/* ——— telemetri yang ditolak sebelum dinilai ——— */}
+          <div className="card">
+            <div className="kicker">{t('ov.rejects')}</div>
+            {Object.keys(metrics.rejects_by_reason).length === 0
+              ? <p className="empty" style={{ padding: '20px 0' }}>{t('ov.rejectsNone')}</p>
+              : (
+                <ul className="ov-tolak">
+                  {Object.entries(metrics.rejects_by_reason)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([alasan, n]) => (
+                      <li key={alasan}>
+                        <span className="n">{n}</span>
+                        <span className="l">{alasan}</span>
+                      </li>
+                    ))}
+                </ul>
+              )}
+          </div>
+        </div>
+      )}
+
       <div className="grid cols-2" style={{ marginTop: 16 }}>
         {/* ——— yang pantas dilihat lebih dahulu ——— */}
         <div className="card">
@@ -261,4 +314,25 @@ function tingkatDari(skor: number, catalog: Catalog | null): Tingkat {
   if (skor >= th.high) return 'tinggi'
   if (skor >= th.medium) return 'sedang'
   return 'rendah'
+}
+
+/** Warna keputusan: hanya dua yang terakhir yang pantas berteriak. */
+function warnaKeputusan(k: string): string {
+  if (k === 'deny') return 'var(--red)'
+  if (k === 'limited') return 'var(--amber)'
+  if (k === 'step_up') return 'var(--gold-soft)'
+  return 'var(--gold)'
+}
+
+/**
+ * Perangkat yang laporan terakhirnya melewati ambang umur.
+ *
+ * Dihitung dari `report_age_seconds` yang dikirim backend dan ambang
+ * `max_report_age_minutes` di katalog, bukan dari ambang baru di layar ini.
+ * Ambang 0 berarti pemeriksaan umur dimatikan, dan jumlahnya pun nol.
+ */
+function basi(m: Metrics, catalog: Catalog | null): number {
+  const menit = catalog?.parameters?.max_report_age_minutes ?? 0
+  if (!menit) return 0
+  return Object.values(m.report_age_seconds).filter((d) => d > menit * 60).length
 }

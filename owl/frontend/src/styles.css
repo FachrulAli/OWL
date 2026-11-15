@@ -1592,3 +1592,155 @@ tbody tr.terpilih td:first-child { box-shadow: inset 2px 0 0 var(--gold); }
 }
 .notif-isi { color: var(--slate-2); font-size: 12.5px; line-height: 1.6; }
 
+
+/* ———————————————————————————————————————————————————————————————
+   ATURAN PENENTU
+
+   Bukan sekadar severitas tinggi: aturan penentu menolak tanpa skor
+   ditimbang sama sekali, jadi tandanya harus berbeda bentuk dari lencana
+   severitas di sebelahnya, bukan hanya berbeda warna.
+   ——————————————————————————————————————————————————————————————— */
+
+.penentu {
+  display: inline-block;
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em;
+  text-transform: uppercase; white-space: nowrap;
+  color: var(--red); padding: 2px 7px; border-radius: 5px;
+  border: 1px solid rgba(217, 83, 79, .55); background: rgba(217, 83, 79, .12);
+}
+
+/* ———————————————————————————————————————————————————————————————
+   METRIK GERBANG PADA IKHTISAR
+   ——————————————————————————————————————————————————————————————— */
+
+.ov-mix { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ov-mix > div { display: flex; flex-direction: column; gap: 3px; }
+.ov-mix .n {
+  font-family: var(--display); font-weight: 700; font-size: 28px; line-height: 1.1;
+}
+.ov-mix .l {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--slate);
+}
+.ov-mix .kosong { opacity: .4; }
+
+.ov-tolak { list-style: none; display: grid; gap: 2px; }
+.ov-tolak li {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: baseline;
+  padding: 9px 0; border-bottom: 1px solid rgba(201, 162, 39, .1);
+}
+.ov-tolak li:last-child { border-bottom: 0; }
+.ov-tolak .n {
+  font-family: var(--display); font-weight: 700; font-size: 19px;
+  text-align: right; color: var(--amber);
+}
+.ov-tolak .l { font-size: 12.5px; color: var(--slate-2); line-height: 1.45; }
+
+/* ———————————————————————————————————————————————————————————————
+   OPERASI PERANGKAT
+
+   Satu-satunya layar yang MENGUBAH keadaan, jadi bentuknya sengaja
+   berbeda: medan isian yang jelas, tombol yang mati sampai syaratnya
+   terpenuhi, dan satu baris pesan yang menyatakan hasilnya.
+   ——————————————————————————————————————————————————————————————— */
+
+.ops-label {
+  display: block; margin-bottom: 6px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--slate);
+}
+.ops input[type='text'], .ops input[type='password'], .ops input[type='number'],
+.ops input:not([type]), .ops select {
+  font-family: 'Inter', system-ui, sans-serif; font-size: 13px;
+  background: rgba(0, 0, 0, .5); color: var(--off);
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px;
+  width: 100%; transition: border-color .2s ease;
+}
+.ops input:focus, .ops select:focus { outline: none; border-color: rgba(231, 200, 120, .55); }
+.ops input:disabled, .ops select:disabled { opacity: .45; }
+.ops input::placeholder { color: var(--slate); }
+.ops-kunci input { max-width: 340px; margin-bottom: 10px; }
+/* Medan isian yang panjangnya tidak ada hubungannya dengan panjang isinya
+   membuat kartu terbaca seperti formulir yang belum selesai dirancang. */
+.ops-pilih input, .ops > .card > input { max-width: 460px; }
+
+.ops-cabut { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin-bottom: 14px; }
+.ops-cabut .n {
+  font-family: var(--display); font-weight: 700; font-size: 26px; line-height: 1;
+  color: var(--gold-soft);
+}
+.ops-cabut .l {
+  font-family: var(--mono); font-size: 9px; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--slate);
+}
+
+.ops-lencana {
+  display: inline-block; margin-left: 8px;
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em;
+  text-transform: uppercase; white-space: nowrap;
+  padding: 3px 9px; border-radius: 999px;
+  background: rgba(185, 178, 163, .16); color: var(--slate-2);
+}
+.ops-cabut .ops-lencana { margin-left: 0; }
+.ops-lencana.hijau { background: rgba(78, 217, 138, .16); color: var(--green); }
+.ops-lencana.jingga { background: rgba(232, 163, 61, .18); color: var(--amber); }
+.ops-lencana.merah { background: rgba(217, 83, 79, .2); color: var(--red); }
+
+.ops-berkas {
+  display: flex; flex-direction: column; gap: 7px; margin-top: 14px;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; color: var(--slate-2);
+}
+.ops-berkas input[type='file'] { font-size: 12px; color: var(--slate); }
+.ops-berkas input[type='file']::file-selector-button {
+  font-family: var(--display); font-size: 12px; font-weight: 600;
+  background: rgba(201, 162, 39, .1); color: var(--gold-soft);
+  border: 1px solid rgba(231, 200, 120, .42); border-radius: 999px;
+  padding: 7px 13px; margin-right: 10px; cursor: pointer;
+}
+.ops-berkas input[type='file']:disabled::file-selector-button { opacity: .4; cursor: default; }
+
+.ops-pilih { margin-bottom: 14px; }
+.ops-terpilih {
+  margin-top: 8px; font-size: 12.5px; color: var(--slate-2);
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+}
+
+.ops-tombol { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 16px; }
+
+.ops-tautan {
+  margin-top: 16px; padding: 14px;
+  border: 1px solid rgba(231, 200, 120, .35); border-radius: 12px;
+  background: rgba(201, 162, 39, .06);
+}
+.ops-tautan input { font-family: var(--mono) !important; font-size: 11.5px !important; }
+.ops-tautan .muted { margin-top: 8px; font-size: 12px; }
+
+.ops-garis { height: 1px; background: rgba(201, 162, 39, .14); margin: 22px 0 18px; }
+
+.ops-kasus-atur {
+  display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;
+}
+.ops-kasus-atur label { display: flex; flex-direction: column; gap: 6px; min-width: 170px; }
+.ops-kasus-atur label span {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--slate);
+}
+.ops-kasus-atur label.redup { opacity: .45; }
+.ops-kasus-atur .btn { white-space: nowrap; }
+
+.ops-waspada {
+  margin-top: 14px; padding: 11px 13px;
+  border-left: 2px solid var(--amber); background: rgba(232, 163, 61, .07);
+  color: var(--slate-2); font-size: 12.5px; line-height: 1.6;
+}
+
+.ops-pesan {
+  margin-top: 14px; padding: 11px 14px; border-radius: 10px;
+  background: rgba(201, 162, 39, .1); color: var(--gold-soft);
+  font-size: 13px; overflow-wrap: anywhere;
+}
+.ops-pesan.salah { background: rgba(217, 83, 79, .12); color: var(--red); }
+
+@media (max-width: 700px) {
+  .ov-mix { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

@@ -9,15 +9,15 @@ import { StatusKoneksi, Versi } from './components/Status'
 import { api, clearKey, hasKey, isOffline, onOfflineChange, onUnauthorized, snapshotGeneratedAt, wsQuery } from './lib/api'
 import { LangToggle, useT } from './lib/i18n'
 import type { Key } from './lib/i18n'
-import type { Catalog, DeviceRow, SocEvent } from './lib/types'
+import type { Catalog, DeviceRow, Metrics, SocEvent } from './lib/types'
 import { Ikhtisar } from './views/Ikhtisar'
 import { Landing } from './views/Landing'
 import { Gerbang } from './views/Gerbang'
 import { Perangkat } from './views/Perangkat'
+import { Operasi } from './views/Operasi'
 import { Soc } from './views/Soc'
-import { Operations } from './components/Operations'
 
-type Tab = 'ikhtisar' | 'gerbang' | 'perangkat' | 'soc'
+type Tab = 'ikhtisar' | 'gerbang' | 'perangkat' | 'soc' | 'operasi'
 
 /**
  * Dua halaman, satu berkas.
@@ -64,6 +64,7 @@ const TABS: { id: Tab; label: Key }[] = [
   { id: 'gerbang', label: 'tab.gerbang' },
   { id: 'perangkat', label: 'tab.perangkat' },
   { id: 'soc', label: 'tab.soc' },
+  { id: 'operasi', label: 'tab.operasi' },
 ]
 
 export default function App() {
@@ -73,6 +74,7 @@ export default function App() {
   const [devices, setDevices] = useState<DeviceRow[]>([])
   const [catalog, setCatalog] = useState<Catalog | null>(null)
   const [events, setEvents] = useState<SocEvent[]>([])
+  const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [panel, setPanel] = useState(false)
   const [health, setHealth] = useState<{ version: string; air_gapped: boolean } | null>(null)
   const [err, setErr] = useState('')
@@ -87,6 +89,7 @@ export default function App() {
     try {
       setDevices(await api.devices())
       api.socEvents(12).then(setEvents).catch(() => undefined)
+      api.metrics().then(setMetrics).catch(() => setMetrics(null))
       setErr('')
     } catch (e) {
       setErr(String(e instanceof Error ? e.message : e))
@@ -305,13 +308,16 @@ export default function App() {
             devices={devices}
             catalog={catalog}
             events={events}
+            metrics={metrics}
             onLihatPerangkat={() => setTab('perangkat')}
           />
         )}
         {tab === 'gerbang' && <Gerbang devices={devices} onRefresh={refresh} />}
         {tab === 'perangkat' && <Perangkat devices={devices} />}
         {tab === 'soc' && <Soc devices={devices} />}
-        {tab === 'soc' && !offline && <Operations />}
+        {tab === 'operasi' && (
+          <Operasi devices={devices} offline={offline} onRefresh={() => void refresh()} />
+        )}
       </div>
     </div>
     {!locked && !muat && (
