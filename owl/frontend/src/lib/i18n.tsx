@@ -301,6 +301,7 @@ const S = {
   'ov.noFindings': { id: 'Tidak ada temuan pada seluruh perangkat.', en: 'No findings on any device.' },
   'ov.attention': { id: 'Perlu dilihat lebih dahulu', en: 'Look at these first' },
   'ov.openDevices': { id: 'Buka daftar perangkat', en: 'Open device list' },
+  'ov.onMap': { id: 'lihat di peta', en: 'show on map' },
   'ov.allCalm': {
     id: 'Tidak ada perangkat yang melewati ambang perhatian.',
     en: 'No device is above the attention threshold.',
@@ -393,6 +394,7 @@ const S = {
   'map.command': { id: 'Komando daerah militer', en: 'Military area command' },
   'map.new': { id: 'baru', en: 'new' },
   'map.new2025': { id: 'penataan 2025', en: '2025 expansion' },
+  'map.lit': { id: 'wilayah berdata', en: 'territory with data' },
   'map.hq': { id: 'Markas', en: 'Based at' },
   'map.area': { id: 'Wilayah', en: 'Territory' },
   'map.devices': { id: 'Perangkat', en: 'Devices' },
@@ -607,6 +609,12 @@ const S = {
       + 'daftar ini ketika kolom satuan pada registrasinya menyebut satuan ini.',
     en: 'No device is enrolled under this command yet. A device joins this list when '
       + 'the unit field on its enrolment names this command.',
+  },
+  'map.litNote': {
+    id: 'Wilayah berwarna mengikuti postur perangkat Kodam-nya. Wilayah gelap '
+      + 'berarti BELUM ADA DATA, bukan aman.',
+    en: 'A coloured territory follows the posture of its command’s devices. A dark '
+      + 'territory means NO DATA YET, not safe.',
   },
   'map.foot': {
     id: 'Dua puluh satu Kodam, yaitu 15 yang lama ditambah 6 hasil penataan 10 '

@@ -1,10 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Ring } from '../components/Ring'
 import { api, scoreColor } from '../lib/api'
 import { DECISION_EN, useT } from '../lib/i18n'
-import type {
-  Catalog, Decision, DeviceRow, Metrics, Sensitivity, SocEvent,
-} from '../lib/types'
+import type { Catalog, Decision, DeviceRow, Metrics, Sensitivity } from '../lib/types'
 
 /**
  * Gerbang: keputusan akses, dan angka-angka yang menerangkannya.
@@ -38,17 +35,15 @@ const WARNA: Record<Tingkat, string> = {
 const KEPUTUSAN = ['allow', 'step_up', 'limited', 'deny'] as const
 
 export function Gerbang({
-  devices, catalog, events, metrics, onLihatPerangkat, onRefresh,
+  devices, catalog, metrics, onRefresh,
 }: {
   devices: DeviceRow[]
   catalog: Catalog | null
-  events: SocEvent[]
   /** Dari OWL Core. Null pada tautan publik: tidak ada rekamannya. */
   metrics: Metrics | null
-  onLihatPerangkat: () => void
   onRefresh: () => void
 }) {
-  const { t, locale, category, word, decision, reason } = useT()
+  const { t, category, word, decision, reason } = useT()
   const [resource, setResource] = useState<Sensitivity>('classified')
   const [results, setResults] = useState<Record<string, Decision>>({})
   const [sibuk, setSibuk] = useState(false)
@@ -133,8 +128,6 @@ export function Gerbang({
     )
   }
 
-  const rataBulat = r.rata === null ? null : Math.round(r.rata)
-
   const hasil = devices.filter((d) => results[d.device_id])
 
   return (
@@ -188,41 +181,6 @@ export function Gerbang({
         <p className="muted gerbang-batas">
           {t('gate.note1')} <strong>{t('gate.noteBold')}</strong>{t('gate.note2')}
         </p>
-      </div>
-
-      {/* ——— baris angka utama ——— */}
-      <div className="ov-kpi" style={{ marginTop: 16 }}>
-        <div className="ov-postur card">
-          <div className="kicker">{t('ov.posture')}</div>
-          <div className="ov-postur-isi">
-            <Ring score={rataBulat} size={104} />
-            <div>
-              <div className="ov-postur-kata" style={{ color: rataBulat === null ? 'var(--slate)' : scoreColor(rataBulat) }}>
-                {rataBulat === null ? t('dev.notAssessed') : word(tingkatDari(rataBulat, catalog))}
-              </div>
-              <p className="muted">{t('ov.postureNote', { n: r.dinilai })}</p>
-            </div>
-          </div>
-        </div>
-
-        <Angka label={t('ov.devices')} nilai={r.total} catatan={t('ov.devicesNote', { n: r.belum })} />
-        <Angka
-          label={t('ov.atRisk')}
-          nilai={r.sebaran.tinggi + r.sebaran.kritis}
-          catatan={t('ov.atRiskNote')}
-          nyala={r.sebaran.tinggi + r.sebaran.kritis > 0}
-        />
-        <Angka
-          label={t('ov.findings')}
-          nilai={r.temuan}
-          catatan={t('ov.findingsNote', { n: r.kritisTemuan })}
-        />
-        <Angka
-          label={t('ov.blind')}
-          nilai={r.dilewati}
-          catatan={t('ov.blindNote')}
-          nyala={r.dilewati > 0}
-        />
       </div>
 
       <div className="grid cols-2" style={{ marginTop: 16 }}>
@@ -321,94 +279,8 @@ export function Gerbang({
         </div>
       )}
 
-      <div className="grid cols-2" style={{ marginTop: 16 }}>
-        {/* ——— yang pantas dilihat lebih dahulu ——— */}
-        <div className="card">
-          <div className="ov-kepala">
-            <div className="kicker" style={{ marginBottom: 0 }}>{t('ov.attention')}</div>
-            <button className="btn ghost kecil" onClick={onLihatPerangkat}>{t('ov.openDevices')}</button>
-          </div>
-          {r.perhatian.length === 0
-            ? <p className="empty" style={{ padding: '26px 0' }}>{t('ov.allCalm')}</p>
-            : (
-              <ul className="ov-alert">
-                {r.perhatian.map((d) => {
-                  const puncak = [...d.findings].sort((a, b) => b.points - a.points)[0]
-                  return (
-                    <li key={d.device_id}>
-                      <span className="skor" style={{ color: scoreColor(d.score ?? 0) }}>
-                        {(d.score ?? 0).toFixed(0)}
-                      </span>
-                      <span className="isi">
-                        <span className="nama">{d.label || d.device_id}</span>
-                        <span className="sub">
-                          {d.unit || '—'} · {puncak ? puncak.rule_id : t('ov.noRule')}
-                        </span>
-                      </span>
-                      <span className={`sev ${puncak?.severity ?? 'low'}`}>
-                        {puncak?.severity ?? '—'}
-                      </span>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          {r.attestasiGagal > 0 && (
-            <p className="flag" style={{ marginTop: 12 }}>
-              {t('ov.attestation', { n: r.attestasiGagal })}
-            </p>
-          )}
-        </div>
-
-        {/* ——— jalur keluar ke SOC ——— */}
-        <div className="card">
-          <div className="kicker">{t('ov.socFlow')}</div>
-          {events.length === 0
-            ? <p className="empty" style={{ padding: '26px 0' }}>{t('soc.empty')}</p>
-            : (
-              <ul className="ov-soc">
-                {events.slice(0, 5).map((e) => (
-                  <li key={e.id}>
-                    <span className="jam">{new Date(e.sent_at).toLocaleTimeString(locale)}</span>
-                    <span className="id">{e.device_id}</span>
-                    <span className={`sev ${e.kind === 'stix' ? 'medium' : 'low'}`}>{e.kind}</span>
-                    <span className="st">{e.delivered ? t('soc.delivered') : t('soc.stored')}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          <p className="muted" style={{ marginTop: 14 }}>{t('ov.socNote')}</p>
-        </div>
-      </div>
     </div>
   )
-}
-
-/** Satu kotak angka. Angka besar dulu, keterangannya menyusul. */
-function Angka({
-  label, nilai, catatan, nyala,
-}: {
-  label: string
-  nilai: number
-  catatan: string
-  nyala?: boolean
-}) {
-  return (
-    <div className={`card ov-angka${nyala ? ' nyala' : ''}`}>
-      <div className="kicker">{label}</div>
-      <div className="n">{nilai}</div>
-      <p className="muted">{catatan}</p>
-    </div>
-  )
-}
-
-/** Tingkat risiko dari skor, memakai ambang katalog, bukan ambang baru. */
-function tingkatDari(skor: number, catalog: Catalog | null): Tingkat {
-  const th = catalog?.thresholds ?? { medium: 30, high: 70, critical: 90 }
-  if (skor >= th.critical) return 'kritis'
-  if (skor >= th.high) return 'tinggi'
-  if (skor >= th.medium) return 'sedang'
-  return 'rendah'
 }
 
 /** Warna keputusan: hanya dua yang terakhir yang pantas berteriak. */

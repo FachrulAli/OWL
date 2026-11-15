@@ -9,7 +9,7 @@ import { StatusKoneksi, Versi } from './components/Status'
 import { api, clearKey, hasKey, isOffline, onOfflineChange, onUnauthorized, snapshotGeneratedAt, wsQuery } from './lib/api'
 import { LangToggle, useT } from './lib/i18n'
 import type { Key } from './lib/i18n'
-import type { Catalog, DeviceRow, Metrics, SocEvent } from './lib/types'
+import type { Catalog, DeviceRow, Metrics } from './lib/types'
 import { Gelaran } from './views/Gelaran'
 import { Landing } from './views/Landing'
 import { Gerbang } from './views/Gerbang'
@@ -73,7 +73,6 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('ikhtisar')
   const [devices, setDevices] = useState<DeviceRow[]>([])
   const [catalog, setCatalog] = useState<Catalog | null>(null)
-  const [events, setEvents] = useState<SocEvent[]>([])
   const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [panel, setPanel] = useState(false)
   const [health, setHealth] = useState<{ version: string; air_gapped: boolean } | null>(null)
@@ -88,7 +87,6 @@ export default function App() {
   const refresh = useCallback(async () => {
     try {
       setDevices(await api.devices())
-      api.socEvents(12).then(setEvents).catch(() => undefined)
       api.metrics().then(setMetrics).catch(() => setMetrics(null))
       setErr('')
     } catch (e) {
@@ -302,14 +300,18 @@ export default function App() {
       </header>
 
       <div className="tabisi" key={tab}>
-        {tab === 'ikhtisar' && <Gelaran devices={devices} />}
+        {tab === 'ikhtisar' && (
+          <Gelaran
+            devices={devices}
+            catalog={catalog}
+            onLihatPerangkat={() => setTab('perangkat')}
+          />
+        )}
         {tab === 'gerbang' && (
           <Gerbang
             devices={devices}
             catalog={catalog}
-            events={events}
             metrics={metrics}
-            onLihatPerangkat={() => setTab('perangkat')}
             onRefresh={() => void refresh()}
           />
         )}

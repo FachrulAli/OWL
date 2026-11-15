@@ -70,6 +70,16 @@ a { color: var(--gold-soft); }
   border-bottom: 1px solid var(--line);
 }
 .brand { display: flex; align-items: center; gap: 12px; }
+/* Pembetulan optis, bukan pembetulan geometris.
+ *
+ * Berkas lambangnya sendiri sudah terpusat rapi: isinya 13 piksel dari tepi
+ * atas dan 12 dari tepi bawah pada kanvas 510x625, sudah diperiksa. Yang
+ * membuatnya tampak turun adalah `align-items: center`, yang menyejajarkan
+ * perisai dengan titik tengah SELURUH blok teks, yaitu kata OWL ditambah
+ * taglinenya. Mata membaca kata OWL sebagai jangkarnya, dan pusat kata itu
+ * berada beberapa piksel di atas pusat blok. Jadi lambangnya dinaikkan
+ * sedikit, mengejar yang dilihat mata, bukan yang dihitung kotak. */
+.brand .logo-mark { position: relative; top: -4px; }
 .brand .word { font-family: var(--display); font-weight: 700; font-size: 28px; letter-spacing: .04em; }
 .brand .sub { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: var(--gold-soft); }
 
@@ -1192,7 +1202,9 @@ pre {
 .kmd-panel {
   position: absolute; top: 14px; z-index: 3;
   width: min(318px, 32%);
-  max-height: calc(100% - 28px);
+  /* Menyisakan ruang untuk legenda di kaki peta: panel yang tumbuh sampai
+     dasar bidang akan menutupi keterangan warnanya sendiri. */
+  max-height: calc(100% - 76px);
   display: flex; flex-direction: column;
   /* Cukup tembus untuk membiarkan garis pantai terbaca di belakangnya,
      cukup pekat untuk tidak membuat teksnya berkelip di atas laut. */
@@ -1916,4 +1928,58 @@ tbody tr.terpilih td:first-child { box-shadow: inset 2px 0 0 var(--gold); }
 
 @media (max-width: 700px) {
   .ov-mix { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+
+/* ———————————————————————————————————————————————————————————————
+   IKHTISAR: PETA, LALU ANGKA, LALU DAFTAR PERHATIAN
+   ——————————————————————————————————————————————————————————————— */
+
+.gl-kpi {
+  display: grid; gap: 14px; margin-top: 14px;
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 1100px) {
+  .gl-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gl-kpi .ov-postur { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) { .gl-kpi { grid-template-columns: 1fr; } }
+
+/* Tombol "lihat di peta" pada daftar perhatian: ia mengarahkan peta di
+   atasnya, jadi bentuknya tautan, bukan tombol penuh yang berebut perhatian
+   dengan severitas di sebelahnya. */
+.ov-kepeta {
+  flex: 0 0 auto; background: transparent; border: 0; cursor: pointer;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--gold-dim); padding: 2px 4px;
+  text-decoration: underline; text-underline-offset: 3px;
+  transition: color .18s ease;
+}
+.ov-kepeta:hover { color: var(--gold-soft); }
+.ov-alert li { grid-template-columns: 44px minmax(0, 1fr) auto auto; }
+
+/* ——— lapisan indikator pada peta ——— */
+
+/* Wilayah yang Kodam-nya sudah punya perangkat. Warnanya disuntik sebaris
+   dari `scoreColor`, jadi satu warna berarti satu hal di seluruh dashboard. */
+.peta-prov path.ada {
+  stroke: rgba(231, 200, 120, .4); stroke-width: .8;
+  cursor: pointer;
+}
+.peta-prov path.ada:hover { stroke: var(--gold-soft); }
+
+/* Cacah perangkat pada pin, seperti gelembung angka pada peta operasi. */
+.peta-pin .cacah circle {
+  fill: #0A0A0A; stroke: var(--gold-soft); stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.peta-pin .cacah text {
+  fill: var(--gold-soft); text-anchor: middle;
+  font-family: var(--mono); font-weight: 500;
+}
+.peta-pin:hover .cacah circle { fill: var(--gold-soft); }
+.peta-pin:hover .cacah text { fill: #000; }
+
+.peta-legenda .l-isi {
+  background: transparent; border: 1px solid var(--gold-soft);
 }
