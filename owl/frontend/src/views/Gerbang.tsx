@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Contributors } from '../components/Contributors'
+import { PetaGelaran } from '../components/PetaGelaran'
 import { Ring } from '../components/Ring'
 import { api } from '../lib/api'
 import { DECISION_EN, useT } from '../lib/i18n'
@@ -41,6 +42,7 @@ export function Gerbang({ devices, onRefresh }: { devices: DeviceRow[]; onRefres
 
   if (devices.length === 0) {
     return (
+      <>
       <div className="card">
         <div className="kicker">{t('gate.kicker')}</div>
         <h3>{t('gate.emptyTitle')}</h3>
@@ -50,6 +52,8 @@ export function Gerbang({ devices, onRefresh }: { devices: DeviceRow[]; onRefres
         </button>
         {err && <p className="muted" style={{ color: 'var(--red)', marginTop: 12 }}>{err}</p>}
       </div>
+      <div style={{ marginTop: 18 }}><PetaGelaran devices={devices} /></div>
+      </>
     )
   }
 
@@ -127,6 +131,10 @@ export function Gerbang({ devices, onRefresh }: { devices: DeviceRow[]; onRefres
             </div>
           )
         })}
+      </div>
+
+      <div style={{ marginTop: 18 }}>
+        <PetaGelaran devices={devices} />
       </div>
     </>
   )

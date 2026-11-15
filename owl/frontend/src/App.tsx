@@ -2,17 +2,19 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Latar } from './components/Latar'
 import { Logo } from './components/Logo'
 import { Login } from './components/Login'
+import { PanelAturan } from './components/PanelAturan'
+import { StatusKoneksi, Versi } from './components/Status'
 import { api, clearKey, hasKey, isOffline, onOfflineChange, onUnauthorized, snapshotGeneratedAt } from './lib/api'
 import { LangToggle, useT } from './lib/i18n'
 import type { Key } from './lib/i18n'
-import type { Catalog, DeviceRow } from './lib/types'
-import { Aturan } from './views/Aturan'
+import type { Catalog, DeviceRow, SocEvent } from './lib/types'
+import { Ikhtisar } from './views/Ikhtisar'
 import { Landing } from './views/Landing'
 import { Gerbang } from './views/Gerbang'
 import { Perangkat } from './views/Perangkat'
 import { Soc } from './views/Soc'
 
-type Tab = 'gerbang' | 'perangkat' | 'aturan' | 'soc'
+type Tab = 'ikhtisar' | 'gerbang' | 'perangkat' | 'soc'
 
 /**
  * Dua halaman, satu berkas.
@@ -46,19 +48,29 @@ function perluLayarPembuka(): boolean {
   try { return sessionStorage.getItem(SESI_MUAT) === null } catch { return false }
 }
 
+/**
+ * Aturan & bobot tidak lagi berupa tab.
+ *
+ * Sifatnya rujukan: dibuka untuk membuktikan satu angka, lalu ditutup.
+ * Sekarang ia tinggal di panel sisi kiri yang dapat dibuka di sebelah
+ * pekerjaan, dan slot navigasinya dipakai Ikhtisar, yang justru dibuka
+ * lebih dahulu daripada layar mana pun.
+ */
 const TABS: { id: Tab; label: Key }[] = [
+  { id: 'ikhtisar', label: 'tab.ikhtisar' },
   { id: 'gerbang', label: 'tab.gerbang' },
   { id: 'perangkat', label: 'tab.perangkat' },
-  { id: 'aturan', label: 'tab.aturan' },
   { id: 'soc', label: 'tab.soc' },
 ]
 
 export default function App() {
   const { t, locale } = useT()
   const [route, setRoute] = useState(jalurSekarang)
-  const [tab, setTab] = useState<Tab>('gerbang')
+  const [tab, setTab] = useState<Tab>('ikhtisar')
   const [devices, setDevices] = useState<DeviceRow[]>([])
   const [catalog, setCatalog] = useState<Catalog | null>(null)
+  const [events, setEvents] = useState<SocEvent[]>([])
+  const [panel, setPanel] = useState(false)
   const [health, setHealth] = useState<{ version: string; air_gapped: boolean } | null>(null)
   const [err, setErr] = useState('')
   const [offline, setOffline] = useState(isOffline())
@@ -71,6 +83,7 @@ export default function App() {
   const refresh = useCallback(async () => {
     try {
       setDevices(await api.devices())
+      api.socEvents(12).then(setEvents).catch(() => undefined)
       setErr('')
     } catch (e) {
       setErr(String(e instanceof Error ? e.message : e))
@@ -140,6 +153,12 @@ export default function App() {
 
   useEffect(() => onOfflineChange(setOffline), [])
 
+  // Keadaan sambungan ditanyakan sekali di awal, pada halaman mana pun.
+  // Tanpa ini, lampu di halaman depan menyala hijau hanya karena belum
+  // ada yang pernah bertanya, dan lampu yang menebak lebih buruk daripada
+  // lampu yang tidak ada.
+  useEffect(() => { api.health().then(setHealth).catch(() => undefined) }, [])
+
   // Kunci dicabut di tengah sesi: layar dikunci lagi, bukan dibiarkan
   // memperlihatkan data terakhir yang sudah tidak berhak dilihat.
   useEffect(() => onUnauthorized(() => setLocked(true)), [])
@@ -205,7 +224,10 @@ export default function App() {
           <button className="btn ghost" onClick={() => pindah('/dashboard')}>
             {t('land.toDashboard')}
           </button>
-          <LangToggle />
+          <div className="sudut">
+            <LangToggle />
+            <StatusKoneksi offline={offline} />
+          </div>
         </header>
         <div key="landing" className="halaman">
           <Landing onOpenDashboard={() => pindah('/dashboard')} />
@@ -228,13 +250,12 @@ export default function App() {
           </div>
         </button>
         <div className="spacer" />
-        {offline
-          ? <span className="pill warn">{t('top.offline')}</span>
-          : health?.air_gapped && <span className="pill ok">{t('top.airgapped')}</span>}
-        {health && <span className="pill">v{health.version}</span>}
         <button className="btn ghost" onClick={() => void refresh()}>{t('top.refresh')}</button>
         <button className="btn ghost" onClick={keluar}>{t('top.logout')}</button>
-        <LangToggle />
+        <div className="sudut">
+          <LangToggle />
+          <StatusKoneksi offline={offline} />
+        </div>
       </header>
 
       <nav className="tabs">
@@ -263,12 +284,29 @@ export default function App() {
       )}
 
       <div className="tabisi" key={tab}>
+        {tab === 'ikhtisar' && (
+          <Ikhtisar
+            devices={devices}
+            catalog={catalog}
+            events={events}
+            onLihatPerangkat={() => setTab('perangkat')}
+          />
+        )}
         {tab === 'gerbang' && <Gerbang devices={devices} onRefresh={refresh} />}
         {tab === 'perangkat' && <Perangkat devices={devices} />}
-        {tab === 'aturan' && <Aturan catalog={catalog} />}
         {tab === 'soc' && <Soc devices={devices} />}
       </div>
     </div>
+    {!locked && !muat && (
+      <>
+        <PanelAturan catalog={catalog} buka={panel} onToggle={setPanel} />
+        <Versi
+          version={health?.version ?? null}
+          airGapped={health?.air_gapped ?? true}
+          offline={offline}
+        />
+      </>
+    )}
     </>
   )
 }

@@ -40,7 +40,7 @@ Tunjuk daftar kontributor di kartu kanan.
 > dipasang pengguna, 12. Jumlah seluruhnya 87, persis skornya. Setiap poin
 > dapat ditunjuk asalnya."
 
-Buka tab **Aturan & bobot** sebentar.
+Tarik **lidah "Aturan & bobot"** di tepi kiri layar sebentar.
 
 > "Dan ini seluruh aturannya, beserta bobot dan tingkat keyakinan tiap
 > metode. Yang keyakinannya rendah ditulis rendah."
