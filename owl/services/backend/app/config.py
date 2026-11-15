@@ -101,6 +101,15 @@ class Settings:
     # Perangkat yang SUDAH mengirim rantai selalu dinilai dari hasil verifikasi,
     # apa pun modenya: bukti mengalahkan klaim.
     ATTESTATION_MODE: str = _s("OWL_ATTESTATION", "verify").lower()
+    # Berkas akar yang disematkan. Kosong berarti rules/google-attestation-roots.pem.
+    ATTESTATION_ROOTS: str = _s("OWL_ATTESTATION_ROOTS", "")
+    # Daftar pencabutan lebih tua dari ini dinyatakan basi di /health dan metrik.
+    REVOCATION_MAX_AGE_DAYS: float = _f("OWL_REVOCATION_MAX_AGE_DAYS", 14.0)
+    # token : pendaftaran dan permintaan tantangan menuntut token sekali pakai
+    #         per perangkat yang diterbitkan admin. Bawaan.
+    # shared: cukup token penggelaran bersama. Hanya untuk emulator dan uji.
+    ENROLL_MODE: str = _s("OWL_ENROLL", "token").lower()
+    ENROLL_TOKEN_TTL_MINUTES: float = _f("OWL_ENROLL_TTL", 60.0)
     # Identitas aplikasi yang boleh memegang kunci agent. Sidik penanda tangan
     # dipisah koma; dibiarkan kosong berarti hanya nama paket yang diperiksa,
     # dan itu HANYA sah selama agent masih build debug.

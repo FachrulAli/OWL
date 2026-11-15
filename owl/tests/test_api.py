@@ -32,10 +32,12 @@ def client(tmp_path):
     # Uji di berkas ini mengirim telemetri tanpa rantai attestation, jadi
     # memakai mode claim. Mode verify diuji di test_attestation.py.
     mode_lama = _paksa("ATTESTATION_MODE", "claim")
+    enroll_lama = _paksa("ENROLL_MODE", "shared")
     policy.reset()
     with TestClient(app) as c:
         yield c
     policy.reset()
+    _paksa("ENROLL_MODE", enroll_lama)
     _paksa("ATTESTATION_MODE", mode_lama)
     _paksa("DB_PATH", db_lama)
 

@@ -20,9 +20,10 @@ BATAS YANG JUJUR
 - Masa berlaku sertifikat TIDAK ditegakkan. Sertifikat attestation di
   lapangan sering bertanggal aneh (mulai 1970, atau perantara yang sudah
   lewat), dan menolaknya akan menolak perangkat yang sah.
-- Daftar pencabutan Google (kunci attestation yang bocor) belum diperiksa.
-  Pada jaringan tertutup daftar itu harus dibawa masuk lewat berkas; itu
-  pekerjaan berikutnya, dan tanpa itu kunci pabrik yang bocor masih diterima.
+- Daftar pencabutan Google (kunci attestation yang bocor) diperiksa HANYA
+  bila petugas sudah mengimpornya lewat media (POST /api/attestation/revocations).
+  OWL Core tidak mengunduhnya sendiri, dan umur daftarnya ditampilkan supaya
+  daftar yang basi tidak terbaca sebagai daftar yang bersih.
 - Emulator tidak punya kunci attestation Google, jadi rantainya ditolak di
   sini. Itu benar, bukan cacat.
 """
@@ -68,6 +69,7 @@ class AttestationResult:
     app_signers: list[str] = field(default_factory=list)   # SHA-256 heksadesimal
     root_subject: str = ""
     chain_sha256: str = ""
+    chain_serials: list[str] = field(default_factory=list)   # heksadesimal huruf kecil
     public_key_b64: str = ""          # SubjectPublicKeyInfo DER, kunci agent
 
     @property
@@ -198,13 +200,30 @@ def _parse_key_description(ext: bytes) -> dict:
 # ——————————————————————————— rantai ———————————————————————————
 
 _roots_cache: list[x509.Certificate] | None = None
+_roots_source: str = ""
 
 
-def trusted_roots() -> list[x509.Certificate]:
-    global _roots_cache
-    if _roots_cache is None:
-        _roots_cache = x509.load_pem_x509_certificates(ROOTS_PATH.read_bytes())
+def trusted_roots(path: str | Path | None = None) -> list[x509.Certificate]:
+    """Akar yang disematkan. `path` menimpa berkas bawaan (OWL_ATTESTATION_ROOTS),
+    dipakai satuan yang menyematkan akarnya sendiri dan uji beban."""
+    global _roots_cache, _roots_source
+    sumber = str(path or ROOTS_PATH)
+    if _roots_cache is None or _roots_source != sumber:
+        _roots_cache = x509.load_pem_x509_certificates(Path(sumber).read_bytes())
+        _roots_source = sumber
     return _roots_cache
+
+
+def serial_forms(cert: x509.Certificate) -> set[str]:
+    """Nomor seri dalam dua bentuk yang dipakai daftar Google: desimal dan
+    heksadesimal huruf kecil tanpa nol di depan."""
+    n = cert.serial_number
+    return {str(n), format(n, "x")}
+
+
+def normalize_serial(key: str) -> str:
+    k = str(key).strip().lower()
+    return k.lstrip("0") or "0"
 
 
 def _spki(cert_or_key) -> bytes:
@@ -229,7 +248,8 @@ def _signed_by(child: x509.Certificate, issuer_key) -> bool:
 
 
 def verify_chain(chain_b64: list[str], challenge: bytes,
-                 roots: list[x509.Certificate] | None = None) -> AttestationResult:
+                 roots: list[x509.Certificate] | None = None,
+                 revoked: set[str] | None = None) -> AttestationResult:
     """Periksa rantai attestation. Tidak pernah melempar: kegagalan kembali
     sebagai `verified=False` beserta alasannya, supaya dapat dicatat."""
     res = AttestationResult()
@@ -245,6 +265,7 @@ def verify_chain(chain_b64: list[str], challenge: bytes,
             raise AttestationError("rantai attestation tidak dapat dibaca sebagai X.509")
 
         res.chain_sha256 = hashlib.sha256(b"".join(ders)).hexdigest()
+        res.chain_serials = [format(c.serial_number, "x") for c in certs]
         leaf = certs[0]
         res.public_key_b64 = base64.b64encode(_spki(leaf)).decode("ascii")
 
@@ -288,6 +309,12 @@ def verify_chain(chain_b64: list[str], challenge: bytes,
         if kd["challenge"] != challenge:
             raise AttestationError("tantangan pada rantai tidak cocok dengan yang diberikan OWL Core")
 
+        hit = rantai_dicabut(certs, revoked)
+        if hit:
+            raise AttestationError(
+                f"sertifikat dalam rantai ada di daftar pencabutan Google ({hit}); "
+                "kunci attestation ini dinyatakan bocor atau cacat")
+
         res.verified = True
         if not res.hardware_backed:
             res.reason = "kunci dibuat di perangkat lunak, bukan di TEE atau StrongBox"
@@ -295,6 +322,35 @@ def verify_chain(chain_b64: list[str], challenge: bytes,
         res.verified = False
         res.reason = str(e)
     return res
+
+
+def rantai_dicabut(certs: list[x509.Certificate], revoked: set[str] | None) -> str:
+    """Nomor seri pertama dalam rantai yang ada di daftar pencabutan, atau ''."""
+    if not revoked:
+        return ""
+    for c in certs:
+        hit = {normalize_serial(f) for f in serial_forms(c)} & revoked
+        if hit:
+            return sorted(hit)[0]
+    return ""
+
+
+def serials_revoked(chain_serials: list[str], revoked: set[str] | None) -> str:
+    """Seperti rantai_dicabut, tetapi atas nomor seri yang sudah tersimpan.
+    Dipakai saat laporan masuk, supaya daftar yang baru diimpor langsung
+    berlaku untuk perangkat yang SUDAH terdaftar."""
+    if not revoked:
+        return ""
+    for sn in chain_serials:
+        forms = {normalize_serial(sn)}
+        try:
+            forms.add(str(int(sn, 16)))
+        except ValueError:
+            pass
+        hit = forms & revoked
+        if hit:
+            return sorted(hit)[0]
+    return ""
 
 
 # ——————————————————————————— tanda tangan laporan ———————————————————————————

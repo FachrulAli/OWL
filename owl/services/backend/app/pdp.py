@@ -60,9 +60,19 @@ def _age_minutes(a: RiskAssessment, now: datetime) -> float:
 
 
 def decide(a: RiskAssessment, resource: Sensitivity = "standard",
-           now: datetime | None = None) -> AccessDecision:
+           now: datetime | None = None, revoked: str | None = None) -> AccessDecision:
     s = a.score
     now = now or datetime.now(timezone.utc)
+
+    # Perangkat yang dicabut admin ditolak lebih dahulu dari apa pun, termasuk
+    # skor, aturan penentu, dan pengecualian. Pencabutan adalah keputusan
+    # manusia atas perangkat yang hilang atau dicuri.
+    if revoked is not None:
+        return AccessDecision(
+            device_id=a.device_id, resource=resource, decision="deny", score=s,
+            reason=f"Deny / Quarantine. Perangkat dicabut administrator: {revoked or 'tanpa alasan tercatat'}.",
+            quarantine=True, top_contributors=["perangkat dicabut"],
+        )
 
     # Lapis 1: laporan kedaluwarsa. Diukur dari waktu penilaian di SERVER,
     # bukan dari jam perangkat, sehingga agent tidak dapat memudakannya.

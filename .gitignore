@@ -26,3 +26,6 @@ local.properties
 *.log
 .idea/
 *.iml
+
+# catatan kerja pribadi, tidak ikut repositori
+docs/ROADMAP-TEKNIS.md

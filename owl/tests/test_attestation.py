@@ -131,6 +131,7 @@ class Rantai:
 def rantai(monkeypatch):
     r = Rantai()
     monkeypatch.setattr(attest, "_roots_cache", [r.root])
+    monkeypatch.setattr(attest, "_roots_source", str(attest.ROOTS_PATH))
     return r
 
 
@@ -201,10 +202,12 @@ def _paksa(name: str, value):
 def client(tmp_path):
     db_lama = _paksa("DB_PATH", str(tmp_path / "attest.db"))
     mode_lama = _paksa("ATTESTATION_MODE", "verify")
+    enroll_lama = _paksa("ENROLL_MODE", "shared")
     policy.reset()
     with TestClient(app) as c:
         yield c
     policy.reset()
+    _paksa("ENROLL_MODE", enroll_lama)
     _paksa("ATTESTATION_MODE", mode_lama)
     _paksa("DB_PATH", db_lama)
 
