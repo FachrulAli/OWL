@@ -1,13 +1,13 @@
 import {
   useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState,
 } from 'react'
-import type { ReactNode } from 'react'
 import { GELARAN, JUMLAH_KODAM } from '../data/gelaran'
 import type { Satuan } from '../data/gelaran'
 import { INDONESIA_PATH, projX, projY } from '../data/indonesiaGeo'
+import { PROVINSI } from '../data/provinsi'
 import { scoreColor } from '../lib/api'
-import { DECISION_EN, useT } from '../lib/i18n'
-import type { Decision, DeviceRow } from '../lib/types'
+import { useT } from '../lib/i18n'
+import type { DeviceRow } from '../lib/types'
 
 /**
  * Peta gelaran satuan, dipakai sebagai bidang kerja halaman gerbang.
@@ -62,6 +62,22 @@ const PX_SASAR = 15
 const PX_HURUF = 8.5
 const PX_LABEL_Y = -12
 
+/**
+ * Garis lintang dan bujur setiap lima derajat.
+ *
+ * Kisi persegi sembarang membuat peta terlihat seperti latar belakang; garis
+ * yang benar-benar lintang dan bujur membuatnya terbaca sebagai peta dan
+ * memberi rasa jarak tanpa satu label pun. Rentangnya melebihi daratan
+ * supaya ikut mengisi laut di tepi bidang pandang.
+ */
+const BUJUR: number[] = []
+for (let lon = 90; lon <= 145; lon += 5) BUJUR.push(lon)
+const LINTANG: number[] = []
+for (let lat = 10; lat >= -15; lat -= 5) LINTANG.push(lat)
+
+/** Nama kota markas baru muncul saat peta cukup dekat untuk memuatnya. */
+const ZOOM_KOTA = 2
+
 interface Pandang { k: number; tx: number; ty: number }
 
 const AWAL: Pandang = { k: 1, tx: 0, ty: 0 }
@@ -114,13 +130,7 @@ export function useGelaran(devices: DeviceRow[]): Titik[] {
   }, [devices])
 }
 
-export function PetaKomando({
-  titik, results, kendali,
-}: {
-  titik: Titik[]
-  results: Record<string, Decision>
-  kendali: ReactNode
-}) {
+export function PetaKomando({ titik }: { titik: Titik[] }) {
   const { t } = useT()
   const bungkus = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -283,23 +293,41 @@ export function PetaKomando({
           onPointerCancel={naik}
         >
           <defs>
-            <radialGradient id="peta-sinar" cx="50%" cy="48%" r="70%">
-              <stop offset="0%" stopColor="rgba(201,162,39,.10)" />
+            <radialGradient id="peta-sinar" cx="50%" cy="48%" r="72%">
+              <stop offset="0%" stopColor="rgba(201,162,39,.12)" />
               <stop offset="100%" stopColor="rgba(0,0,0,0)" />
             </radialGradient>
-            <pattern id="peta-kisi" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M40 0H0V40" fill="none" stroke="rgba(201,162,39,.08)" strokeWidth=".6" />
-            </pattern>
+            <linearGradient id="peta-tanah" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(201,162,39,.21)" />
+              <stop offset="100%" stopColor="rgba(201,162,39,.09)" />
+            </linearGradient>
           </defs>
 
-          <rect x={X0} y={Y0} width={VB_W} height={VB_H} fill="url(#peta-kisi)" />
+          <rect x={X0} y={Y0} width={VB_W} height={VB_H} className="peta-laut" />
           <rect x={X0} y={Y0} width={VB_W} height={VB_H} fill="url(#peta-sinar)" />
 
           <g
             className={`peta-isi${geser ? ' geser' : ''}`}
             style={{ transform: `translate(${tx}px, ${ty}px) scale(${k})` }}
           >
-            <path d={INDONESIA_PATH} className="peta-darat" />
+            {/* garis lintang dan bujur sungguhan, bukan kisi sembarang */}
+            <g className="peta-graticule">
+              {BUJUR.map((lon) => (
+                <line key={`b${lon}`} x1={projX(lon)} y1={Y0} x2={projX(lon)} y2={Y0 + VB_H} />
+              ))}
+              {LINTANG.map((lat) => (
+                <line key={`l${lat}`} x1={X0} y1={projY(lat)} x2={X0 + VB_W} y2={projY(lat)} />
+              ))}
+            </g>
+
+            {/* daratan: bidang provinsi dahulu, garis pantai di atasnya */}
+            <g className="peta-prov">
+              {PROVINSI.map((pr) => (
+                <path key={pr.nama} d={pr.d}><title>{pr.nama}</title></path>
+              ))}
+            </g>
+            <path d={INDONESIA_PATH} className="peta-pantai-sinar" />
+            <path d={INDONESIA_PATH} className="peta-pantai" />
 
             {titik.map((p) => {
               const { s, x, y, milik } = p
@@ -330,6 +358,16 @@ export function PetaKomando({
                   >
                     {s.pusat ? 'MABESAD' : s.singkat}
                   </text>
+                  {k >= ZOOM_KOTA && (
+                    <text
+                      className="kota"
+                      x={px(s.dx ?? 0)}
+                      y={px(13)}
+                      style={{ fontSize: `${px(7)}px` }}
+                    >
+                      {s.markas}
+                    </text>
+                  )}
                 </g>
               )
             })}
@@ -359,7 +397,7 @@ export function PetaKomando({
         </div>
       </div>
 
-      {/* ——— panel kiri: kendali gerbang ——— */}
+      {/* ——— panel kiri: ringkasan gelaran ——— */}
       <div className={`kmd-panel kiri${kiriBuka ? '' : ' tutup'}`}>
         <button
           className="kmd-lipat"
@@ -369,7 +407,7 @@ export function PetaKomando({
         >
           {kiriBuka ? '‹' : '›'}
         </button>
-        <div className="kmd-isi">{kendali}</div>
+        <div className="kmd-isi"><RingkasGelaran titik={titik} /></div>
       </div>
 
       {/* ——— panel kanan: keterangan satuan ——— */}
@@ -386,7 +424,7 @@ export function PetaKomando({
           <KeteranganSatuan
             titik={titik}
             fokus={fokus}
-            results={results}
+            onPilih={pilih}
             onTutup={() => { setFokus(null); setPandang(AWAL) }}
           />
         </div>
@@ -404,34 +442,71 @@ export function PetaKomando({
  * belakangnya, sebab membaca peta komando sebagai peta pelacakan adalah
  * salah paham yang paling mahal di layar ini.
  */
+/**
+ * Ringkasan gelaran di panel kiri.
+ *
+ * Isinya tidak berubah mengikuti pin yang ditekan: ia menyatakan apa yang
+ * sebenarnya ditunjukkan peta di belakangnya. Membaca peta komando sebagai
+ * peta pelacakan adalah salah paham yang paling mahal di layar ini, dan
+ * salah paham itu tidak boleh bergantung pada pembaca menekan sesuatu
+ * lebih dahulu.
+ */
+function RingkasGelaran({ titik }: { titik: Titik[] }) {
+  const { t } = useT()
+  const terpeta = titik.reduce((a, p) => a + p.milik.length, 0)
+  return (
+    <>
+      <div className="kicker">{t('map.kicker')}</div>
+      <div className="peta-angka">
+        <div>
+          <span className="n">{JUMLAH_KODAM}</span>
+          <span className="l">{t('map.kodam')}</span>
+        </div>
+        <div>
+          <span className="n">{terpeta}</span>
+          <span className="l">{t('map.mapped')}</span>
+        </div>
+      </div>
+      <p className="muted">{t('map.note')}</p>
+      <p className="peta-kaki">{t('map.foot')}</p>
+    </>
+  )
+}
+
 function KeteranganSatuan({
-  titik, fokus, results, onTutup,
+  titik, fokus, onPilih, onTutup,
 }: {
   titik: Titik[]
   fokus: string | null
-  results: Record<string, Decision>
+  onPilih: (p: Titik) => void
   onTutup: () => void
 }) {
-  const { t, word, decision } = useT()
+  const { t, word } = useT()
   const aktif = titik.find((p) => p.s.id === fokus) ?? null
-  const terpeta = titik.reduce((a, p) => a + p.milik.length, 0)
 
   if (!aktif) {
+    const berisi = titik.filter((p) => p.milik.length > 0)
     return (
       <>
-        <div className="kicker">{t('map.kicker')}</div>
-        <div className="peta-angka">
-          <div>
-            <span className="n">{JUMLAH_KODAM}</span>
-            <span className="l">{t('map.kodam')}</span>
-          </div>
-          <div>
-            <span className="n">{terpeta}</span>
-            <span className="l">{t('map.mapped')}</span>
-          </div>
-        </div>
-        <p className="muted">{t('map.note')}</p>
+        <div className="kicker">{t('map.detail')}</div>
         <p className="peta-ajak">{t('map.pick')}</p>
+        {berisi.length > 0 && (
+          <>
+            <div className="kicker" style={{ marginTop: 18, marginBottom: 8 }}>
+              {t('map.withDevices')}
+            </div>
+            <ul className="peta-pintas">
+              {berisi.map((p) => (
+                <li key={p.s.id}>
+                  <button onClick={() => onPilih(p)}>
+                    <span className="nama">{p.s.nama}</span>
+                    <span className="n">{p.milik.length}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </>
     )
   }
@@ -464,31 +539,23 @@ function KeteranganSatuan({
         <p className="muted peta-sisi-kosong">{t('map.deviceNoneLong')}</p>
       ) : (
         <ul className="peta-sisi-daftar">
-          {milik.map((d) => {
-            const res = results[d.device_id]
-            const lolos = res && (res.decision === 'allow' || res.decision === 'step_up')
-            return (
-              <li key={d.device_id}>
-                <span
-                  className="skor"
-                  style={{ color: d.score === null ? 'var(--slate)' : scoreColor(d.score) }}
-                >
-                  {d.score === null ? '—' : d.score.toFixed(0)}
-                </span>
-                <span className="isi">
-                  <span className="nama">{d.label || d.device_id}</span>
-                  <span className="sub">{d.device_id} · {d.owner_role || '—'}</span>
-                </span>
-                {res
-                  ? (
-                    <span className={`vonis ${lolos ? 'ok' : 'no'}`} title={DECISION_EN[res.decision]}>
-                      {decision(res.decision)}
-                    </span>
-                  )
-                  : <span className="tingkat">{d.level ? word(d.level) : t('dev.notAssessed')}</span>}
-              </li>
-            )
-          })}
+          {milik.map((d) => (
+            <li key={d.device_id}>
+              <span
+                className="skor"
+                style={{ color: d.score === null ? 'var(--slate)' : scoreColor(d.score) }}
+              >
+                {d.score === null ? '—' : d.score.toFixed(0)}
+              </span>
+              <span className="isi">
+                <span className="nama">{d.label || d.device_id}</span>
+                <span className="sub">{d.device_id} · {d.owner_role || '—'}</span>
+              </span>
+              {d.revoked
+                ? <span className="ops-lencana merah">{t('dev.revoked')}</span>
+                : <span className="tingkat">{d.level ? word(d.level) : t('dev.notAssessed')}</span>}
+            </li>
+          ))}
         </ul>
       )}
 

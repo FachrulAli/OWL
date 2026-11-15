@@ -1022,14 +1022,26 @@ pre {
 
 .komando { position: relative; }
 
+/* Peta keluar dari lebar kolom dashboard.
+ *
+ * Kepulauan ini membentang 46 derajat bujur. Dipaksa masuk ke kolom teks
+ * selebar 1280 piksel, Jawa menyusut jadi coretan setebal beberapa piksel
+ * dan peta berhenti menjadi peta. Jadi halaman ini saja melebar sampai
+ * hampir selebar jendela, dan sisa dashboard tetap pada kolomnya. */
+.komando {
+  /* `max(100%, …)` menjaga peta tidak pernah menjadi lebih SEMPIT daripada
+     kolom dashboard. Tanpa itu, pada jendela selebar 1280 piksel rumus
+     94vw justru menyusutkan peta di bawah lebar kolomnya sendiri. */
+  width: max(100%, min(94vw, 1760px));
+  margin-left: calc((100% - max(100%, min(94vw, 1760px))) / 2);
+}
+
 .peta-bungkus {
   position: relative; width: 100%;
   /* sama dengan bidang pandang di PetaGelaran.tsx: 1140 x 500 */
   aspect-ratio: 1140 / 500; min-height: 420px;
   border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
-  background:
-    radial-gradient(70% 90% at 50% 20%, rgba(201, 162, 39, .07), rgba(0, 0, 0, 0) 70%),
-    #030303;
+  background: #03060B;
 }
 .peta {
   display: block; width: 100%; height: 100%;
@@ -1047,10 +1059,39 @@ pre {
 }
 .peta-isi.geser { transition: none; }
 
-.peta-darat {
-  fill: rgba(201, 162, 39, .09);
-  stroke: rgba(201, 162, 39, .5); stroke-width: .8;
+/* Laut: biru-hitam yang sangat gelap, bukan hitam murni. Perbedaan tipis
+   itulah yang memisahkan daratan dari latar tanpa satu garis tambahan. */
+.peta-laut { fill: #03060B; }
+
+.peta-graticule line {
+  stroke: rgba(201, 162, 39, .09); stroke-width: .7;
   vector-effect: non-scaling-stroke;
+}
+
+/* Bidang provinsi memberi peta skala dan tempat. Garis batasnya sengaja
+   jauh lebih redup daripada garis pantai: batas administrasi bukan yang
+   dicari pembaca, ia hanya membuat daratan tidak terbaca sebagai gumpalan. */
+.peta-prov path {
+  fill: url(#peta-tanah);
+  stroke: rgba(201, 162, 39, .26); stroke-width: .55;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+}
+/* Pendar di tepi daratan dibuat dengan satu salinan garis pantai yang tebal
+   dan nyaris tembus pandang, bukan dengan `filter`. Filter atas 3.700 titik
+   yang berada di bawah transform berjalan ulang setiap bingkai saat peta
+   digeser; salinan ini tidak. */
+.peta-pantai-sinar {
+  fill: none;
+  stroke: rgba(231, 200, 120, .13); stroke-width: 5;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+}
+.peta-pantai {
+  fill: none;
+  stroke: rgba(231, 200, 120, .6); stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
 }
 
 .peta-pin { cursor: pointer; }
@@ -1087,6 +1128,11 @@ pre {
 }
 .peta-bungkus.geser .peta-pin .nama { transition: fill .3s ease; }
 .peta-pin.pusat .nama { fill: var(--gold-dim); }
+.peta-pin .kota {
+  font-family: var(--mono); letter-spacing: .14em; text-transform: uppercase;
+  fill: rgba(185, 178, 163, .55); text-anchor: middle; pointer-events: none;
+}
+.peta-pin:hover .kota, .peta-pin.dipilih .kota { fill: var(--off); }
 .peta-pin:hover .nama, .peta-pin.dipilih .nama { fill: var(--gold-soft); }
 
 /* ——— panel mengambang ——— */
@@ -1182,44 +1228,72 @@ pre {
 .peta-legenda .l-baru { background: var(--amber); }
 .kmd-petunjuk { color: var(--gold-dim); }
 
-/* ——— kendali gerbang di panel kiri ——— */
+/* ——— kendali gerbang, kini sebuah kartu di puncak halaman Gerbang ——— */
 
-.gate-pilih { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; }
-.gate-pilih .btn { width: 100%; }
-.gate-jalan { width: 100%; margin-top: 9px; }
-.gate-batas {
-  margin-top: 16px; padding-top: 14px;
-  border-top: 1px solid rgba(201, 162, 39, .12);
-  font-size: 11.5px !important;
+.gerbang-kendali { display: flex; flex-direction: column; }
+.gerbang-atur {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap;
 }
+.gerbang-tombol { display: flex; gap: 8px; flex-wrap: wrap; }
 
-.gate-hasil { list-style: none; display: grid; gap: 12px; }
-.gate-hasil li {
-  padding: 11px 12px; border-radius: 12px;
-  border: 1px solid rgba(201, 162, 39, .22); background: rgba(0, 0, 0, .34);
+.gerbang-hasil {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 12px; margin-top: 18px;
 }
-.gate-hasil li.no { border-color: rgba(232, 163, 61, .4); }
-.gate-hasil .baris {
-  display: grid; grid-template-columns: 30px minmax(0, 1fr) auto;
-  gap: 9px; align-items: center;
+.gerbang-jawab {
+  padding: 14px 16px; border-radius: 14px;
+  border: 1px solid rgba(201, 162, 39, .26); background: rgba(0, 0, 0, .35);
+  animation: jawab-masuk .4s cubic-bezier(.22, .9, .25, 1) both;
 }
-.gate-hasil .skor { font-family: var(--display); font-weight: 700; font-size: 18px; }
-.gate-hasil .nama {
-  font-size: 12.5px; font-weight: 600;
+.gerbang-jawab.no { border-color: rgba(232, 163, 61, .45); }
+@keyframes jawab-masuk {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.gerbang-jawab .atas {
+  display: grid; grid-template-columns: 38px minmax(0, 1fr) auto;
+  gap: 11px; align-items: center;
+}
+.gerbang-jawab .skor {
+  font-family: var(--display); font-weight: 700; font-size: 23px; text-align: right;
+}
+.gerbang-jawab .siapa { min-width: 0; }
+.gerbang-jawab .nama {
+  font-size: 13.5px; font-weight: 600;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.gate-hasil .alasan { margin-top: 7px; color: var(--slate-2); font-size: 11.5px; line-height: 1.55; }
-.gate-hasil .rek {
-  margin-top: 4px; font-family: var(--mono); font-size: 10px; color: var(--slate);
+.gerbang-jawab .sub {
+  font-family: var(--mono); font-size: 10px; color: var(--slate); margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.gate-hasil .flag { margin-top: 5px; font-size: 10px; }
+.gerbang-jawab .alasan {
+  margin-top: 10px; color: var(--slate-2); font-size: 12.5px; line-height: 1.55;
+}
+.gerbang-jawab .rek {
+  margin-top: 5px; font-family: var(--mono); font-size: 10px; color: var(--slate);
+}
+.gerbang-jawab .flag { margin-top: 6px; font-size: 10.5px; }
 
+/* Lencana vonis. Dipakai di jawaban gerbang; bentuknya pil supaya terbaca
+   sebagai keputusan, bukan sebagai judul. */
 .vonis {
-  font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em;
-  text-transform: uppercase; padding: 3px 8px; border-radius: 5px; white-space: nowrap;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+  text-transform: uppercase; white-space: nowrap;
+  padding: 4px 10px; border-radius: 999px;
 }
 .vonis.ok { background: rgba(201, 162, 39, .2); color: var(--gold-soft); }
 .vonis.no { background: rgba(232, 163, 61, .2); color: var(--amber); }
+
+.gerbang-batas {
+  margin-top: 18px; padding-top: 14px;
+  border-top: 1px solid rgba(201, 162, 39, .12);
+  font-size: 12.5px !important; max-width: 96ch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gerbang-jawab { animation: none; }
+}
 
 /* ——— keterangan satuan di panel kanan ——— */
 
@@ -1282,6 +1356,36 @@ pre {
   font-family: var(--mono); font-size: 8.5px; letter-spacing: .13em;
   text-transform: uppercase; color: var(--slate);
 }
+/* Catatan kaki panel: menjelaskan batas data, jadi ia harus ADA dan harus
+   dapat dibaca, tetapi tidak boleh seramai angka di atasnya. */
+.peta-kaki {
+  margin-top: 14px; padding-top: 13px;
+  border-top: 1px solid rgba(201, 162, 39, .12);
+  color: var(--slate); font-size: 11px; line-height: 1.6;
+}
+/* Pintasan ke satuan yang benar-benar punya perangkat. Panel yang hanya
+   berisi ajakan menyuruh orang berburu pin sendiri di peta selebar 46
+   derajat bujur. */
+.peta-pintas { list-style: none; display: grid; gap: 2px; }
+.peta-pintas button {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 9px 10px; cursor: pointer; text-align: left;
+  background: transparent; color: var(--slate-2);
+  border: 1px solid transparent; border-radius: 9px;
+  font: inherit; font-size: 12.5px;
+  transition: background .18s ease, border-color .18s ease, color .18s ease;
+}
+.peta-pintas button:hover {
+  background: rgba(201, 162, 39, .1); border-color: rgba(231, 200, 120, .3);
+  color: var(--off);
+}
+.peta-pintas .nama { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.peta-pintas .n {
+  flex: 0 0 auto; font-family: var(--mono); font-size: 10.5px;
+  color: var(--gold-soft); background: rgba(201, 162, 39, .16);
+  border-radius: 999px; padding: 2px 8px;
+}
+
 .peta-ajak {
   margin-top: 13px; padding: 10px 12px;
   border: 1px dashed rgba(201, 162, 39, .32); border-radius: 11px;
@@ -1296,7 +1400,7 @@ pre {
 /* Pada layar sempit panel mengambang menutupi hampir seluruh peta, jadi
    keduanya turun menjadi kartu biasa di bawahnya. */
 @media (max-width: 900px) {
-  .komando { display: flex; flex-direction: column; }
+  .komando { display: flex; flex-direction: column; width: 100%; margin-left: 0; }
   /* Tingginya tetap mengikuti nisbah bidang pandang. Tinggi yang dipaksa
      membuat SVG menyisakan pita kosong di atas dan di bawah kepulauan,
      dan pita itu memakan layar yang justru paling sempit. */

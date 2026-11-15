@@ -587,6 +587,11 @@ const S = {
       + 'denied at the gate without the score being looked at',
   },
 
+  'map.detail': { id: 'Keterangan satuan', en: 'Command details' },
+  'map.withDevices': {
+    id: 'Satuan yang sudah punya perangkat',
+    en: 'Commands with devices enrolled',
+  },
   'map.pick': {
     id: 'Tekan satu pin untuk membuka keterangan satuan beserta perangkat yang '
       + 'terdaftar di bawahnya.',

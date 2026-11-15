@@ -10,7 +10,7 @@ import { api, clearKey, hasKey, isOffline, onOfflineChange, onUnauthorized, snap
 import { LangToggle, useT } from './lib/i18n'
 import type { Key } from './lib/i18n'
 import type { Catalog, DeviceRow, Metrics, SocEvent } from './lib/types'
-import { Ikhtisar } from './views/Ikhtisar'
+import { Gelaran } from './views/Gelaran'
 import { Landing } from './views/Landing'
 import { Gerbang } from './views/Gerbang'
 import { Perangkat } from './views/Perangkat'
@@ -303,16 +303,17 @@ export default function App() {
       </nav>
 
       <div className="tabisi" key={tab}>
-        {tab === 'ikhtisar' && (
-          <Ikhtisar
+        {tab === 'ikhtisar' && <Gelaran devices={devices} />}
+        {tab === 'gerbang' && (
+          <Gerbang
             devices={devices}
             catalog={catalog}
             events={events}
             metrics={metrics}
             onLihatPerangkat={() => setTab('perangkat')}
+            onRefresh={() => void refresh()}
           />
         )}
-        {tab === 'gerbang' && <Gerbang devices={devices} onRefresh={refresh} />}
         {tab === 'perangkat' && <Perangkat devices={devices} />}
         {tab === 'soc' && <Soc devices={devices} />}
         {tab === 'operasi' && (
